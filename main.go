@@ -21,7 +21,7 @@ func main() {
 	logger.Must(cc,cc.Init())
 	fmt.Println(logger.Must(cc.Encrypt("Artyom is Gay")))
 
-	acc:= core.CAccount{DB: db}
+	acc:= core.CAccount{DB: db, Logger: logger}
 	acc.Uid=acc.SearchUsers("Nanorun")
 	acc.LoadAll()
 

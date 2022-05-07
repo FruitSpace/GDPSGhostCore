@@ -30,6 +30,7 @@ const (
 
 
 type CAccount struct {
+	//Main/Auth
 	Uid int
 	Uname string
 	Passhash string
@@ -37,6 +38,7 @@ type CAccount struct {
 	Role_id int
 	IsBanned int
 
+	//Stats
 	Stars int
 	Diamonds int
 	Coins int
@@ -47,11 +49,13 @@ type CAccount struct {
 	Special int
 	LvlsCompleted int
 
+	//Technical
 	RegDate string
 	AccessDate string
 	LastIP string
 	GameVer string
 
+	//Social
 	Blacklist string
 	FriendsCount int
 	FriendshipIds string
