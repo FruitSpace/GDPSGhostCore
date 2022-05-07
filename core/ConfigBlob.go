@@ -38,6 +38,7 @@ type ChestConfig struct {
 }
 
 type ServerConfig struct {
+	SrvID string
 	SrvKey string
 	MaxUsers int
 	MaxLevels int

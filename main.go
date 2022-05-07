@@ -53,6 +53,7 @@ func GenConfig() core.ConfigBlob {
 			1,6,1,6, 14400,
 		},
 		ServerConfig: core.ServerConfig{
+			"0002",
 			"SRV_KEY",
 			100,
 			500,
