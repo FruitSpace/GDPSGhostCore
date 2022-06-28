@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/exp/slices"
 	"strconv"
 	"strings"
 	"time"
-	"golang.org/x/exp/slices"
 )
 
 const (
@@ -46,6 +46,7 @@ type CAccount struct {
 	Demons int
 	CPoints int
 	Orbs int
+	Moons int
 	Special int
 	LvlsCompleted int
 
@@ -161,13 +162,13 @@ func (acc *CAccount) PushVessels() {
 }
 
 func (acc *CAccount) LoadStats() {
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT stars,diamonds,coins,ucoins,demons,cpoints,orbs,special,lvlsCompleted FROM users WHERE uid=?",acc.Uid).Scan(
-		&acc.Stars,&acc.Diamonds,&acc.Coins,&acc.UCoins,&acc.Demons,&acc.CPoints,&acc.Orbs,&acc.Special,&acc.LvlsCompleted))
+	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT stars,diamonds,coins,ucoins,demons,cpoints,orbs,moons,special,lvlsCompleted FROM users WHERE uid=?",acc.Uid).Scan(
+		&acc.Stars,&acc.Diamonds,&acc.Coins,&acc.UCoins,&acc.Demons,&acc.CPoints,&acc.Orbs,&acc.Moons,&acc.Special,&acc.LvlsCompleted))
 }
 
 func (acc *CAccount) PushStats() {
-	acc.DB.DB.Query("UPDATE users SET stars=?,diamonds=?,coins=?,ucoins=?,demons=?,cpoints=?,orbs=?,special=?,lvlsCompleted=? WHERE uid=?",
-		acc.Stars,acc.Diamonds,acc.Coins,acc.UCoins,acc.Demons,acc.CPoints,acc.Orbs,acc.Special,acc.LvlsCompleted,acc.Uid)
+	acc.DB.DB.Query("UPDATE users SET stars=?,diamonds=?,coins=?,ucoins=?,demons=?,cpoints=?,orbs=?,moons=?,special=?,lvlsCompleted=? WHERE uid=?",
+		acc.Stars,acc.Diamonds,acc.Coins,acc.UCoins,acc.Demons,acc.CPoints,acc.Orbs,acc.Moons,acc.Special,acc.LvlsCompleted,acc.Uid)
 }
 
 func (acc *CAccount) LoadAuth(method int) {

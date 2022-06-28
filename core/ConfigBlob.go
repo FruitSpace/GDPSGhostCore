@@ -57,6 +57,7 @@ type GlobalConfig struct {
 	RedisPort string
 	RedisPassword string
 	RedisDB int
+	ModuleSettings map[string]string
 }
 
 type ConfigBlob struct {
@@ -66,6 +67,6 @@ type ConfigBlob struct {
 	ServerConfig ServerConfig
 }
 
-func (blob ConfigBlob) LoadById(Srvid string, glob *GlobalConfig) {
+func (blob *ConfigBlob) LoadById(Srvid string, glob *GlobalConfig) {
 
 }

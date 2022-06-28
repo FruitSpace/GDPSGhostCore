@@ -13,6 +13,7 @@ CREATE TABLE users
     demons         int(11)      NOT NULL DEFAULT 0,
     cpoints        int(11)      NOT NULL DEFAULT 0,
     orbs           int(11)      NOT NULL DEFAULT 0,
+    moons           int(11)      NOT NULL DEFAULT 0,
 
     regDate        DATETIME     NOT NULL,
     accessDate     DATETIME     NOT NULL,

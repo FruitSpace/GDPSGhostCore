@@ -14,6 +14,7 @@ const (
 	ACTION_LEVEL_UPLOAD int = 115
 	ACTION_LEVEL_DELETE int = 116
 	ACTION_LEVEL_UPDATE int = 117
+	ACTION_LEVEL_RATE int = 109
 	ACTION_PANEL_GAUNTLET_ADD int = 118
 	ACTION_PANEL_GAUNTLET_DELETE int = 119
 	ACTION_PANEL_GAUNTLET_EDIT int = 120
@@ -66,6 +67,10 @@ func RegisterAction(action int, uid int, target_id int, data map[string]string, 
 	case ACTION_LEVEL_UPDATE:
 		types=4
 		data["action"]="Update"
+		break
+	case ACTION_LEVEL_RATE:
+		types=4
+		data["action"]="Rate"
 		break
 	case ACTION_PANEL_GAUNTLET_ADD:
 		types=5
