@@ -1,0 +1,10 @@
+{
+  "DBPassword": "PASSWORD",
+  "Chests": {
+    "SmallOrbsMin": 200,
+    "SmallOrbsMax": 400,
+    "SmallDiamondsMin": 2,
+    "SmallDiamondsMax": 10,
+    "SmallShards": []
+  }
+}

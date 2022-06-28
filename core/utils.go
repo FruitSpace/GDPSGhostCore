@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"encoding/base64"
 	"fmt"
 	"golang.org/x/exp/slices"
 	"io"
@@ -60,6 +61,19 @@ func Hashsolo3(lvlstring string) string {
 func HashSolo4(lvlstring string) string {
 	sha:=sha1.New()
 	sha.Write([]byte(lvlstring+"pC26fpYaQCtg"))
+	return fmt.Sprintf("%x",sha.Sum(nil))
+}
+
+func DoGjp(gjp string) string {
+	gjp=strings.ReplaceAll(strings.ReplaceAll(gjp,"_","/"),"-","+")
+	block,err:=base64.StdEncoding.DecodeString(gjp)
+	if err!=nil {return ""}
+	return DoXOR(string(block),"37526")
+}
+
+func DoGjp2(password string) string {
+	sha:=sha1.New()
+	sha.Write([]byte(password+"mI29fmAnxgTs"))
 	return fmt.Sprintf("%x",sha.Sum(nil))
 }
 
