@@ -9,7 +9,6 @@ import (
 
 type CFriendship struct {
 	DB MySQLConn
-	Logger Logger
 }
 
 func (cf *CFriendship) IsAlreadyFriend(uid_dest int, uid int) bool {
@@ -54,7 +53,7 @@ func (cf *CFriendship) GetFriendRequests(uid int, page int, sent bool) (int,[]ma
 		var user map[string]string
 		user["id"]=strconv.Itoa(id)
 		user["comment"]=comment
-		acc:=CAccount{DB:cf.DB, Logger: cf.Logger}
+		acc:=CAccount{DB:cf.DB}
 		if sent {acc.Uid=dest}else{acc.Uid=src}
 		user["uid"]=strconv.Itoa(acc.Uid)
 		acc.LoadAuth(CAUTH_UID)
@@ -85,8 +84,8 @@ func (cf *CFriendship) DeleteFriendship(uid int, uid_dest int) {
 	id:=cf.GetFriendshipId(uid,uid_dest)
 	if id==0 {return}
 	cf.DB.ShouldQuery("DELETE FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",uid,uid_dest,uid,uid_dest)
-	u1:=CAccount{DB: cf.DB, Logger: cf.Logger}
-	u2:=CAccount{DB: cf.DB, Logger: cf.Logger}
+	u1:=CAccount{DB: cf.DB}
+	u2:=CAccount{DB: cf.DB}
 	u1.Uid=uid
 	u2.Uid=uid_dest
 	u1.UpdateFriendships(CFRIENDSHIP_REMOVE,id)
@@ -108,14 +107,16 @@ func (cf *CFriendship) GetFriendByFID(id int) (int,int) {
 	return uid1,uid2
 }
 
-func (cf *CFriendship) GetAccFriends(acc CAccount) []map[string]int {
+func (cf *CFriendship) GetAccFriends(acc CAccount) []int {
 	fr:=strings.Split(acc.FriendshipIds,",")
-	var frlist []map[string]int
+	var frlist []int
 	for _,sfr:=range fr {
 		id,err:=strconv.Atoi(sfr)
 		if err!=nil {continue}
 		uid1,uid2:=cf.GetFriendByFID(id)
-		frlist=append(frlist,map[string]int{"uid1":uid1,"uid2":uid2})
+		targetUid:=uid1
+		if uid1==acc.Uid {targetUid=uid2}
+		frlist=append(frlist,targetUid)
 	}
 	return frlist
 }
@@ -126,7 +127,7 @@ func (cf *CFriendship) ReadFriendRequest(id int) {
 
 func (cf *CFriendship) RequestFriend(uid int, uid_dest int, comment string) int {
 	if uid==uid_dest || cf.IsAlreadyFriend(uid,uid_dest) || cf.IsAlreadySentFriend(uid,uid_dest) || len(comment)>512 {return -1}
-	acc:=CAccount{DB: cf.DB, Logger: cf.Logger}
+	acc:=CAccount{DB: cf.DB}
 	acc.Uid=uid_dest
 	acc.LoadSettings()
 	if acc.FrS>0 {return -1}
@@ -149,8 +150,8 @@ func (cf *CFriendship) AcceptFriendRequest(id int, uid int) int {
 	rq,_:=req.Exec(uid,dest)
 	iid,_:=rq.LastInsertId()
 	cf.DB.ShouldQuery("DELETE FROM friendreqs WHERE id=?",id)
-	u1:=CAccount{DB: cf.DB, Logger: cf.Logger}
-	u2:=CAccount{DB: cf.DB, Logger: cf.Logger}
+	u1:=CAccount{DB: cf.DB}
+	u2:=CAccount{DB: cf.DB}
 	u1.Uid=uid
 	u2.Uid=dest
 	res:=u1.UpdateFriendships(CFRIENDSHIP_ADD,int(iid))

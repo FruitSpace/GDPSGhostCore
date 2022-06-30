@@ -159,7 +159,7 @@ func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string) bool 
 				if len(command)<4 {return false}
 				if c,err:=strconv.Atoi(command[2]); err!=nil{
 					if c!=cl.Id {return false}
-					xacc:=CAccount{}
+					xacc:=CAccount{DB: db}
 					uid:=xacc.GetUIDByUname(command[3],false)
 					if uid<1 {return false}
 					db.ShouldQuery("UPDATE levels SET iud=? WHERE id=?",uid,cl.Id)
@@ -224,13 +224,13 @@ func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string) bool 
 		collabMembers:=strings.Split(req,",")
 		switch command[1] {
 		case "add":
-			xacc:=CAccount{}
+			xacc:=CAccount{DB: db}
 			uid:=xacc.GetUIDByUname(command[2],false)
 			if uid<0 {return false}
 			if !slices.Contains(collabMembers,strconv.Itoa(uid)) {collabMembers=append(collabMembers,strconv.Itoa(uid))}
 			break
 		case "del":
-			xacc:=CAccount{}
+			xacc:=CAccount{DB: db}
 			uid:=xacc.GetUIDByUname(command[2],false)
 			if uid<0 {return false}
 			if slices.Contains(collabMembers,strconv.Itoa(uid)) {
@@ -244,4 +244,5 @@ func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string) bool 
 		db.ShouldQuery("UPDATE levles SET collab=? WHERE id=?",strings.Join(collabMembers,","),cl.Id)
 		return true
 	}
+	return false
 }

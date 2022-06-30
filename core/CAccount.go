@@ -92,7 +92,6 @@ type CAccount struct {
 	Twitter string
 
 	DB MySQLConn
-	Logger Logger
 }
 
 
