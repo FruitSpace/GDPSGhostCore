@@ -31,7 +31,7 @@ CREATE TABLE users
     friendship_ids TEXT         NOT NULL DEFAULT '',
 
     iconType       TINYINT      NOT NULL DEFAULT 0,
-    vessels        JSON         NOT NULL DEFAULT '{"clr_primary":0,"clr_secondary":0,"cube":0,"ship":0,"ball":0,"ufo":0,"wave":0,"robot":0,"spider":0,"trace":0,"death":0}',
+    vessels        JSON         NOT NULL DEFAULT '{"clr_primary":0,"clr_secondary":0,"cube":0,"ship":0,"ball":0,"ufo":0,"wave":0,"robot":0,"spider":0,"swing":0,"jetpack":0,"trace":0,"death":0}',
     chests         JSON         NOT NULL DEFAULT '{"small_count":0,"big_count":0,"small_time":0,"big_time":0}',
     settings       JSON         NOT NULL DEFAULT '{"frS":0,"cS":0,"mS":0,"youtube":"","twitch":"","twitter":""}'
 );

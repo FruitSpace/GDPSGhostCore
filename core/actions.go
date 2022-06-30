@@ -126,12 +126,12 @@ func RegisterAction(action int, uid int, target_id int, data map[string]string, 
 	isMod:=0
 	if uid>0 {
 		ret:=0
-		db.DB.QueryRow("SELECT role_id FROM users WHERE uid=?",uid).Scan(&ret)
+		db.ShouldQueryRow("SELECT role_id FROM users WHERE uid=?",uid).Scan(&ret)
 		if ret>0 {isMod=1}
 	}
 	datac,_:=json.Marshal(data)
 	date:=time.Now().Format("2006-01-02 15:04:05")
-	db.DB.Query("INSERT INTO actions (date, uid, type, target_id, isMod, data) VALUES (?,?,?,?,?,?)",
+	db.ShouldQuery("INSERT INTO actions (date, uid, type, target_id, isMod, data) VALUES (?,?,?,?,?,?)",
 		date,
 		uid,
 		types,

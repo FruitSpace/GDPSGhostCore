@@ -14,14 +14,14 @@ type CFriendship struct {
 
 func (cf *CFriendship) IsAlreadyFriend(uid_dest int, uid int) bool {
 	var cnt int
-	cf.Logger.Must(cf.DB,cf.DB.DB.QueryRow("SELECT count(*) as cnt FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",
-		uid,uid_dest,uid,uid_dest).Scan(&cnt))
+	cf.DB.MustQueryRow("SELECT count(*) as cnt FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",
+		uid,uid_dest,uid,uid_dest).Scan(&cnt)
 	return cnt>0
 }
 
 func (cf *CFriendship) IsAlreadySentFriend(uid_dest int ,uid int) bool {
 	var cnt int
-	cf.Logger.Must(cf.DB,cf.DB.DB.QueryRow("SELECT count(*) as cnt FROM friendreqs WHERE uid_src=? AND uid_dest=?",uid,uid_dest).Scan(&cnt))
+	cf.DB.MustQueryRow("SELECT count(*) as cnt FROM friendreqs WHERE uid_src=? AND uid_dest=?",uid,uid_dest).Scan(&cnt)
 	return cnt>0
 }
 
@@ -29,7 +29,7 @@ func (cf *CFriendship) CountFriendRequests(uid int, new bool) int {
 	var cnt int
 	q:="SELECT count(*) as cnt FROM friendreqs WHERE uid_dest=?"
 	if new {q+=" AND isNew=1"}
-	cf.Logger.Must(cf.DB,cf.DB.DB.QueryRow(q,uid).Scan(&cnt))
+	cf.DB.MustQueryRow(q,uid).Scan(&cnt)
 	return cnt
 }
 
@@ -37,7 +37,7 @@ func (cf *CFriendship) GetFriendRequests(uid int, page int, sent bool) (int,[]ma
 	q:="SELECT id,uid_src,uid_dest,uploadDate,comment,isNew FROM friendreqs WHERE "
 	if sent {q+="uid_src=?"}else{q+="uid_dest=?"}
 	q+=" LIMIT 10 OFFSET ?"
-	rows,_:=cf.DB.DB.Query(q,uid,page)
+	rows:=cf.DB.MustQuery(q,uid,page)
 	var users []map[string]string
 	var cnt int
 	for rows.Next() {
@@ -77,14 +77,14 @@ func (cf *CFriendship) GetFriendRequestsCount(uid int, sent bool) int {
 	var cnt int
 	q:="SELECT count(*) as cnt FROM friendreqs WHERE "
 	if sent {q+="uid_src=?"}else{q+="uid_dest=?"}
-	cf.Logger.Must(cf.DB,cf.DB.DB.QueryRow(q,uid).Scan(&cnt))
+	cf.DB.MustQueryRow(q,uid).Scan(&cnt)
 	return cnt
 }
 
 func (cf *CFriendship) DeleteFriendship(uid int, uid_dest int) {
 	id:=cf.GetFriendshipId(uid,uid_dest)
 	if id==0 {return}
-	cf.DB.DB.Query("DELETE FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",uid,uid_dest,uid,uid_dest)
+	cf.DB.ShouldQuery("DELETE FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",uid,uid_dest,uid,uid_dest)
 	u1:=CAccount{DB: cf.DB, Logger: cf.Logger}
 	u2:=CAccount{DB: cf.DB, Logger: cf.Logger}
 	u1.Uid=uid
@@ -95,7 +95,7 @@ func (cf *CFriendship) DeleteFriendship(uid int, uid_dest int) {
 
 func (cf *CFriendship) GetFriendshipId(uid int, uid_dest int) int {
 	var id int
-	cf.DB.DB.QueryRow("SELECT id FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",uid,uid_dest,uid,uid_dest).Scan(&id)
+	cf.DB.ShouldQueryRow("SELECT id FROM friendships WHERE (uid1=? AND uid2=?) OR (uid2=? AND uid1=?)",uid,uid_dest,uid,uid_dest).Scan(&id)
 	return id
 }
 
@@ -104,7 +104,7 @@ func (cf *CFriendship) GetFriendByFID(id int) (int,int) {
 		uid1 int
 		uid2 int
 	)
-	cf.DB.DB.QueryRow("SELECT uid1,uid2 FROM friendships WHERE id=?",id).Scan(&uid1,&uid2)
+	cf.DB.ShouldQueryRow("SELECT uid1,uid2 FROM friendships WHERE id=?",id).Scan(&uid1,&uid2)
 	return uid1,uid2
 }
 
@@ -121,7 +121,7 @@ func (cf *CFriendship) GetAccFriends(acc CAccount) []map[string]int {
 }
 
 func (cf *CFriendship) ReadFriendRequest(id int) {
-	cf.DB.DB.QueryRow("UPDATE friendreqs SET isNew=0 WHERE id=?",id)
+	cf.DB.ShouldQuery("UPDATE friendreqs SET isNew=0 WHERE id=?",id)
 }
 
 func (cf *CFriendship) RequestFriend(uid int, uid_dest int, comment string) int {
@@ -133,7 +133,7 @@ func (cf *CFriendship) RequestFriend(uid int, uid_dest int, comment string) int 
 	acc.LoadSocial()
 	blacklist:=strings.Split(acc.Blacklist,",")
 	if slices.Contains(blacklist,uid) {return -1}
-	acc.DB.DB.Query("INSERT INTO friendreqs (uid_src, uid_dest, uploadDate, comment) VALUES (?,?,?,?)",
+	acc.DB.ShouldQuery("INSERT INTO friendreqs (uid_src, uid_dest, uploadDate, comment) VALUES (?,?,?,?)",
 		uid,uid_dest,time.Now().Format("2006-01-02 15:04:05"),comment)
 	return 1
 }
@@ -143,12 +143,12 @@ func (cf *CFriendship) AcceptFriendRequest(id int, uid int) int {
 		src int
 		dest int
 	)
-	cf.DB.DB.QueryRow("SELECT uid_src, uid_dest FROM friendreqs WHERE id=",id).Scan(&src,&dest)
+	cf.DB.ShouldQueryRow("SELECT uid_src, uid_dest FROM friendreqs WHERE id=",id).Scan(&src,&dest)
 	if src==dest || uid!=dest {return -1}
 	req,_:=cf.DB.DB.Prepare("INSERT INTO friendships (uid1, uid2) VALUES (?,?)")
 	rq,_:=req.Exec(uid,dest)
 	iid,_:=rq.LastInsertId()
-	cf.DB.DB.Query("DELETE FROM friendreqs WHERE id=?",id)
+	cf.DB.ShouldQuery("DELETE FROM friendreqs WHERE id=?",id)
 	u1:=CAccount{DB: cf.DB, Logger: cf.Logger}
 	u2:=CAccount{DB: cf.DB, Logger: cf.Logger}
 	u1.Uid=uid
@@ -164,9 +164,9 @@ func (cf *CFriendship) RejectFriendRequestById(id int, uid int) int {
 		uid1 int
 		uid2 int
 	)
-	cf.DB.DB.QueryRow("SELECT uid_src, uid_dest FROM friendreqs WHERE id=?",id).Scan(&uid1,&uid2)
+	cf.DB.ShouldQueryRow("SELECT uid_src, uid_dest FROM friendreqs WHERE id=?",id).Scan(&uid1,&uid2)
 	if uid1==uid2 || uid!=uid2 {return -1}
-	cf.DB.DB.Query("DELETE FROM friendreqs WHERE id=?",id)
+	cf.DB.ShouldQuery("DELETE FROM friendreqs WHERE id=?",id)
 	return 1
 }
 
@@ -182,5 +182,5 @@ func (cf *CFriendship) RejectFriendRequestByUid(uid int, uid_dest int, isSender 
 		uid1=uid_dest
 		uid2=uid
 	}
-	cf.DB.DB.Query("DELETE FROM friendreqs WHERE uid_src=? AND uid_dest=?",uid1,uid2)
+	cf.DB.ShouldQuery("DELETE FROM friendreqs WHERE uid_src=? AND uid_dest=?",uid1,uid2)
 }

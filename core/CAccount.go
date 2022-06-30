@@ -72,6 +72,8 @@ type CAccount struct {
 	Wave int
 	Robot int
 	Spider int
+	Swing int
+	Jetpack int
 	Trace int
 	Death int
 
@@ -96,13 +98,13 @@ type CAccount struct {
 
 func (acc *CAccount) CountUsers() int {
 	var cnt int
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT count(*) as cnt FROM users").Scan(&cnt))
+	acc.DB.MustQueryRow("SELECT count(*) as cnt FROM users").Scan(&cnt)
 	return cnt
 }
 
 func (acc *CAccount) Exists(uid int) bool {
 	var cnt int
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT uname FROM users WHERE uid=$uid").Scan(&cnt))
+	acc.DB.MustQueryRow("SELECT uname FROM users WHERE uid=$uid").Scan(&cnt)
 	return cnt>0
 }
 
@@ -114,7 +116,7 @@ func (acc *CAccount) SearchUsers(sterm string) int {
 
 func (acc *CAccount) LoadSettings() {
 	var settings string
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT settings FROM users WHERE uid=?",acc.Uid).Scan(&settings))
+	acc.DB.MustQueryRow("SELECT settings FROM users WHERE uid=?",acc.Uid).Scan(&settings)
 	json.Unmarshal([]byte(settings),acc)
 }
 
@@ -123,12 +125,12 @@ func (acc *CAccount) PushSettings() {
 		"frS": acc.FrS, "cS": acc.CS, "mS": acc.MS,
 		"youtube": acc.Youtube, "twitch": acc.Twitch, "twitter": acc.Twitter}
 	js,_:=json.Marshal(data)
-	acc.DB.DB.Query("UPDATE users SET settings=? WHERE uid=?",string(js),acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET settings=? WHERE uid=?",string(js),acc.Uid)
 }
 
 func (acc *CAccount) LoadChests() {
 	var chests string
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT chests FROM users WHERE uid=?",acc.Uid).Scan(&chests))
+	acc.DB.MustQueryRow("SELECT chests FROM users WHERE uid=?",acc.Uid).Scan(&chests)
 	var chst map[string]int
 	json.Unmarshal([]byte(chests),&chst)
 	acc.ChestSmallCount=chst["small_count"]
@@ -141,12 +143,12 @@ func (acc *CAccount) PushChests() {
 	data:= map[string]int {"small_count": acc.ChestSmallCount, "big_count": acc.ChestBigCount,
 		"small_time": acc.ChestSmallTime, "big_time": acc.ChestBigTime}
 	js,_:=json.Marshal(data)
-	acc.DB.DB.Query("UPDATE users SET chests=? WHERE uid=?",string(js),acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET chests=? WHERE uid=?",string(js),acc.Uid)
 }
 
 func (acc *CAccount) LoadVessels() {
 	var vessels string
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT iconType,vessels FROM users WHERE uid=?",acc.Uid).Scan(&acc.IconType,&vessels))
+	acc.DB.MustQueryRow("SELECT iconType,vessels FROM users WHERE uid=?",acc.Uid).Scan(&acc.IconType,&vessels)
 	json.Unmarshal([]byte(vessels),acc)
 	var clrs map[string]int
 	json.Unmarshal([]byte(vessels),&clrs)
@@ -156,18 +158,19 @@ func (acc *CAccount) LoadVessels() {
 
 func (acc *CAccount) PushVessels() {
 	data:= map[string]int {"clr_primary": acc.ColorPrimary, "clr_secondary": acc.ColorSecondary, "cube": acc.Cube, "ship": acc.Ship,
-		"ball": acc.Ball, "ufo": acc.Ufo, "wave": acc.Wave, "robot": acc.Robot, "spider": acc.Spider, "trace": acc.Trace, "death": acc.Death}
+		"ball": acc.Ball, "ufo": acc.Ufo, "wave": acc.Wave, "robot": acc.Robot, "spider": acc.Spider, "swing": acc.Swing,
+		"jetpack": acc.Jetpack, "trace": acc.Trace, "death": acc.Death}
 	js,_:=json.Marshal(data)
 	acc.DB.DB.Query("UPDATE users SET vessels=?, iconType=? WHERE uid=?",string(js),acc.IconType,acc.Uid)
 }
 
 func (acc *CAccount) LoadStats() {
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT stars,diamonds,coins,ucoins,demons,cpoints,orbs,moons,special,lvlsCompleted FROM users WHERE uid=?",acc.Uid).Scan(
-		&acc.Stars,&acc.Diamonds,&acc.Coins,&acc.UCoins,&acc.Demons,&acc.CPoints,&acc.Orbs,&acc.Moons,&acc.Special,&acc.LvlsCompleted))
+	acc.DB.MustQueryRow("SELECT stars,diamonds,coins,ucoins,demons,cpoints,orbs,moons,special,lvlsCompleted FROM users WHERE uid=?",acc.Uid).Scan(
+		&acc.Stars,&acc.Diamonds,&acc.Coins,&acc.UCoins,&acc.Demons,&acc.CPoints,&acc.Orbs,&acc.Moons,&acc.Special,&acc.LvlsCompleted)
 }
 
 func (acc *CAccount) PushStats() {
-	acc.DB.DB.Query("UPDATE users SET stars=?,diamonds=?,coins=?,ucoins=?,demons=?,cpoints=?,orbs=?,moons=?,special=?,lvlsCompleted=? WHERE uid=?",
+	acc.DB.ShouldQuery("UPDATE users SET stars=?,diamonds=?,coins=?,ucoins=?,demons=?,cpoints=?,orbs=?,moons=?,special=?,lvlsCompleted=? WHERE uid=?",
 		acc.Stars,acc.Diamonds,acc.Coins,acc.UCoins,acc.Demons,acc.CPoints,acc.Orbs,acc.Moons,acc.Special,acc.LvlsCompleted,acc.Uid)
 }
 
@@ -175,28 +178,28 @@ func (acc *CAccount) LoadAuth(method int) {
 	var req *sql.Row
 	switch method {
 	case CAUTH_UID:
-		req=acc.DB.DB.QueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE uid=?",acc.Uid)
+		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE uid=?",acc.Uid)
 		break
 	case CAUTH_UNAME:
-		req=acc.DB.DB.QueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE uname=?",acc.Uname)
+		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE uname=?",acc.Uname)
 		break
 	case CAUTH_EMAIL:
-		req=acc.DB.DB.QueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE email=?",acc.Email)
+		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE email=?",acc.Email)
 		break
 	default:
 		return
 	}
-	acc.Logger.Must(acc.DB,req.Scan(&acc.Uid,&acc.Uname,&acc.Passhash,&acc.Email,&acc.Role_id,&acc.IsBanned))
+	req.Scan(&acc.Uid,&acc.Uname,&acc.Passhash,&acc.Email,&acc.Role_id,&acc.IsBanned)
 }
 
 func (acc *CAccount) LoadTechnical() {
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT regDate,accessDate,lastIP,gameVer FROM users WHERE uid=?",acc.Uid).Scan(
-		&acc.RegDate,&acc.AccessDate,&acc.LastIP,&acc.GameVer))
+	acc.DB.MustQueryRow("SELECT regDate,accessDate,lastIP,gameVer FROM users WHERE uid=?",acc.Uid).Scan(
+		&acc.RegDate,&acc.AccessDate,&acc.LastIP,&acc.GameVer)
 }
 
 func (acc *CAccount) LoadSocial() {
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT blacklist,friends_cnt,friendship_ids FROM users WHERE uid=?",acc.Uid).Scan(
-		&acc.Blacklist,&acc.FriendsCount,&acc.FriendshipIds))
+	acc.DB.MustQueryRow("SELECT blacklist,friends_cnt,friendship_ids FROM users WHERE uid=?",acc.Uid).Scan(
+		&acc.Blacklist,&acc.FriendsCount,&acc.FriendshipIds)
 	acc.Blacklist=strings.ReplaceAll(acc.Blacklist,",,",",")
 	acc.FriendshipIds=strings.ReplaceAll(acc.FriendshipIds,",,",",")
 }
@@ -227,12 +230,12 @@ func (acc *CAccount) GetUnameByUID(uid int) string {
 
 func (acc *CAccount) UpdateIP(ip string) {
 	acc.LastIP=ip
-	acc.DB.DB.Query("UPDATE users SET lastIP=?, accessDate=? WHERE uid=?",ip,time.Now().Format("2006-01-02 15:04:05"),acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET lastIP=?, accessDate=? WHERE uid=?",ip,time.Now().Format("2006-01-02 15:04:05"),acc.Uid)
 }
 
 func (acc *CAccount) CountIPs(ip string) int {
 	var cnt int
-	acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT count(*) as cnt FROM users WHERE lastIP=?",ip).Scan(&cnt))
+	acc.DB.MustQueryRow("SELECT count(*) as cnt FROM users WHERE lastIP=?",ip).Scan(&cnt)
 	return cnt
 }
 
@@ -245,7 +248,7 @@ func (acc *CAccount) UpdateBlacklist(action int, uid int) {
 		blacklist=sliceRemove(blacklist,i)
 	}
 	acc.Blacklist=strings.Join(blacklist,",")
-	acc.DB.DB.Query("UPDATE users SET blacklist=? WHERE uid=?",acc.Blacklist,acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET blacklist=? WHERE uid=?",acc.Blacklist,acc.Uid)
 }
 
 func (acc *CAccount) UpdateFriendships(action int, uid int) int{
@@ -260,7 +263,7 @@ func (acc *CAccount) UpdateFriendships(action int, uid int) int{
 		friendships=sliceRemove(friendships,i)
 	} else {return -1}
 	acc.FriendshipIds=strings.Join(friendships,",")
-	acc.DB.DB.Query("UPDATE users SET friends_cnt=?, friendship_ids=? WHERE uid=?",acc.FriendsCount,acc.FriendshipIds,acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET friends_cnt=?, friendship_ids=? WHERE uid=?",acc.FriendsCount,acc.FriendshipIds,acc.Uid)
 	return 1
 }
 
@@ -287,7 +290,7 @@ func (acc *CAccount) GetShownIcon() int {
 
 func (acc *CAccount) GetLeaderboardRank() int {
 	var cnt int
-	acc.DB.DB.QueryRow("SELECT count(*) as cnt FROM users WHERE stars>=? AND isBanned=0",acc.Stars).Scan(&cnt)
+	acc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM users WHERE stars>=? AND isBanned=0",acc.Stars).Scan(&cnt)
 	return cnt
 }
 
@@ -311,7 +314,7 @@ func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStras int) [
 	default:
 		query="SELECT uid FROM users WHERE 1=0" //IDK WHY I DID THIS
 	}
-	rows,_:=acc.DB.DB.Query(query)
+	rows:=acc.DB.ShouldQuery(query)
 
 	var users []int
 	for rows.Next() {
@@ -324,7 +327,7 @@ func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStras int) [
 
 func (acc *CAccount) UpdateRole(role_id int) {
 	acc.Role_id = role_id
-	acc.DB.DB.Query("UPDATE users SET role_id=? WHERE uid=?",role_id,acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET role_id=? WHERE uid=?",role_id,acc.Uid)
 }
 
 func (acc *CAccount) GetRoleObj(fetchPrivs bool) Role {
@@ -332,18 +335,18 @@ func (acc *CAccount) GetRoleObj(fetchPrivs bool) Role {
 	if acc.Role_id==0 {return role}
 	if fetchPrivs {
 		var privs string
-		acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT roleName,commentColor,modLevel,privs FROM roles WHERE id=?",acc.Role_id).Scan(
-			&role.RoleName,&role.CommentColor,&role.ModLevel,&privs))
+		acc.DB.MustQueryRow("SELECT roleName,commentColor,modLevel,privs FROM roles WHERE id=?",acc.Role_id).Scan(
+			&role.RoleName,&role.CommentColor,&role.ModLevel,&privs)
 		json.Unmarshal([]byte(privs),&role.Privs)
 	}else{
-		acc.Logger.Must(acc.DB,acc.DB.DB.QueryRow("SELECT roleName,commentColor,modLevel FROM roles WHERE id=?",acc.Role_id).Scan(
-			&role.RoleName,&role.CommentColor,&role.ModLevel))
+		acc.DB.MustQueryRow("SELECT roleName,commentColor,modLevel FROM roles WHERE id=?",acc.Role_id).Scan(
+			&role.RoleName,&role.CommentColor,&role.ModLevel)
 	}
 	return role
 }
 
 func (acc *CAccount) UpdateAccessTime() {
-	acc.DB.DB.Query("UPDATE users SET accessDate=?  WHERE uid=?",time.Now().Format("2006-01-02 15:04:05"),acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET accessDate=?  WHERE uid=?",time.Now().Format("2006-01-02 15:04:05"),acc.Uid)
 }
 
 func (acc *CAccount) BanUser(action int) {
@@ -359,7 +362,7 @@ func (acc *CAccount) BanUser(action int) {
 		ban=1
 	}
 	acc.IsBanned=ban
-	acc.DB.DB.Query("UPDATE users SET isBanned=? WHERE uid=?",ban,acc.Uid)
+	acc.DB.ShouldQuery("UPDATE users SET isBanned=? WHERE uid=?",ban,acc.Uid)
 }
 
 func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
@@ -388,8 +391,8 @@ func (acc *CAccount) Register(uname string, pass string, email string, ip string
 	if uid!=0 {return -3}
 	passx:=MD5(MD5(pass+"HalogenCore1704")+"ae07")+MD5(pass)[:4]
 	rdate:=time.Now().Format("2006-01-02 15:04:05")
-	req,_:=acc.DB.DB.Prepare("INSERT INTO users (uname,passhash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,1)")
-	sreq,_:=req.Exec(uname,passx,email,rdate,rdate)
+	sreq:=acc.DB.MustPrepareExec("INSERT INTO users (uname,passhash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,1)",
+		uname,passx,email,rdate,rdate)
 	vuid,_:=sreq.LastInsertId()
 	acc.Uid=int(vuid)
 	acc.UpdateIP(ip)
@@ -402,7 +405,7 @@ func (acc *CAccount) VerifySession(uid int, ip string, gjp string) bool {
 		lastIP string
 		isBanned int
 	)
-	acc.DB.DB.QueryRow("SELECT accessDate, lastIP, isBanned FROM users WHERE uid=?",uid).Scan(&aDate,&lastIP,&isBanned)
+	acc.DB.ShouldQueryRow("SELECT accessDate, lastIP, isBanned FROM users WHERE uid=?",uid).Scan(&aDate,&lastIP,&isBanned)
 	if aDate=="" || isBanned>0 {return false}
 	ptime,_:=time.Parse("2006-01-02 15:04:05",aDate)
 	if ip==lastIP && (time.Now().Unix()-ptime.Unix())<3600 {return true}

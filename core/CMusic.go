@@ -27,7 +27,7 @@ type CMusic struct {
 
 func (mus *CMusic) Exists(id int) bool {
 	var cnt int
-	mus.Logger.Must(mus.DB,mus.DB.DB.QueryRow("SELECT count(*) as cnt FROM songs WHERE id=?",id).Scan(&cnt))
+	mus.DB.MustQueryRow("SELECT count(*) as cnt FROM songs WHERE id=?",id).Scan(&cnt)
 	return cnt>0
 }
 
@@ -69,38 +69,35 @@ func (mus *CMusic) TransformHalResource() bool {
 func (mus *CMusic) GetSong(id int) bool {
 	if !mus.ConfBlob.ServerConfig.HalMusic {return mus.RequestNGOuter(id)}
 	if !mus.Exists(id) {return false}
-	mus.Logger.Must(mus.DB,mus.DB.DB.QueryRow("SELECT id,name,artist,size,url,isBanned,downloads FROM songs WHERE id=?",id).Scan(
-		&mus.Id,&mus.Name,&mus.Artist,&mus.Size,&mus.Url,&mus.IsBanned,&mus.Downloads))
+	mus.DB.MustQueryRow("SELECT id,name,artist,size,url,isBanned,downloads FROM songs WHERE id=?",id).Scan(
+		&mus.Id,&mus.Name,&mus.Artist,&mus.Size,&mus.Url,&mus.IsBanned,&mus.Downloads)
 	if mus.IsBanned {return false}
 	if mus.Url[0:4]=="hal:" {return mus.TransformHalResource()}
 	return true
 }
 
 func (mus *CMusic) UploadSong() int {
-	req,_:=mus.DB.DB.Prepare("INSERT INTO songs (name,artist,size,url) VALUES (?,?,?,?)")
-	c,_:=req.Exec(mus.Name,mus.Artist,mus.Size,mus.Url)
+	c:=mus.DB.ShouldPrepareExec("INSERT INTO songs (name,artist,size,url) VALUES (?,?,?,?)",mus.Name,mus.Artist,mus.Size,mus.Url)
 	id,_:=c.LastInsertId()
 	return int(id)
 }
 
 func (mus *CMusic) BanMusic(id int, ban bool) {
-	var banc int
-	if ban{banc=1}
-	mus.DB.DB.Query("UPDATE songs SET isBanned=? WHERE id=?",banc,id)
+	mus.DB.ShouldQuery("UPDATE songs SET isBanned=? WHERE id=?",ban,id)
 }
 
 func (mus *CMusic) CountDownloads() {
-	req,_:=mus.DB.DB.Query("SELECT id FROM songs")
+	req:=mus.DB.MustQuery("SELECT id FROM songs")
 	for req.Next() {
 		var id int
 		req.Scan(&id)
-		creq,_:=mus.DB.DB.Query("SELECT downloads FROM levels WHERE song_id=?",id)
+		creq:=mus.DB.ShouldQuery("SELECT downloads FROM levels WHERE song_id=?",id)
 		var cnt int
 		for creq.Next() {
 			var downs int
 			creq.Scan(&downs)
 			cnt+=downs
 		}
-		mus.DB.DB.Query("UPDATE songs SET downloads=? WHERE id=?",cnt,id)
+		mus.DB.ShouldQuery("UPDATE songs SET downloads=? WHERE id=?",cnt,id)
 	}
 }
