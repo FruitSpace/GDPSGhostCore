@@ -8,16 +8,20 @@ import (
 
 func GetUserInfo(resp http.ResponseWriter, req *http.Request){
 	vars:= gorilla.Vars(req)
+    io.WriteString(resp,vars["gdps"])
 }
 
 func GetUserList(resp http.ResponseWriter, req *http.Request){
 	vars:= gorilla.Vars(req)
+    io.WriteString(resp,vars["gdps"])
 }
 
 func GetUsers(resp http.ResponseWriter, req *http.Request){
 	vars:= gorilla.Vars(req)
+    io.WriteString(resp,vars["gdps"])
 }
 
 func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request){
 	vars:= gorilla.Vars(req)
+    io.WriteString(resp,vars["gdps"])
 }

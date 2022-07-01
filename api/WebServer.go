@@ -2,9 +2,9 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	gorilla "github.com/gorilla/mux"
 	"log"
 	"net/http"
-	gorilla "github.com/gorilla/mux"
 )
 
 
@@ -113,6 +113,8 @@ var RouteMap = map[string]func(resp http.ResponseWriter, req *http.Request){
 
 func (ghost *GhostServer) StartServer(Host string) {
 	mux:=gorilla.NewRouter()
+	var nfh NotFoundHandler
+	mux.NotFoundHandler=nfh
 	mux.HandleFunc("/",Redirector)
 	for route,handler:= range RouteMap {
 		mux.HandleFunc("/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}"+route,handler)
