@@ -1,6 +1,7 @@
 package api
 
 import (
+	"HalogenGhostCore/core"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -21,7 +22,7 @@ var NotFoundTemplate = `
 	</body>
 </html>`
 
-func Shield(resp http.ResponseWriter, req *http.Request){
+func Shield(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	vars:= gorilla.Vars(req)
 	io.WriteString(resp,"[GhostCore] Serving //"+vars["gdps"]+"//")
 }

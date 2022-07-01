@@ -3,6 +3,7 @@ package api
 import (
 	"HalogenGhostCore/core"
 	gorilla "github.com/gorilla/mux"
+	"io"
 	"log"
 	"net/http"
 )
@@ -10,12 +11,10 @@ import (
 
 type GhostServer struct {
 	log core.Logger
-	db core.MySQLConn
-	rdb core.RedisConn
-	config core.ConfigBlob
+	config core.GlobalConfig
 }
 
-var RouteMap = map[string]func(resp http.ResponseWriter, req *http.Request){
+var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalConfig){
 	"/": Shield,
 
 	"/database/accounts/accountManagement.php": AccountManagement,
@@ -117,12 +116,26 @@ func (ghost *GhostServer) StartServer(Host string) {
 	mux.NotFoundHandler=nfh
 	mux.HandleFunc("/",Redirector)
 	for route,handler:= range RouteMap {
-		mux.HandleFunc("/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}"+route,handler)
+		mux.HandleFunc("/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}"+route,
+			func(resp http.ResponseWriter,req*http.Request){
+				handler(resp,req,&ghost.config)
+			})
 	}
 	log.Println("Server is up and running on http://"+Host)
 	err:=http.ListenAndServe(Host,mux)
 	if err!=nil {
 		ghost.log.LogErr(ghost,err.Error())
 	}
+
+}
+
+func ReadPost(req *http.Request) string {
+	if req.Body==nil { return ""}
+	body,err:=io.ReadAll(req.Body)
+	if err!=nil {
+		log.Println(err.Error())
+		return ""
+	}
+	return string(body)
 
 }

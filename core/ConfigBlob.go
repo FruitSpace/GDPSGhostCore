@@ -1,5 +1,7 @@
 package core
 
+import "encoding/json"
+
 type MysqlConfig struct {
 	Host string
 	Port int
@@ -67,6 +69,14 @@ type ConfigBlob struct {
 	ServerConfig ServerConfig
 }
 
-func (blob *ConfigBlob) LoadById(Srvid string, glob *GlobalConfig) {
-
+func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
+	rdb:=RedisConn{}
+	if err:=rdb.ConnectBlob(*glob); err!=nil {return ConfigBlob{},err}
+	conf:=ConfigBlob{}
+	t:=rdb.DB.Get(rdb.context,Srvid)
+	if err:=t.Err();err!=nil { return ConfigBlob{},err}
+	err:=json.Unmarshal([]byte(t.String()),&conf)
+	if err!=nil{return ConfigBlob{},err}
+	rdb.DB.Close()
+	return conf, nil
 }

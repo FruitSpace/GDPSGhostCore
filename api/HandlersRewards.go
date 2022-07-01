@@ -1,17 +1,18 @@
 package api
 
 import (
+	"HalogenGhostCore/core"
 	"io"
 	"net/http"
 	gorilla "github.com/gorilla/mux"
 )
 
-func GetChallenges(resp http.ResponseWriter, req *http.Request){
+func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	vars:= gorilla.Vars(req)
     io.WriteString(resp,vars["gdps"])
 }
 
-func GetRewards(resp http.ResponseWriter, req *http.Request){
+func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	vars:= gorilla.Vars(req)
     io.WriteString(resp,vars["gdps"])
 }
