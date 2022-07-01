@@ -1,33 +1,35 @@
 package main
 
 import (
+	"HalogenGhostCore/api"
 	"HalogenGhostCore/core"
-	"HalogenGhostCore/core/connectors"
 	"fmt"
 )
 
 func main() {
-	config:=GenConfig()
+	//config:=GenConfig()
 	//gconfig:=GenGConfig()
 
-	logger:=core.Logger{
-		connectors.GetWriter("",""),
-	}
-	db:=core.MySQLConn{}
-	logger.Must(db,db.ConnectBlob(config))
-
-	cc:=core.ThunderAES{}
-	logger.Must(cc,cc.GenKey("Amongus"))
-	logger.Must(cc,cc.Init())
-	fmt.Println(logger.Must(cc.Encrypt("Artyom is Gay")))
-
-	acc:= core.CAccount{DB: db, Logger: logger}
-	acc.Uid=acc.SearchUsers("Nanorun")
-	acc.LoadAll()
-
-	PrintCAccount(acc)
-
-	fmt.Println(acc.GetRoleObj(true))
+	//logger:=core.Logger{
+	//	connectors.GetWriter("",""),
+	//}
+	//db:=core.MySQLConn{}
+	//logger.Must(db,db.ConnectBlob(config))
+	//
+	//cc:=core.ThunderAES{}
+	//logger.Must(cc,cc.GenKey("Amongus"))
+	//logger.Must(cc,cc.Init())
+	//fmt.Println(logger.Must(cc.Encrypt("Artyom is Gay")))
+	//
+	//acc:= core.CAccount{DB: db, Logger: logger}
+	//acc.Uid=acc.SearchUsers("Nanorun")
+	//acc.LoadAll()
+	//
+	//PrintCAccount(acc)
+	//
+	//fmt.Println(acc.GetRoleObj(true))
+	ghostServer:= api.GhostServer{}
+	ghostServer.StartServer("0.0.0.0:1997")
 
 }
 
@@ -75,6 +77,7 @@ func GenGConfig() core.GlobalConfig {
 		"5469",
 		"",
 		0,
+		map[string]string{},
 	}
 }
 

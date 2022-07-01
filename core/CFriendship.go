@@ -133,7 +133,7 @@ func (cf *CFriendship) RequestFriend(uid int, uid_dest int, comment string) int 
 	if acc.FrS>0 {return -1}
 	acc.LoadSocial()
 	blacklist:=strings.Split(acc.Blacklist,",")
-	if slices.Contains(blacklist,uid) {return -1}
+	if slices.Contains(blacklist,strconv.Itoa(uid)) {return -1}
 	acc.DB.ShouldQuery("INSERT INTO friendreqs (uid_src, uid_dest, uploadDate, comment) VALUES (?,?,?,?)",
 		uid,uid_dest,time.Now().Format("2006-01-02 15:04:05"),comment)
 	return 1
