@@ -80,11 +80,11 @@ func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
 		return ConfigBlob{},err
 	}
 	conf:=ConfigBlob{}
-	t:=rdb.DB.Get(rdb.context,Srvid)
-	if err:=t.Err();err!=nil {
+	t,err:=rdb.DB.Get(rdb.context,Srvid).Result()
+	if err!=nil {
 		return ConfigBlob{},err
 	}
-	err:=json.Unmarshal([]byte(t.String()),&conf)
+	err=json.Unmarshal([]byte(t),&conf)
 	if err!=nil{
 		log.LogWarn(rdb,err.Error())
 		return ConfigBlob{},err

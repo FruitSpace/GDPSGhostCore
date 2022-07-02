@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/zlib"
 	"encoding/base64"
-	"errors"
 	"github.com/go-redis/redis/v8"
 	gorilla "github.com/gorilla/mux"
 	"io"
@@ -90,7 +89,8 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				taes := core.ThunderAES{}
 				taes.Init()
 				taes.GenKey(config.ServerConfig.SrvKey)
-				data,err:=taes.DecryptRaw(os.ReadFile(savepath))
+				d,err:=os.ReadFile(savepath)
+				data,err:=taes.DecryptRaw(d)
 				if err!=nil{
 					io.WriteString(resp,"There was an error")
 					log.Panicln(err.Error())
@@ -172,9 +172,9 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		io.WriteString(resp,strconv.Itoa(uid))
 		if uid>0 {
 			core.RegisterAction(core.ACTION_USER_REGISTER,0,uid, map[string]string{"uname":uname,"email":email},db)
+		}else {
+			io.WriteString(resp, "-1")
 		}
-	}else{
-		io.WriteString(resp,"-1")
 	}else{
 		io.WriteString(resp,"-1")
 	}

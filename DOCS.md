@@ -8,9 +8,9 @@
   "DBConfig": {
     "Host": "localhost",
     "Port": 3306,
-    "User": "halogen",
-    "Password": "D0wn_Th3_r4BB1t_H0lE_731",
-    "DBName": "gdps_0002"
+    "User": "halgd_000S",
+    "Password": "eyR20yDmWAbo*",
+    "DBName": "gdps_000S"
   },
   "LogConfig": {
     "LogEnable": true,
@@ -39,8 +39,8 @@
     "ChestBigWait": 14400
   },
   "ServerConfig": {
-    "SrvID": "0002",
-    "SrvKey": "SRV_KEY",
+    "SrvID": "000S",
+    "SrvKey": "wiDTlkGFmherxIXH",
     "MaxUsers": 100,
     "MaxLevels": 500,
     "MaxComments": 1000,
