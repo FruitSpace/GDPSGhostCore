@@ -18,7 +18,7 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 		config.DBConfig.User,config.DBConfig.Password,config.DBConfig.Host,config.DBConfig.Port,config.DBConfig.DBName))
 	err:= db.DB.Ping()
 	if err!=nil{
-		db.logger.LogErr(db,err.Error())
+		db.logger.LogWarn(err,err.Error())
 	}
 	return err
 }

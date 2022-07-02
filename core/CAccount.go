@@ -3,7 +3,6 @@ package core
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"golang.org/x/exp/slices"
 	"strconv"
 	"strings"
@@ -373,7 +372,6 @@ func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
 		acc.LoadAuth(CAUTH_UID)
 		if acc.IsBanned>0 {return -12}
 		passx:=MD5(MD5(pass+"HalogenCore1704")+"ae07")+MD5(pass)[:4]
-		fmt.Println(passx)
 		if acc.Passhash==passx {
 			acc.UpdateIP(ip)
 			return uid

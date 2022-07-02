@@ -103,11 +103,18 @@ type Logger struct {
 
 func (lg *Logger) LogErr(module interface{}, message string) {
 	log.SetOutput(lg.Output)
+
 	log.Panicf("[%T] %s\n",module,message)
 }
 func (lg *Logger) LogWarn(module interface{}, message string) {
 	log.SetOutput(lg.Output)
 	log.Printf("[%T] %s\n",module,message)
+}
+
+func (lg *Logger) Must(err error) {
+	if err!=nil{
+		lg.LogErr(err,err.Error())
+	}
 }
 
 

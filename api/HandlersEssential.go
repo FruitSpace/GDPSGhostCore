@@ -2,14 +2,14 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
-	gorilla "github.com/gorilla/mux"
 )
 
 func GetAccountUrl(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+    io.WriteString(resp,"http://s.halhost.cc/"+vars["gdps"]+"/database")
 }
 
 func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){

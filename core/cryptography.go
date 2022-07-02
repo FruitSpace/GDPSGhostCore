@@ -25,6 +25,7 @@ func (taes *ThunderAES) GenKey(s string) error {
 func (taes *ThunderAES) Init() error {
 	var err error
 	taes.Blk,err=aes.NewCipher(taes.CryptKey)
+	if err!=nil {return err}
 	taes.GCM,err=cipher.NewGCM(taes.Blk)
 	return err
 }

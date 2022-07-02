@@ -2,10 +2,12 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"reflect"
 	"runtime"
 	"strings"
@@ -138,13 +140,23 @@ func (ghost *GhostServer) StartServer(Host string) {
 
 }
 
-func ReadPost(req *http.Request) string {
-	if req.Body==nil { return ""}
+func ReadPost(req *http.Request) url.Values {
+	if req.Body==nil { return url.Values{}}
 	body,err:=io.ReadAll(req.Body)
 	if err!=nil {
 		log.Println(err.Error())
-		return ""
+		return url.Values{}
 	}
-	return string(body)
+	vals:=make(url.Values)
+	pairs:=strings.Split(string(body),"&")
+	for _,val:= range pairs {
+
+		m:=strings.SplitN(val,"=",2)
+		fmt.Println(m)
+		rval,_:=url.QueryUnescape(m[1])
+		rkey,_:=url.QueryUnescape(m[0])
+		vals[rkey]=append(vals[rkey],rval)
+	}
+	return vals
 
 }

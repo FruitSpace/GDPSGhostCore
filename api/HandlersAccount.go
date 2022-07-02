@@ -3,14 +3,13 @@ package api
 import (
 	"HalogenGhostCore/core"
 	"bytes"
-	"compress/zlib"
+	"compress/gzip"
 	"encoding/base64"
 	"github.com/go-redis/redis/v8"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -28,7 +27,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		log.Panicln(err.Error())
 	}
 	//Get:=req.URL.Query()
-	Post,_:=url.ParseQuery(ReadPost(req))
+	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
@@ -37,22 +36,27 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
-			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
+			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"
 			taes:=core.ThunderAES{}
-			taes.Init()
-			taes.GenKey(config.ServerConfig.SrvKey)
+			logger:=core.Logger{Output: os.Stderr}
+			logger.Must(taes.GenKey(config.ServerConfig.SrvKey))
+			logger.Must(taes.Init())
 			datax,err:=taes.EncryptRaw(saveData)
 			if err!=nil{
 				io.WriteString(resp,"There was an error")
-				log.Panicln(err.Error())
+				logger.LogErr(taes,err.Error())
 				return
 			}
-			os.WriteFile(savepath,datax,0644)
+			os.MkdirAll(savepath,os.ModePerm)
+			logger.Must(os.WriteFile(savepath+strconv.Itoa(acc.Uid)+".hal",datax,0644))
 			saveData=strings.ReplaceAll(strings.ReplaceAll(strings.Split(saveData,";")[0],"_","/"),"-","+")
-			b,_:=base64.StdEncoding.DecodeString(saveData)
-			r,_:=zlib.NewReader(bytes.NewReader(b))
-			sd,_:=io.ReadAll(r)
-			saveData=string(sd)
+			b,err:=base64.StdEncoding.DecodeString(saveData)
+			logger.Must(err)
+			r,err:=gzip.NewReader(bytes.NewBuffer(b))
+			logger.Must(err)
+			d,err:=io.ReadAll(r)
+			logger.Must(err)
+			saveData=string(d)
 			acc.LoadStats()
 			acc.Orbs,_=strconv.Atoi(strings.Split(strings.Split(saveData,"</s><k>14</k><s>")[1],"</s>")[0])
 			acc.LvlsCompleted,_=strconv.Atoi(strings.Split(strings.Split(strings.Split(saveData,"<k>GS_value</k>")[1],"</s><k>4</k><s>")[1],"</s>")[0])
@@ -76,7 +80,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		log.Panicln(err.Error())
 	}
 	//Get:=req.URL.Query()
-	Post,_:=url.ParseQuery(ReadPost(req))
+	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
@@ -86,9 +90,10 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
 			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
 			if _, err := os.Stat(savepath); err==nil {
+				logger:=core.Logger{Output: os.Stderr}
 				taes := core.ThunderAES{}
-				taes.Init()
-				taes.GenKey(config.ServerConfig.SrvKey)
+				logger.Must(taes.GenKey(config.ServerConfig.SrvKey))
+				logger.Must(taes.Init())
 				d,err:=os.ReadFile(savepath)
 				data,err:=taes.DecryptRaw(d)
 				if err!=nil{
@@ -126,7 +131,7 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		log.Panicln(err.Error())
 	}
 	//Get:=req.URL.Query()
-	Post,_:=url.ParseQuery(ReadPost(req))
+	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
@@ -157,7 +162,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		log.Panicln(err.Error())
 	}
 	//Get:=req.URL.Query()
-	Post, _ := url.ParseQuery(ReadPost(req))
+	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Has("email") &&
 		Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("email")!="" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
