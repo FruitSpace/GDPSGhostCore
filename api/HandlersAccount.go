@@ -2,28 +2,110 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"bytes"
+	"compress/zlib"
+	"encoding/base64"
+	"errors"
+	"github.com/go-redis/redis/v8"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
 	config,err:=conf.LoadById(vars["gdps"])
 	if err!=nil{
+		if err==redis.Nil {return}
 		io.WriteString(resp,"There was an error")
-		log.Println(err.Error())
+		log.Panicln(err.Error())
 	}
-	Get:=req.URL.Query()
+	//Get:=req.URL.Query()
 	Post,_:=url.ParseQuery(ReadPost(req))
-	if Post.Has("userName")
+	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
+		uname:=core.ClearGDRequest(Post.Get("userName"))
+		pass:=core.ClearGDRequest(Post.Get("password"))
+		saveData:=core.ClearGDRequest(Post.Get("saveData"))
+		db:=core.MySQLConn{}
+		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
+		acc:=core.CAccount{DB: db}
+		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
+			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
+			taes:=core.ThunderAES{}
+			taes.Init()
+			taes.GenKey(config.ServerConfig.SrvKey)
+			datax,err:=taes.EncryptRaw(saveData)
+			if err!=nil{
+				io.WriteString(resp,"There was an error")
+				log.Panicln(err.Error())
+				return
+			}
+			os.WriteFile(savepath,datax,0644)
+			saveData=strings.ReplaceAll(strings.ReplaceAll(strings.Split(saveData,";")[0],"_","/"),"-","+")
+			b,_:=base64.StdEncoding.DecodeString(saveData)
+			r,_:=zlib.NewReader(bytes.NewReader(b))
+			sd,_:=io.ReadAll(r)
+			saveData=string(sd)
+			acc.LoadStats()
+			acc.Orbs,_=strconv.Atoi(strings.Split(strings.Split(saveData,"</s><k>14</k><s>")[1],"</s>")[0])
+			acc.LvlsCompleted,_=strconv.Atoi(strings.Split(strings.Split(strings.Split(saveData,"<k>GS_value</k>")[1],"</s><k>4</k><s>")[1],"</s>")[0])
+			acc.PushStats()
+			io.WriteString(resp,"1")
+		}else{io.WriteString(resp,"-2")}
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
 func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	config,err:=conf.LoadById(vars["gdps"])
+	if err!=nil{
+		if err==redis.Nil {return}
+		io.WriteString(resp,"There was an error")
+		log.Panicln(err.Error())
+	}
+	//Get:=req.URL.Query()
+	Post,_:=url.ParseQuery(ReadPost(req))
+	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
+		uname:=core.ClearGDRequest(Post.Get("userName"))
+		pass:=core.ClearGDRequest(Post.Get("password"))
+		db:=core.MySQLConn{}
+		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
+		acc:=core.CAccount{DB: db}
+		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
+			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
+			if _, err := os.Stat(savepath); err==nil {
+				taes := core.ThunderAES{}
+				taes.Init()
+				taes.GenKey(config.ServerConfig.SrvKey)
+				data,err:=taes.DecryptRaw(os.ReadFile(savepath))
+				if err!=nil{
+					io.WriteString(resp,"There was an error")
+					log.Panicln(err.Error())
+					return
+				}
+				io.WriteString(resp,data+";21;30;a;a")
+			}else{
+				io.WriteString(resp,"-1")
+			}
+		}else{
+			io.WriteString(resp,"-2")
+		}
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
 func AccountManagement(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
@@ -33,11 +115,67 @@ func AccountManagement(resp http.ResponseWriter, req *http.Request, conf *core.G
 }
 
 func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	config,err:=conf.LoadById(vars["gdps"])
+	if err!=nil{
+		if err==redis.Nil {return}
+		io.WriteString(resp,"There was an error")
+		log.Panicln(err.Error())
+	}
+	//Get:=req.URL.Query()
+	Post,_:=url.ParseQuery(ReadPost(req))
+	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
+		uname:=core.ClearGDRequest(Post.Get("userName"))
+		pass:=core.ClearGDRequest(Post.Get("password"))
+		db:=core.MySQLConn{}
+		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
+		acc:=core.CAccount{DB: db}
+		uid:=acc.LogIn(uname,pass, IPAddr, 0)
+		if uid<0 {
+			io.WriteString(resp,strconv.Itoa(uid))
+		}else{
+			io.WriteString(resp,strconv.Itoa(uid)+","+strconv.Itoa(uid))
+			core.RegisterAction(core.ACTION_USER_LOGIN,0,uid, map[string]string{"uname":uname},db)
+		}
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
-func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
-	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	IPAddr := req.Header.Get("CF-Connecting-IP")
+	if IPAddr == "" {IPAddr = req.Header.Get("X-Real-IP")}
+	if IPAddr == "" {IPAddr = strings.Split(req.RemoteAddr, ":")[0]}
+	vars := gorilla.Vars(req)
+	config, err := conf.LoadById(vars["gdps"])
+	if err != nil {
+		if err == redis.Nil {return}
+		io.WriteString(resp, "There was an error")
+		log.Panicln(err.Error())
+	}
+	//Get:=req.URL.Query()
+	Post, _ := url.ParseQuery(ReadPost(req))
+	if Post.Has("userName") && Post.Has("password") && Post.Has("email") &&
+		Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("email")!="" {
+		uname := core.ClearGDRequest(Post.Get("userName"))
+		pass := core.ClearGDRequest(Post.Get("password"))
+		email := core.ClearGDRequest(Post.Get("email"))
+		db := core.MySQLConn{}
+		if err := db.ConnectBlob(config); err != nil {
+			log.Fatalln(err.Error())
+		}
+		acc := core.CAccount{DB: db}
+		uid:=acc.Register(uname,pass,email,IPAddr)
+		io.WriteString(resp,strconv.Itoa(uid))
+		if uid>0 {
+			core.RegisterAction(core.ACTION_USER_REGISTER,0,uid, map[string]string{"uname":uname,"email":email},db)
+		}
+	}else{
+		io.WriteString(resp,"-1")
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }

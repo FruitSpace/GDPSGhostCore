@@ -3,6 +3,7 @@ package main
 import (
 	"HalogenGhostCore/api"
 	"HalogenGhostCore/core"
+	"HalogenGhostCore/core/connectors"
 	"encoding/json"
 	"fmt"
 )
@@ -31,7 +32,12 @@ func main() {
 	x:=core.ConfigBlob{}
 	err:=json.Unmarshal([]byte(`{"DBConfig":{"Host":"localhost","Port":3306,"User":"halogen","Password":"D0wn_Th3_r4BB1t_H0lE_731","DBName":"gdps_0002"},"LogConfig":{"LogEnable":true,"LogDB":false,"LogEndpoints":false,"LogRequests":false},"ChestConfig":{"ChestSmallOrbsMin":200,"ChestSmallOrbsMax":400,"ChestSmallDiamondsMin":2,"ChestSmallDiamondsMax":10,"ChestSmallShardsMin":1,"ChestSmallShardsMax":6,"ChestSmallKeysMin":1,"ChestSmallKeysMax":6,"ChestSmallWait":3600,"ChestBigOrbsMin":2000,"ChestBigOrbsMax":4000,"ChestBigDiamondsMin":20,"ChestBigDiamondsMax":100,"ChestBigShardsMin":1,"ChestBigShardsMax":6,"ChestBigKeysMin":1,"ChestBigKeysMax":6,"ChestBigWait":14400},"ServerConfig":{"SrvID":"0002","SrvKey":"SRV_KEY","MaxUsers":100,"MaxLevels":500,"MaxComments":1000,"MaxPosts":1000,"HalMusic":true,"Locked":false}} `),&x)
 	fmt.Println(x,err)
-	ghostServer:= api.GhostServer{}
+	ghostServer:= api.GhostServer{
+		Log: core.Logger{
+			Output: connectors.GetWriter("",""),
+		},
+		Config: GenGConfig(),
+	}
 	ghostServer.StartServer("0.0.0.0:1997")
 
 }
@@ -77,9 +83,11 @@ func GenGConfig() core.GlobalConfig {
 		"null",
 		false,
 		"localhost",
-		"5469",
+		"6379",
 		"",
-		0,
+		7,
+		"./",
+
 		map[string]string{},
 	}
 }

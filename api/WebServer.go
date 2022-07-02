@@ -6,19 +6,22 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"reflect"
+	"runtime"
+	"strings"
 )
 
 
 type GhostServer struct {
-	log core.Logger
-	config core.GlobalConfig
+	Log core.Logger
+	Config core.GlobalConfig
 }
 
 var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalConfig){
 	"/": Shield,
 
 	"/database/accounts/accountManagement.php": AccountManagement,
-	"/database/accounts/backupGJAccount": AccountBackup,
+	"/database/accounts/backupGJAccount.php": AccountBackup,
 	"/database/accounts/loginGJAccount.php": AccountLogin,
 	"/database/accounts/registerGJAccount.php": AccountRegister,
 	"/database/accounts/syncGJAccount.php": AccountSync,
@@ -109,22 +112,28 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 
 }
 
+func GetFunctionName(i interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
+}
 
 func (ghost *GhostServer) StartServer(Host string) {
 	mux:=gorilla.NewRouter()
 	var nfh NotFoundHandler
 	mux.NotFoundHandler=nfh
 	mux.HandleFunc("/",Redirector)
-	for route,handler:= range RouteMap {
+	for route:= range RouteMap {
 		mux.HandleFunc("/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}"+route,
-			func(resp http.ResponseWriter,req*http.Request){
-				handler(resp,req,&ghost.config)
+			func(resp http.ResponseWriter,req *http.Request){
+				vars:=gorilla.Vars(req)
+				handler:=RouteMap[strings.Replace(req.URL.Path,"/"+vars["gdps"],"",1)]
+				log.Println(req.URL.Path," Got ", GetFunctionName(handler))
+				handler(resp,req,&ghost.Config)
 			})
 	}
 	log.Println("Server is up and running on http://"+Host)
 	err:=http.ListenAndServe(Host,mux)
 	if err!=nil {
-		ghost.log.LogErr(ghost,err.Error())
+		ghost.Log.LogErr(ghost,err.Error())
 	}
 
 }

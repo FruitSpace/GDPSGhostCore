@@ -43,3 +43,15 @@ func (taes *ThunderAES) Decrypt(blk string) (string,error) {
 	return string(plain), err
 }
 
+func (taes *ThunderAES) EncryptRaw(text string) ([]byte,error) {
+	nonce:=make([]byte, taes.GCM.NonceSize())
+	_,err:=io.ReadFull(rand.Reader,nonce)
+	raw:=taes.GCM.Seal(nonce,nonce,[]byte(text),nil)
+	return raw, err
+}
+
+func (taes *ThunderAES) DecryptRaw(block []byte) (string,error) {
+	nonce, raw := block[:taes.GCM.NonceSize()], block[taes.GCM.NonceSize():]
+	plain, err:=taes.GCM.Open(nil,nonce,raw,nil)
+	return string(plain), err
+}

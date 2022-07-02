@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"golang.org/x/exp/slices"
+	"html"
 	"io"
 	"log"
 	"strconv"
@@ -13,6 +14,17 @@ import (
 	"time"
 )
 
+func ClearGDRequest(str string) string {
+	return strings.TrimSpace(
+		strings.Split(
+			strings.Split(
+				strings.Split(
+					strings.Split(
+						strings.Split(
+							strings.TrimSpace(
+								html.EscapeString(str)),":")[0],"|")[0],"~")[0],"#")[0],")")[0])
+
+}
 
 func DoXOR(text string, key string) (output string) {
 	for i:=0;i<len(text);i++ {
@@ -86,6 +98,8 @@ func MD5(str string) string {
 type Logger struct {
 	Output io.Writer
 }
+
+
 
 func (lg *Logger) LogErr(module interface{}, message string) {
 	log.SetOutput(lg.Output)

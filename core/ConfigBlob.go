@@ -1,6 +1,8 @@
 package core
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 type MysqlConfig struct {
 	Host string
@@ -59,6 +61,7 @@ type GlobalConfig struct {
 	RedisPort string
 	RedisPassword string
 	RedisDB int
+	SavePath string
 	ModuleSettings map[string]string
 }
 
@@ -71,12 +74,21 @@ type ConfigBlob struct {
 
 func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
 	rdb:=RedisConn{}
-	if err:=rdb.ConnectBlob(*glob); err!=nil {return ConfigBlob{},err}
+	log:=Logger{}
+	if err:=rdb.ConnectBlob(*glob); err!=nil {
+		log.LogWarn(rdb,err.Error())
+		return ConfigBlob{},err
+	}
 	conf:=ConfigBlob{}
 	t:=rdb.DB.Get(rdb.context,Srvid)
-	if err:=t.Err();err!=nil { return ConfigBlob{},err}
+	if err:=t.Err();err!=nil {
+		return ConfigBlob{},err
+	}
 	err:=json.Unmarshal([]byte(t.String()),&conf)
-	if err!=nil{return ConfigBlob{},err}
+	if err!=nil{
+		log.LogWarn(rdb,err.Error())
+		return ConfigBlob{},err
+	}
 	rdb.DB.Close()
 	return conf, nil
 }

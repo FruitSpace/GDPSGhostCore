@@ -17,6 +17,9 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 	db.DB, _ =sql.Open("mysql",fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		config.DBConfig.User,config.DBConfig.Password,config.DBConfig.Host,config.DBConfig.Port,config.DBConfig.DBName))
 	err:= db.DB.Ping()
+	if err!=nil{
+		db.logger.LogErr(db,err.Error())
+	}
 	return err
 }
 
