@@ -20,6 +20,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
 	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
+	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if err!=nil{
 		if err==redis.Nil {return}
@@ -28,34 +29,30 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
+	if Post.Has("userName") && Post.Has("password") && Post.Has("saveData") &&
+		Post.Get("userName")!="" && Post.Get("password")!="" && Post.Get("saveData")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		saveData:=core.ClearGDRequest(Post.Get("saveData"))
 		db:=core.MySQLConn{}
-		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
 			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"
 			taes:=core.ThunderAES{}
-			logger:=core.Logger{Output: os.Stderr}
-			logger.Must(taes.GenKey(config.ServerConfig.SrvKey))
-			logger.Must(taes.Init())
+			if logger.Should(taes.GenKey(config.ServerConfig.SrvKey))!=nil {return}
+			if logger.Should(taes.Init())!=nil {return}
 			datax,err:=taes.EncryptRaw(saveData)
-			if err!=nil{
-				io.WriteString(resp,"There was an error")
-				logger.LogErr(taes,err.Error())
-				return
-			}
+			if logger.Should(err)!=nil {return}
 			os.MkdirAll(savepath,os.ModePerm)
-			logger.Must(os.WriteFile(savepath+strconv.Itoa(acc.Uid)+".hal",datax,0644))
+			if logger.Should(os.WriteFile(savepath+strconv.Itoa(acc.Uid)+".hal",datax,0644))!=nil {return}
 			saveData=strings.ReplaceAll(strings.ReplaceAll(strings.Split(saveData,";")[0],"_","/"),"-","+")
 			b,err:=base64.StdEncoding.DecodeString(saveData)
-			logger.Must(err)
+			if logger.Should(err)!=nil {return}
 			r,err:=gzip.NewReader(bytes.NewBuffer(b))
-			logger.Must(err)
+			if logger.Should(err)!=nil {return}
 			d,err:=io.ReadAll(r)
-			logger.Must(err)
+			if logger.Should(err)!=nil {return}
 			saveData=string(d)
 			acc.LoadStats()
 			acc.Orbs,_=strconv.Atoi(strings.Split(strings.Split(saveData,"</s><k>14</k><s>")[1],"</s>")[0])
@@ -73,12 +70,9 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
 	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
+	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
-	if err!=nil{
-		if err==redis.Nil {return}
-		io.WriteString(resp,"There was an error")
-		log.Panicln(err.Error())
-	}
+	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
@@ -90,17 +84,12 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
 			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
 			if _, err := os.Stat(savepath); err==nil {
-				logger:=core.Logger{Output: os.Stderr}
 				taes := core.ThunderAES{}
-				logger.Must(taes.GenKey(config.ServerConfig.SrvKey))
-				logger.Must(taes.Init())
+				if logger.Should(taes.GenKey(config.ServerConfig.SrvKey))!=nil {return}
+				if logger.Should(taes.Init())!=nil {return}
 				d,err:=os.ReadFile(savepath)
 				data,err:=taes.DecryptRaw(d)
-				if err!=nil{
-					io.WriteString(resp,"There was an error")
-					log.Panicln(err.Error())
-					return
-				}
+				if logger.Should(err)!=nil {return}
 				io.WriteString(resp,data+";21;30;a;a")
 			}else{
 				io.WriteString(resp,"-1")
@@ -124,19 +113,16 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
 	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
+	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
-	if err!=nil{
-		if err==redis.Nil {return}
-		io.WriteString(resp,"There was an error")
-		log.Panicln(err.Error())
-	}
+	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		db:=core.MySQLConn{}
-		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		uid:=acc.LogIn(uname,pass, IPAddr, 0)
 		if uid<0 {
@@ -155,12 +141,9 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if IPAddr == "" {IPAddr = req.Header.Get("X-Real-IP")}
 	if IPAddr == "" {IPAddr = strings.Split(req.RemoteAddr, ":")[0]}
 	vars := gorilla.Vars(req)
+	logger:=core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
-	if err != nil {
-		if err == redis.Nil {return}
-		io.WriteString(resp, "There was an error")
-		log.Panicln(err.Error())
-	}
+	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Has("email") &&
@@ -169,9 +152,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		pass := core.ClearGDRequest(Post.Get("password"))
 		email := core.ClearGDRequest(Post.Get("email"))
 		db := core.MySQLConn{}
-		if err := db.ConnectBlob(config); err != nil {
-			log.Fatalln(err.Error())
-		}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc := core.CAccount{DB: db}
 		uid:=acc.Register(uname,pass,email,IPAddr)
 		io.WriteString(resp,strconv.Itoa(uid))

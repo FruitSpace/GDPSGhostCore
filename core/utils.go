@@ -117,6 +117,11 @@ func (lg *Logger) Must(err error) {
 	}
 }
 
+func (lg *Logger) Should(err error) error{
+	if err!=nil{lg.LogWarn(err,err.Error())}
+	return err
+}
+
 
 func sliceRemove(s []string, i int) []string {
 	s[i] = s[len(s)-1]
