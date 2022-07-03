@@ -102,7 +102,7 @@ func (acc *CAccount) CountUsers() int {
 
 func (acc *CAccount) Exists(uid int) bool {
 	var cnt int
-	acc.DB.MustQueryRow("SELECT uname FROM users WHERE uid=$uid").Scan(&cnt)
+	acc.DB.MustQueryRow("SELECT count(*) as cnt FROM users WHERE uid=?",uid).Scan(&cnt)
 	return cnt>0
 }
 

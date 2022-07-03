@@ -145,3 +145,17 @@ func FilterEmail(email string) bool {
 	if !slices.Contains(AllowedEmailProviders,semail[1]) {return false}
 	return true
 }
+
+func TryInt(target *int, str string) bool {
+	if c,err:=strconv.Atoi(str); err==nil {
+		*target=c
+		return true
+	}
+	return false
+}
+
+func ToInt(b bool) int{
+	var i int
+	if b {i=1}
+	return i
+}

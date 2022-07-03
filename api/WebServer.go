@@ -151,6 +151,7 @@ func ReadPost(req *http.Request) url.Values {
 	vals:=make(url.Values)
 	pairs:=strings.Split(string(body),"&")
 	for _,val:= range pairs {
+		if !strings.Contains(val,"=") {continue}
 
 		m:=strings.SplitN(val,"=",2)
 		fmt.Println(m)
