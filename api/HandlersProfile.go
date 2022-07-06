@@ -54,7 +54,10 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		}
 		cf:=core.CFriendship{DB: db}
 		data:=connectors.GetUserProfile(acc,cf.IsAlreadyFriend(acc.Uid,uidSelf))
-		//! ADD CMessages Messages Check
+		if acc.Uid==uidSelf {
+			cm:=core.CMessage{DB: db}
+			data+=connectors.UserProfilePersonal(cf.CountFriendRequests(acc.Uid,true),cm.CountMessages(acc.Uid,true))
+		}
 		io.WriteString(resp,data)
 	}else{
 		io.WriteString(resp,"-1")

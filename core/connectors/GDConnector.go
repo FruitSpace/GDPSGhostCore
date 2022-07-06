@@ -15,3 +15,7 @@ func GetUserProfile(acc core.CAccount, isFriend bool) string {
 		":28:"+s(acc.Trace)+":29:1:30:"+s(acc.GetLeaderboardRank())+":31:"+s(core.ToInt(isFriend))+":43:"+s(acc.Spider)+":44:"+acc.Twitter+
 		":45:"+acc.Twitch+":46:"+s(acc.Diamonds)+":48:"+s(acc.Death)+":49:"+s(role.ModLevel)+":50:"+s(acc.CS)
 }
+
+func UserProfilePersonal(frReq int,msgNewCnt int) string {
+	return ":38:"+strconv.Itoa(msgNewCnt)+":39:"+strconv.Itoa(frReq)+":40:0"
+}
