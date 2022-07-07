@@ -125,7 +125,7 @@ func (cc *CComment) DeleteLevelComment(id int, uid int) {
 	cc.DB.ShouldQuery("DELETE FROM comments WHERE id=? AND uid=?",id,uid)
 }
 
-func (cc *CComment) DeleteownerLevelComment(id int, lvlId int) {
+func (cc *CComment) DeleteOwnerLevelComment(id int, lvlId int) {
 	cc.DB.ShouldQuery("DELETE FROM comments WHERE id=? AND lvl_id=?",id,lvlId)
 }
 

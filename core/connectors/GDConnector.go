@@ -3,6 +3,7 @@ package connectors
 import (
 	"HalogenGhostCore/core"
 	"strconv"
+	"time"
 )
 
 func GetUserProfile(acc core.CAccount, isFriend bool) string {
@@ -18,4 +19,12 @@ func GetUserProfile(acc core.CAccount, isFriend bool) string {
 
 func UserProfilePersonal(frReq int,msgNewCnt int) string {
 	return ":38:"+strconv.Itoa(msgNewCnt)+":39:"+strconv.Itoa(frReq)+":40:0"
+}
+
+func GetAccountComment(comment core.CComment) string {
+	s:=strconv.Itoa
+	t,err:=time.Parse("2006-01-02 15:04:05",comment.PostedTime)
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	return "2~"+comment.Comment+"~3~"+s(comment.Uid)+"~4~"+s(comment.Likes)+"~5~0~6~"+s(comment.Id)+"~7~"+s(core.ToInt(comment.IsSpam))+"~9~"+age+"|"
 }

@@ -33,6 +33,7 @@ type CAccount struct {
 	Uid int
 	Uname string
 	Passhash string
+	GjpHash string
 	Email string
 	Role_id int
 	IsBanned int
@@ -176,18 +177,18 @@ func (acc *CAccount) LoadAuth(method int) {
 	var req *sql.Row
 	switch method {
 	case CAUTH_UID:
-		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE uid=?",acc.Uid)
+		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,gjphash,email,role_id,isBanned FROM users WHERE uid=?",acc.Uid)
 		break
 	case CAUTH_UNAME:
-		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE uname=?",acc.Uname)
+		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,gjphash,email,role_id,isBanned FROM users WHERE uname=?",acc.Uname)
 		break
 	case CAUTH_EMAIL:
-		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,email,role_id,isBanned FROM users WHERE email=?",acc.Email)
+		req=acc.DB.MustQueryRow("SELECT uid,uname,passhash,gjphash,email,role_id,isBanned FROM users WHERE email=?",acc.Email)
 		break
 	default:
 		return
 	}
-	req.Scan(&acc.Uid,&acc.Uname,&acc.Passhash,&acc.Email,&acc.Role_id,&acc.IsBanned)
+	req.Scan(&acc.Uid,&acc.Uname,&acc.Passhash,&acc.GjpHash,&acc.Email,&acc.Role_id,&acc.IsBanned)
 }
 
 func (acc *CAccount) LoadTechnical() {
@@ -229,6 +230,11 @@ func (acc *CAccount) GetUnameByUID(uid int) string {
 func (acc *CAccount) UpdateIP(ip string) {
 	acc.LastIP=ip
 	acc.DB.ShouldQuery("UPDATE users SET lastIP=?, accessDate=? WHERE uid=?",ip,time.Now().Format("2006-01-02 15:04:05"),acc.Uid)
+}
+
+func (acc *CAccount) UpdateGJP2(gjp2 string) {
+	acc.GjpHash=gjp2
+	acc.DB.ShouldQuery("UPDATE users SET gjphash=? WHERE uid=?",acc.GjpHash,acc.Uid)
 }
 
 func (acc *CAccount) CountIPs(ip string) int {
@@ -388,15 +394,15 @@ func (acc *CAccount) Register(uname string, pass string, email string, ip string
 	if uid!=0 {return -3}
 	passx:=MD5(MD5(pass+"HalogenCore1704")+"ae07")+MD5(pass)[:4]
 	rdate:=time.Now().Format("2006-01-02 15:04:05")
-	sreq:=acc.DB.MustPrepareExec("INSERT INTO users (uname,passhash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,1)",
-		uname,passx,email,rdate,rdate)
+	sreq:=acc.DB.MustPrepareExec("INSERT INTO users (uname,passhash,gjphash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,?,1)",
+		uname,passx,DoGjp2(pass),email,rdate,rdate)
 	vuid,_:=sreq.LastInsertId()
 	acc.Uid=int(vuid)
 	acc.UpdateIP(ip)
 	return acc.Uid
 }
 
-func (acc *CAccount) VerifySession(uid int, ip string, gjp string) bool {
+func (acc *CAccount) VerifySession(uid int, ip string, gjp string, is22 bool) bool {
 	var (
 		aDate string
 		lastIP string
@@ -406,9 +412,19 @@ func (acc *CAccount) VerifySession(uid int, ip string, gjp string) bool {
 	if aDate=="" || isBanned>0 {return false}
 	ptime,_:=time.Parse("2006-01-02 15:04:05",aDate)
 	if ip==lastIP && (time.Now().Unix()-ptime.Unix())<3600 {return true}
-	gjp=strings.ReplaceAll(strings.ReplaceAll(gjp,"_","/"),"-","+")
-	gjp=DoXOR(gjp,"37526")
-	if acc.LogIn("",gjp,ip,uid)>0 {return true}
+	if is22 {
+		acc.Uid=uid
+		acc.LoadAuth(CAUTH_UID)
+		if acc.IsBanned>0 {return false}
+		if acc.GjpHash==gjp {
+			acc.UpdateIP(ip)
+			return true
+		}
+	}else{
+		gjp=strings.ReplaceAll(strings.ReplaceAll(gjp,"_","/"),"-","+")
+		gjp=DoXOR(gjp,"37526")
+		if acc.LogIn("",gjp,ip,uid)>0 {return true}
+	}
 	return false
 }
 

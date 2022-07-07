@@ -9,6 +9,7 @@ import (
 	"html"
 	"io"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -158,4 +159,37 @@ func ToInt(b bool) int{
 	var i int
 	if b {i=1}
 	return i
+}
+
+func GetGDVersion(post url.Values) int {
+	version:=21
+	if post.Has("gameVersion") {
+		if c, err:=strconv.Atoi(post.Get("gameVersion")); err==nil {
+			version=c
+		}
+	}
+	if version==20 {
+		if post.Has("binaryVersion") {
+			if c, err:=strconv.Atoi(post.Get("gameVersion")); err==nil && c>27 {
+				version++
+			}
+		}
+	}
+	if version==21 {
+		if post.Has("binaryVersion") {
+			if c, err:=strconv.Atoi(post.Get("gameVersion")); err==nil && c>36 {
+				version++
+			}
+		}
+	}
+	return version
+}
+
+func CheckGDAuth(post url.Values) bool {
+	version:=GetGDVersion(post)
+	if post.Has("accountID") && post.Get("accountID")!="" && (
+		(version<22 && post.Has("gjp") && post.Get("gjp")!="") || (version==22 && post.Has("gjp2") && post.Get("gjp2")!="")) {
+		return true
+	}
+	return false
 }

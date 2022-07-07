@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
-	"github.com/go-redis/redis/v8"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -22,11 +21,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	vars:= gorilla.Vars(req)
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
-	if err!=nil{
-		if err==redis.Nil {return}
-		io.WriteString(resp,"There was an error")
-		log.Panicln(err.Error())
-	}
+	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Has("userName") && Post.Has("password") && Post.Has("saveData") &&

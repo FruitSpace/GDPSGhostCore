@@ -56,7 +56,7 @@ func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string) bool 
 			if err==sql.ErrNoRows {
 				date=strings.Split(time.Now().Format("2006-01-02 15:04:05")," ")[0]+" 00:00:00"
 			}else{
-				tme,_:=time.Parse("2006-01-02 00:00:00",strings.Split(date," ")[0]+" 00:00:00")
+				tme,_:=time.Parse("2006-01-02 15:04:05",strings.Split(date," ")[0]+" 00:00:00")
 				tme.AddDate(0,0,1)
 				date=tme.Format("2006-01-02 15:04:05")
 			}
@@ -75,7 +75,7 @@ func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string) bool 
 			if err==sql.ErrNoRows {
 				date=strings.Split(time.Now().Format("2006-01-02 15:04:05")," ")[0]+" 00:00:00"
 			}else{
-				tme,_:=time.Parse("2006-01-02 00:00:00",strings.Split(date," ")[0]+" 00:00:00")
+				tme,_:=time.Parse("2006-01-02 15:04:05",strings.Split(date," ")[0]+" 00:00:00")
 				tme.AddDate(0,0,7)
 				date=tme.Format("2006-01-02 15:04:05")
 			}
