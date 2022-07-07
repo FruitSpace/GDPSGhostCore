@@ -35,7 +35,7 @@ func DoXOR(text string, key string) (output string) {
 }
 
 func GetDateAgo(date int64) string {
-	diff:=time.Now().Unix()-date
+	diff:=time.Now().Unix()+10800-date
 	if diff<60 {return strconv.FormatInt(diff,10)+" seconds"}
 	if diff<3600 {return strconv.FormatInt(diff/60,10)+" minutes"}
 	if diff<86400 {return strconv.FormatInt(diff/3600,10)+" hours"}
