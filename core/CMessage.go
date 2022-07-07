@@ -63,6 +63,7 @@ func (cm *CMessage) SendMessageObj() bool {
 	return true
 }
 
+// GetMessageForUid Warns that page is not multiplied
 func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) []map[string]string {
 	var cnt int
 	pf:="uid_dest"
