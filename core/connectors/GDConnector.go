@@ -28,3 +28,19 @@ func GetAccountComment(comment core.CComment) string {
 	age:=core.GetDateAgo(t.Unix())
 	return "2~"+comment.Comment+"~3~"+s(comment.Uid)+"~4~"+s(comment.Likes)+"~5~0~6~"+s(comment.Id)+"~7~"+s(core.ToInt(comment.IsSpam))+"~9~"+age+"|"
 }
+
+func GetLevelComment(comment core.CComment) string {
+	s:=strconv.Itoa
+	t,err:=time.Parse("2006-01-02 15:04:05",comment.PostedTime)
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	acc:=core.CAccount{DB: comment.DB, Uid: comment.Uid}
+	if !acc.Exists(comment.Uid) {return ""}
+	acc.LoadAuth(core.CAUTH_UID)
+	acc.LoadStats()
+	acc.LoadVessels()
+	role:=acc.GetRoleObj(false)
+	if role.CommentColor!="" {role.CommentColor="~12~"+role.CommentColor}
+	return "2~"+comment.Comment+"~3~"+s(comment.Uid)+"~4~"+s(comment.Likes)+"~5~0~6~"+s(comment.Id)+"~7~"+s(core.ToInt(comment.IsSpam))+
+		"~9~"+age+"~10~"+s(comment.Percent)+"~11~"
+}

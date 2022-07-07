@@ -99,7 +99,6 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 
 func AccountManagement(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
 	http.Redirect(resp,req,"https://get.halhost.cc/"+vars["gdps"],http.StatusMovedPermanently)
 }
 
@@ -153,8 +152,6 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		io.WriteString(resp,strconv.Itoa(uid))
 		if uid>0 {
 			core.RegisterAction(core.ACTION_USER_REGISTER,0,uid, map[string]string{"uname":uname,"email":email},db)
-		}else {
-			io.WriteString(resp, "-1")
 		}
 	}else{
 		io.WriteString(resp,"-1")

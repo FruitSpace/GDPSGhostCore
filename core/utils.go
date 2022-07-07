@@ -143,7 +143,7 @@ func FilterEmail(email string) bool {
 		"bk.ru",
 		"vk.com",
 	}
-	if !slices.Contains(AllowedEmailProviders,semail[1]) {return false}
+	if !slices.Contains(AllowedEmailProviders,strings.ToLower(semail[1])) {return false}
 	return true
 }
 

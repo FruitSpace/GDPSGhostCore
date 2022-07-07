@@ -75,9 +75,9 @@ func (cc *CComment) GetAllAccComments(uid int, page int) []CComment {
 	return out
 }
 
-// GetAllLevelComments Warns that page is not multiplied
 func (cc *CComment) GetAllLevelComments(lvlId int, page int, sortMode bool) []CComment {
 	filter:="postedTime"
+	page*=10
 	if sortMode {filter="likes"}
 	rows:=cc.DB.ShouldQuery("SELECT id,uid,comment,postedTime,likes,isSpam,percent FROM comments WHERE lvl_id=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page),lvlId)
 	var out []CComment

@@ -399,7 +399,7 @@ func (acc *CAccount) Register(uname string, pass string, email string, ip string
 	vuid,_:=sreq.LastInsertId()
 	acc.Uid=int(vuid)
 	acc.UpdateIP(ip)
-	return acc.Uid
+	return 1
 }
 
 func (acc *CAccount) VerifySession(uid int, ip string, gjp string, is22 bool) bool {
