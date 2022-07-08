@@ -187,8 +187,7 @@ func GetGDVersion(post url.Values) int {
 
 func CheckGDAuth(post url.Values) bool {
 	version:=GetGDVersion(post)
-	if post.Has("accountID") && post.Get("accountID")!="" && (
-		(version<22 && post.Has("gjp") && post.Get("gjp")!="") || (version==22 && post.Has("gjp2") && post.Get("gjp2")!="")) {
+	if post.Get("accountID")!="" && ((version<22 && post.Get("gjp")!="") || (version==22 && post.Get("gjp2")!="")) {
 		return true
 	}
 	return false

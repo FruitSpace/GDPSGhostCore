@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	gorilla "github.com/gorilla/mux"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -24,8 +23,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("userName") && Post.Has("password") && Post.Has("saveData") &&
-		Post.Get("userName")!="" && Post.Get("password")!="" && Post.Get("saveData")!="" {
+	if Post.Get("userName")!="" && Post.Get("password")!="" && Post.Get("saveData")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		saveData:=core.ClearGDRequest(Post.Get("saveData"))
@@ -70,11 +68,11 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
+	if Post.Get("userName")!="" && Post.Get("password")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		db:=core.MySQLConn{}
-		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
 			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
@@ -112,7 +110,7 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("userName") && Post.Has("password") && Post.Get("userName")!="" && Post.Get("password")!="" {
+	if Post.Get("userName")!="" && Post.Get("password")!="" {
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		db:=core.MySQLConn{}
@@ -140,8 +138,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("userName") && Post.Has("password") && Post.Has("email") &&
-		Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("email")!="" {
+	if Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("email")!="" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		email := core.ClearGDRequest(Post.Get("email"))

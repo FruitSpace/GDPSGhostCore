@@ -200,3 +200,12 @@ CREATE TABLE actions
     isMod     tinyint(1) NOT NULL DEFAULT 0,
     data      JSON       NOT NULL DEFAULT '{}'
 );
+
+CREATE TABLE rateQueue
+(
+    id              int(11)      NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    lvl_id          int(11)          NOT NULL,
+    name            varchar(32)      NOT NULL DEFAULT 'Unnamed',
+    uid             int(11)          NOT NULL,
+    mod_uid         int(11)          NOT NULL
+);

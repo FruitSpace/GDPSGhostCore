@@ -22,7 +22,7 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if core.CheckGDAuth(Post) && Post.Has("commentID") && Post.Get("commentID")!="" {
+	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var uid int
@@ -61,7 +61,7 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("accountID") && Post.Get("accountID")!="" {
+	if Post.Get("accountID")!="" {
 		page:=0
 		if Post.Has("page") {
 			if c, err:= strconv.Atoi(Post.Get("page")); err==nil {page=c}
@@ -97,7 +97,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if core.CheckGDAuth(Post) && Post.Has("comment") && Post.Get("comment")!="" {
+	if core.CheckGDAuth(Post) && Post.Get("comment")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var uid int
@@ -137,8 +137,7 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if core.CheckGDAuth(Post) && Post.Has("commentID") && Post.Get("commentID")!="" &&
-		Post.Has("levelID") && Post.Get("levelID")!="" {
+	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var uid int
@@ -183,7 +182,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("levelID") && Post.Get("levelID")!="" {
+	if Post.Get("levelID")!="" {
 		page:=0
 		if Post.Has("page") {
 			if c, err:= strconv.Atoi(Post.Get("page")); err==nil {page=c}
@@ -221,7 +220,7 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("userID") && Post.Get("userID")!="" {
+	if Post.Get("userID")!="" {
 		page:=0
 		if Post.Has("page") {
 			if c, err:= strconv.Atoi(Post.Get("page")); err==nil {page=c}
@@ -267,7 +266,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if core.CheckGDAuth(Post) && Post.Has("comment") && Post.Get("comment")!="" && Post.Has("levelID") && Post.Get("levelID")!="" {
+	if core.CheckGDAuth(Post) && Post.Get("comment")!="" && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var uid int

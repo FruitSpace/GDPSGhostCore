@@ -35,8 +35,8 @@ func (cf *CFriendship) CountFriendRequests(uid int, new bool) int {
 func (cf *CFriendship) GetFriendRequests(uid int, page int, sent bool) (int,[]map[string]string) {
 	q:="SELECT id,uid_src,uid_dest,uploadDate,comment,isNew FROM friendreqs WHERE "
 	if sent {q+="uid_src=?"}else{q+="uid_dest=?"}
-	q+=" LIMIT 10 OFFSET ?"
-	rows:=cf.DB.MustQuery(q,uid,page)
+	q+=" LIMIT 10 OFFSET "+strconv.Itoa(page*10)
+	rows:=cf.DB.MustQuery(q,uid)
 	var users []map[string]string
 	var cnt int
 	for rows.Next() {

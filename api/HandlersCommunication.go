@@ -2,50 +2,345 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"HalogenGhostCore/core/connectors"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post)  && Post.Get("targetAccountID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var uidTarget int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&uidTarget,Post.Get("targetAccountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if uidTarget>0 {
+			xacc.UpdateBlacklist(core.CBLACKLIST_BLOCK,uidTarget)
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("targetAccountID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var uidTarget int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&uidTarget,Post.Get("targetAccountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if uidTarget>0 {
+			xacc.UpdateBlacklist(core.CBLACKLIST_UNBLOCK,uidTarget)
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 
 func FriendAcceptRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("requestID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var requestId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&requestId,Post.Get("requestID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if requestId>0 {
+			cf:=core.CFriendship{DB: db}
+			io.WriteString(resp,strconv.Itoa(cf.AcceptFriendRequest(requestId,xacc.Uid)))
+		}else{
+			io.WriteString(resp,"-1")
+		}
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("targetAccountID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var targetId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&targetId,Post.Get("targetAccountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if targetId>0 {
+			cf:=core.CFriendship{DB: db}
+			issender:= Post.Get("isSender")=="1"
+			cf.RejectFriendRequestByUid(xacc.Uid,targetId,issender)
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		page:=0
+		core.TryInt(&page,Post.Get("page"))
+		getSent:= Post.Get("getSent")=="1"
+
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		cf:=core.CFriendship{DB: db}
+		count, frqs:=cf.GetFriendRequests(xacc.Uid,page,getSent)
+		if len(frqs)==0 {
+			io.WriteString(resp,"-2")
+		}else{
+			output:=""
+			for _,frq := range frqs {
+				output += connectors.GetFriendRequest(frq)
+			}
+			io.WriteString(resp,output[:len(output)-1]+"#"+strconv.Itoa(count)+":"+strconv.Itoa(page*10)+":10")
+		}
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("requestID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var requestId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&requestId,Post.Get("requestID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if requestId>0 {
+			cf:=core.CFriendship{DB: db}
+			cf.ReadFriendRequest(requestId)
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("targetAccountID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var targetId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&targetId,Post.Get("targetAccountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if targetId>0 {
+			cf:=core.CFriendship{DB: db}
+			cf.DeleteFriendship(xacc.Uid,targetId)
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("toAccountID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var targetId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&targetId,Post.Get("toAccountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if targetId>0 {
+			cf:=core.CFriendship{DB: db}
+			comment:=Post.Get("comment")
+			comment=core.ClearGDRequest(comment)
+			io.WriteString(resp,strconv.Itoa(cf.RequestFriend(xacc.Uid,targetId,comment)))
+		}else{
+			io.WriteString(resp,"-1")
+		}
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 

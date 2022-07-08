@@ -6,7 +6,6 @@ import (
 	gorilla "github.com/gorilla/mux"
 	"golang.org/x/exp/slices"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -23,10 +22,9 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
-	if Post.Has("targetAccountID") && Post.Get("targetAccountID")!="" {
+	if Post.Get("targetAccountID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		if err:=db.ConnectBlob(config); err!=nil {log.Fatalln(err.Error())}
 		acc:=core.CAccount{DB: db}
 		var uidSelf int
 		core.TryInt(&acc.Uid,Post.Get("targetAccountID"))

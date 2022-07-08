@@ -56,3 +56,11 @@ func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role)
 		"~9~"+age+"~10~"+s(comment.Percent)+"~11~"+s(role.ModLevel)+role.CommentColor+":1~"+acc.Uname+"~9~"+s(acc.GetShownIcon())+
 		"~10~"+s(acc.ColorPrimary)+"~11~"+s(acc.ColorSecondary)+"~14~"+s(acc.IconType)+"~15~"+s(acc.Special)+s(acc.Uid)+"|"
 }
+
+func GetFriendRequest(frq map[string]string) string {
+	t,err:=time.Parse("2006-01-02 15:04:05",frq["date"])
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	return "1:"+frq["uname"]+":2:"+frq["uid"]+":9:"+frq["iconId"]+":10:"+frq["clr_primary"]+":11:"+frq["clr_secondary"]+
+		":14:"+frq["iconType"]+":15:"+frq["special"]+":16:"+frq["uid"]+":32:"+frq["id"]+":35:"+frq["comment"]+":37:"+age+":41:"+frq["isNew"]+"|"
+}
