@@ -9,10 +9,8 @@ import (
 	"time"
 )
 
-func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string) bool {
+func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string, isOwner bool, role Role) bool {
 	command:=strings.Split(comment," ")
-	isOwner:=cl.IsOwnedBy(acc.Uid)
-	role:=acc.GetRoleObj(true)
 	switch command[0] {
 	case "!feature":
 		if role.RoleName=="" || role.Privs["cFeature"]!=1 {return false}

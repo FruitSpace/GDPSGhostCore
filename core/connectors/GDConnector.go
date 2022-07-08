@@ -42,5 +42,17 @@ func GetLevelComment(comment core.CComment) string {
 	role:=acc.GetRoleObj(false)
 	if role.CommentColor!="" {role.CommentColor="~12~"+role.CommentColor}
 	return "2~"+comment.Comment+"~3~"+s(comment.Uid)+"~4~"+s(comment.Likes)+"~5~0~6~"+s(comment.Id)+"~7~"+s(core.ToInt(comment.IsSpam))+
-		"~9~"+age+"~10~"+s(comment.Percent)+"~11~"
+		"~9~"+age+"~10~"+s(comment.Percent)+"~11~"+s(role.ModLevel)+role.CommentColor+":1~"+acc.Uname+"~9~"+s(acc.GetShownIcon())+
+		"~10~"+s(acc.ColorPrimary)+"~11~"+s(acc.ColorSecondary)+"~14~"+s(acc.IconType)+"~15~"+s(acc.Special)+s(acc.Uid)+"|"
+}
+
+func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role) string {
+	s:=strconv.Itoa
+	t,err:=time.Parse("2006-01-02 15:04:05",comment.PostedTime)
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	if role.CommentColor!="" {role.CommentColor="~12~"+role.CommentColor}
+	return "2~"+comment.Comment+"~3~"+s(comment.Uid)+"~4~"+s(comment.Likes)+"~5~0~6~"+s(comment.Id)+"~7~"+s(core.ToInt(comment.IsSpam))+
+		"~9~"+age+"~10~"+s(comment.Percent)+"~11~"+s(role.ModLevel)+role.CommentColor+":1~"+acc.Uname+"~9~"+s(acc.GetShownIcon())+
+		"~10~"+s(acc.ColorPrimary)+"~11~"+s(acc.ColorSecondary)+"~14~"+s(acc.IconType)+"~15~"+s(acc.Special)+s(acc.Uid)+"|"
 }
