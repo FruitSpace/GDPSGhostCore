@@ -85,3 +85,7 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 	return "1:"+msg["id"]+":2:"+msg["uid"]+":3:"+msg["uid"]+":4:"+msg["subject"]+":5:"+msg["message"]+":6:"+msg["uname"]+":7:"+age+
 		":8:"+msg["isOld"]+":9:"+strconv.Itoa(core.ToInt(getSent))+"|"
 }
+
+func GetMusic(mus core.CMusic) string {
+	return "1~|~"+strconv.Itoa(mus.Id)+"~|~2~|~"+mus.Name+"~|~3~|~1~|~4~|~"+mus.Artist+"~|~5~|~"+mus.Size+"~|~6~|~~|~10~|~"+mus.Url
+}
