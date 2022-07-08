@@ -63,13 +63,13 @@ func (cm *CMessage) SendMessageObj() bool {
 	return true
 }
 
-// GetMessageForUid Warns that page is not multiplied
-func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) []map[string]string {
+func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) (int,[]map[string]string) {
+	page*=10
 	var cnt int
 	pf:="uid_dest"
 	if sent {pf="uid_src"}
 	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM messages WHERE "+pf+"=?",uid).Scan(&cnt)
-	if cnt==0 {return []map[string]string{}}
+	if cnt==0 {return 0,[]map[string]string{}}
 	rows:=cm.DB.ShouldQuery("SELECT id,uid_src,uid_dest,subject,body,postedTime,isNew FROM messages WHERE "+pf+"=? ORDER BY id limit 10 OFFSET "+strconv.Itoa(page),uid)
 	var out []map[string]string
 	for rows.Next() {
@@ -79,7 +79,7 @@ func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) []map[string]
 			"id":strconv.Itoa(msg.Id),
 			"subject": msg.Subject,
 			"message": msg.Message,
-			"isNew": strconv.Itoa(ToInt(msg.IsNew)),
+			"isOld": strconv.Itoa(ToInt(!msg.IsNew)),
 			"date": msg.PostedTime,
 		}
 		acc:=CAccount{DB: cm.DB}
@@ -95,5 +95,5 @@ func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) []map[string]
 		if msg.IsNew {cm.DB.ShouldQuery("UPDATE messages SET isNew=0 WHERE id=?",msg.Id)}
 		out=append(out,blk)
 	}
-	return out
+	return cnt,out
 }

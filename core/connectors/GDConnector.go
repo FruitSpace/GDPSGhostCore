@@ -64,3 +64,24 @@ func GetFriendRequest(frq map[string]string) string {
 	return "1:"+frq["uname"]+":2:"+frq["uid"]+":9:"+frq["iconId"]+":10:"+frq["clr_primary"]+":11:"+frq["clr_secondary"]+
 		":14:"+frq["iconType"]+":15:"+frq["special"]+":16:"+frq["uid"]+":32:"+frq["id"]+":35:"+frq["comment"]+":37:"+age+":41:"+frq["isNew"]+"|"
 }
+
+func GetMessage(msg core.CMessage, uid int) string {
+	s:=strconv.Itoa
+	t,err:=time.Parse("2006-01-02 15:04:05",msg.PostedTime)
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	uidx:=msg.UidDest
+	if uid==msg.UidDest {uidx=msg.UidSrc}
+	xacc:=core.CAccount{DB: msg.DB, Uid: uidx}
+	xacc.LoadAuth(core.CAUTH_UID)
+	return "1:"+s(msg.Id)+":2:"+s(uidx)+":3:"+s(uidx)+":4:"+msg.Subject+":5:"+msg.Message+":6:"+xacc.Uname+":7:"+age+
+		":8:"+s(core.ToInt(!msg.IsNew))+":9:"+s(core.ToInt(uid==msg.UidSrc))
+}
+
+func GetMessageStr(msg map[string]string, getSent bool) string {
+	t,err:=time.Parse("2006-01-02 15:04:05",msg["date"])
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	return "1:"+msg["id"]+":2:"+msg["uid"]+":3:"+msg["uid"]+":4:"+msg["subject"]+":5:"+msg["message"]+":6:"+msg["uname"]+":7:"+age+
+		":8:"+msg["isOld"]+":9:"+strconv.Itoa(core.ToInt(getSent))+"|"
+}

@@ -189,7 +189,6 @@ func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.G
 		page:=0
 		core.TryInt(&page,Post.Get("page"))
 		getSent:= Post.Get("getSent")=="1"
-
 		core.TryInt(&xacc.Uid,Post.Get("accountID"))
 		if core.GetGDVersion(Post)==22{
 			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
@@ -345,21 +344,186 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 
 
 func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("messageID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var msgId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&msgId,Post.Get("messageID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		if msgId>0 {
+			cm:=core.CMessage{DB: db, Id: msgId}
+			cm.DeleteMessage(xacc.Uid)
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("messageID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var msgId int
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		core.TryInt(&msgId,Post.Get("messageID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		cm:=core.CMessage{DB: db}
+		if cm.Exists(msgId) {
+			cm.LoadMessageById(msgId)
+			if xacc.Uid==cm.UidSrc || xacc.Uid==cm.UidDest {
+				io.WriteString(resp,connectors.GetMessage(cm,xacc.Uid))
+			}else{
+				io.WriteString(resp,"1")
+			}
+		}else{
+			io.WriteString(resp,"-1")
+		}
+
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		page:=0
+		core.TryInt(&page,Post.Get("page"))
+		getSent:= Post.Get("getSent")=="1"
+
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		cm:=core.CMessage{DB: db}
+		count,msgs:=cm.GetMessageForUid(xacc.Uid,page,getSent)
+		if len(msgs)==0 {
+			io.WriteString(resp, "-2")
+		}else{
+			output:=""
+			for _,msg := range msgs {
+				output+=connectors.GetMessageStr(msg,getSent)
+			}
+			io.WriteString(resp,output[:len(output)-1]+"#"+strconv.Itoa(count)+":"+strconv.Itoa(page*10)+":10")
+		}
+
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
 
 func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("toAccountID")!="" && Post.Get("body")!=""{
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		var uidDest int
+		core.TryInt(&uidDest,Post.Get("toAccountID"))
+		body:=core.ClearGDRequest(Post.Get("body"))
+		subject:=core.ClearGDRequest(Post.Get("subject"))
+		core.TryInt(&xacc.Uid,Post.Get("accountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-1")
+				return
+			}
+		}
+		cm:=core.CMessage{
+			DB: db,
+			UidSrc: xacc.Uid,
+			UidDest: uidDest,
+			Subject: subject,
+			Message: body,
+		}
+		if cm.SendMessageObj(){
+			io.WriteString(resp, "1")
+		}else{
+			io.WriteString(resp, "-1")
+		}
+	}else{
+		io.WriteString(resp, "-1")
+	}
 }
