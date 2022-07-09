@@ -89,3 +89,11 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 func GetMusic(mus core.CMusic) string {
 	return "1~|~"+strconv.Itoa(mus.Id)+"~|~2~|~"+mus.Name+"~|~3~|~1~|~4~|~"+mus.Artist+"~|~5~|~"+mus.Size+"~|~6~|~~|~10~|~"+mus.Url
 }
+
+func GetTopArtists(artists map[string]string) string {
+	out:=""
+	for artist, youtube := range artists {
+		out+="4:"+artist+":7:"+youtube+"|"
+	}
+	return out[:len(out)-1]
+}

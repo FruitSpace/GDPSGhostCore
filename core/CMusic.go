@@ -21,7 +21,7 @@ type CMusic struct {
 
 	DB MySQLConn
 	Logger Logger
-	Config GlobalConfig
+	Config *GlobalConfig
 	ConfBlob ConfigBlob
 }
 
@@ -99,5 +99,26 @@ func (mus *CMusic) CountDownloads() {
 			cnt+=downs
 		}
 		mus.DB.ShouldQuery("UPDATE songs SET downloads=? WHERE id=?",cnt,id)
+	}
+}
+
+//! Implement normal API
+func (mus *CMusic) GetTopArtists() map[string]string {
+//	resp,err:=http.Get(mus.Config.ApiEndpoint+"?id="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
+//	if err!=nil {return []map[string]string}
+//	rsp,_:=io.ReadAll(resp.Body)
+//	json.Unmarshal(rsp,mus)
+	return map[string]string{
+		"Riot [Monstercat]": "Monstercat",
+		"Noisestorm": "noisestorm",
+		"Nitro Fun": "NitroFunOfficial",
+		"Throttle": "officialThrottle",
+		"Tokyo Machine": "TokyoMachine",
+		"BadComputer": "BadComputer",
+		"Liquid Soul": "liquidsouliboga",
+		"Xtrullor": "xtrullor",
+		"Creo": "CreoMusic",
+		"Dirty Paws": "DirtyPaws",
+		"Have better candidates? Join HalogenHost Discord":"",
 	}
 }
