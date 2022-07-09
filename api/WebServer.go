@@ -128,7 +128,10 @@ func (ghost *GhostServer) StartServer(Host string) {
 			func(resp http.ResponseWriter,req *http.Request){
 				vars:=gorilla.Vars(req)
 				handler:=RouteMap[strings.Replace(req.URL.Path,"/"+vars["gdps"],"",1)]
-				log.Println(req.URL.Path," Got ", GetFunctionName(handler))
+				IPAddr:=req.Header.Get("CF-Connecting-IP")
+				if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+				if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
+				log.Println("["+IPAddr+"] "+req.URL.Path," Got ", GetFunctionName(handler))
 				handler(resp,req,&ghost.Config)
 			})
 	}

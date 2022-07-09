@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -50,11 +51,15 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
-	//Post:=ReadPost(req)
+	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
+	page:=0
+	core.TryInt(&page,Post.Get("page"))
+	if page<0 {page=0}
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
-	io.WriteString(resp,connectors.GetTopArtists(mus.GetTopArtists()))
+	artists:=mus.GetTopArtists()
+	io.WriteString(resp,connectors.GetTopArtists(artists)+"#"+strconv.Itoa(len(artists))+"0:"+strconv.Itoa(len(artists)))
 }
 
 func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
