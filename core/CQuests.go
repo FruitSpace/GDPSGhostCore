@@ -53,7 +53,7 @@ func (cq *CQuests) PushLevel(lvlId, cType int) int {
 
 func (cq *CQuests) GetQuests(uid int) string{
 	rand.Seed(int64(time.Now().YearDay()*uid))
-	req:=cq.DB.ShouldQuery("SELECT id,type,needed,reward,name,timeExpire FROM quests AS r1 " +
+	req:=cq.DB.ShouldQuery("SELECT r1.id,type,needed,reward,name,timeExpire FROM quests AS r1 " +
 		"JOIN (SELECT CEIL("+fmt.Sprintf("%f",rand.Float64())+" * (SELECT MAX(id) FROM quests WHERE type>1)) AS id) AS r2 " +
 		"WHERE r1.id >= r2.id AND r1.timeExpire<now() AND r1.type>1 ORDER BY r1.id ASC LIMIT 3")
 	out:=""

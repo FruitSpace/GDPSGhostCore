@@ -137,8 +137,19 @@ func GenerateChestBig(config core.ConfigBlob) string {
 
 func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) string {
 	s:=strconv.Itoa
-	out:="1:"+s(acc.Uid)+":"+chk+":"+udid+":"+s(acc.Uid)+":"+s(smallLeft)+":"+GenerateChestSmall(config)+":"+s(acc.ChestSmallCount)+":"+
+	out:=core.RandStringBytes(5)+":"+s(acc.Uid)+":"+chk+":"+udid+":"+s(acc.Uid)+":"+s(smallLeft)+":"+GenerateChestSmall(config)+":"+s(acc.ChestSmallCount)+":"+
 		s(bigLeft)+":"+GenerateChestBig(config)+":"+s(acc.ChestBigCount)+":"+s(chestType)
 	out=strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out,"59182"))),"/","_"),"+","-")
 	return core.RandStringBytes(5)+out+"|"+core.HashSolo4(out)
+}
+
+func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string{
+	s:=strconv.Itoa
+	virt:=core.RandStringBytes(5)
+	tme,_:=time.Parse("2006-01-02 15:04:05",strings.Split(time.Now().Format("2006-01-02 15:04:05")," ")[0]+" 00:00:00")
+	//!Additional 10800 Review is needed
+	timeLeft:=int(tme.AddDate(0,0,1).Unix()-(time.Now().Unix()+10800))
+	out:=virt+":"+s(uid)+":"+chk+":"+udid+":"+s(uid)+":"+s(timeLeft)+":"+cq.GetQuests(uid)
+	out=strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out,"19847"))),"/","_"),"+","-")
+	return virt+out+"|"+core.HashSolo3(out)
 }

@@ -25,7 +25,16 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if Post.Get("chk")!="" && Post.Get("udid")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		
+		cq:=core.CQuests{DB: db}
+		if cq.Exists(core.QUEST_TYPE_CHALLENGE) {
+			chalk, _ := base64.StdEncoding.DecodeString(Post.Get("chk")[5:])
+			chk := core.DoXOR(string(chalk), "59182")
+			var uid int
+			core.TryInt(&uid,Post.Get("accountID"))
+			io.WriteString(resp,connectors.ChallengesOutput(cq,uid,chk,Post.Get("udid")))
+		}else{
+			io.WriteString(resp,"-2")
+		}
 	}else{
 		io.WriteString(resp,"-1")
 	}

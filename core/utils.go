@@ -66,7 +66,7 @@ func HashSolo2(lvlstring string) string {
 	return fmt.Sprintf("%x",sha.Sum(nil))
 }
 
-func Hashsolo3(lvlstring string) string {
+func HashSolo3(lvlstring string) string {
 	sha:=sha1.New()
 	sha.Write([]byte(lvlstring+"oC36fpYaPtdg"))
 	return fmt.Sprintf("%x",sha.Sum(nil))
@@ -110,7 +110,7 @@ func (lg *Logger) LogErr(module interface{}, message string) {
 }
 func (lg *Logger) LogWarn(module interface{}, message string) {
 	log.SetOutput(lg.Output)
-	log.Printf("[%T] %s\n",module,message)
+	fmt.Printf("[%T] %s\n",module,message)
 }
 
 func (lg *Logger) Must(err error) {
