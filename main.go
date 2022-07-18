@@ -90,7 +90,7 @@ func GenGConfig() core.GlobalConfig {
 		7,
 		"./",
 
-		map[string]string{},
+		map[string]string{"rabbitmq_host":"auto"},
 	}
 }
 
