@@ -2,9 +2,9 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
-	gorilla "github.com/gorilla/mux"
 	"os"
 	"strings"
 )
@@ -18,7 +18,7 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
 	//Get:=req.URL.Query()
-	Post:=ReadPost(req)
+	//Post:=ReadPost(req)
 	db:=core.MySQLConn{}
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	//!WHATEVER THE FUCK IS GOING ON HERE

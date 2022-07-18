@@ -61,9 +61,9 @@ func GenConfig() core.ConfigBlob {
 		},
 		ChestConfig: core.ChestConfig{
 			200,400,2,10,
-			1,6,1,6, 3600,
+			[]int{1,2,3,4,5,6},1,6, 3600,
 			2000,4000,20,100,
-			1,6,1,6, 14400,
+			[]int{1,2,3,4,5,6},1,6, 14400,
 		},
 		ServerConfig: core.ServerConfig{
 			"0002",
