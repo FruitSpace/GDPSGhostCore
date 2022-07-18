@@ -410,7 +410,10 @@ func (acc *CAccount) VerifySession(uid int, ip string, gjp string, is22 bool) bo
 		isBanned int
 	)
 	acc.DB.ShouldQueryRow("SELECT accessDate, lastIP, isBanned FROM users WHERE uid=?",uid).Scan(&aDate,&lastIP,&isBanned)
-	if aDate=="" || isBanned>0 {return false}
+	if aDate=="" || isBanned>0 {
+		acc.IsBanned=isBanned
+		return false
+	}
 	ptime,_:=time.Parse("2006-01-02 15:04:05",aDate)
 	if ip==lastIP && (time.Now().Unix()-ptime.Unix())<3600 {return true}
 	if is22 {
