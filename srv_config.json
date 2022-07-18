@@ -5,6 +5,6 @@
     "SmallOrbsMax": 400,
     "SmallDiamondsMin": 2,
     "SmallDiamondsMax": 10,
-    "SmallShards": []
+    "SmallShards": [1,2,3,4,5,6]
   }
 }

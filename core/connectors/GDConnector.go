@@ -137,8 +137,8 @@ func GenerateChestBig(config core.ConfigBlob) string {
 
 func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) string {
 	s:=strconv.Itoa
-	out:=core.RandStringBytes(5)+":"+s(acc.Uid)+":"+chk+":"+udid+":"+s(acc.Uid)+":"+s(smallLeft)+GenerateChestSmall(config)+":"+s(acc.ChestSmallCount)+":"+
-		s(bigLeft)+GenerateChestBig(config)+":"+s(acc.ChestBigCount)+":"+s(chestType)
+	out:="1:"+s(acc.Uid)+":"+chk+":"+udid+":"+s(acc.Uid)+":"+s(smallLeft)+":"+GenerateChestSmall(config)+":"+s(acc.ChestSmallCount)+":"+
+		s(bigLeft)+":"+GenerateChestBig(config)+":"+s(acc.ChestBigCount)+":"+s(chestType)
 	out=strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out,"59182"))),"/","_"),"+","-")
 	return core.RandStringBytes(5)+out+"|"+core.HashSolo4(out)
 }

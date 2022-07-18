@@ -2,6 +2,7 @@ package core
 
 import (
 	"database/sql"
+	"encoding/base64"
 	"encoding/json"
 	"golang.org/x/exp/slices"
 	"strconv"
@@ -422,7 +423,8 @@ func (acc *CAccount) VerifySession(uid int, ip string, gjp string, is22 bool) bo
 		}
 	}else{
 		gjp=strings.ReplaceAll(strings.ReplaceAll(gjp,"_","/"),"-","+")
-		gjp=DoXOR(gjp,"37526")
+		vgjp,_:=base64.StdEncoding.DecodeString(gjp)
+		gjp=DoXOR(string(vgjp),"37526")
 		if acc.LogIn("",gjp,ip,uid)>0 {return true}
 	}
 	return false
