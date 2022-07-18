@@ -3,6 +3,7 @@ package connectors
 import (
 	"HalogenGhostCore/core"
 	"encoding/base64"
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
@@ -150,6 +151,7 @@ func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string{
 	//!Additional 10800 Review is needed
 	timeLeft:=int(tme.AddDate(0,0,1).Unix()-(time.Now().Unix()+10800))
 	out:=virt+":"+s(uid)+":"+chk+":"+udid+":"+s(uid)+":"+s(timeLeft)+":"+cq.GetQuests(uid)
+	fmt.Println(out)
 	out=strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out,"19847"))),"/","_"),"+","-")
 	return virt+out+"|"+core.HashSolo3(out)
 }

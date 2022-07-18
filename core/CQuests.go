@@ -57,11 +57,17 @@ func (cq *CQuests) GetQuests(uid int) string{
 		"JOIN (SELECT CEIL("+fmt.Sprintf("%f",rand.Float64())+" * (SELECT MAX(id) FROM quests WHERE type>1)) AS id) AS r2 " +
 		"WHERE r1.id >= r2.id AND r1.timeExpire<now() AND r1.type>1 ORDER BY r1.id ASC LIMIT 3")
 	out:=""
+	var cnt int
 	for req.Next() {
 		var id,xType,needed, reward int
 		var name, timeExpire string
 		req.Scan(&id,&xType,&needed,&reward,&name,&timeExpire)
 		out+=strconv.Itoa(id)+","+strconv.Itoa(xType-1)+","+strconv.Itoa(needed)+","+strconv.Itoa(reward)+","+name+":"
+		cnt++
+	}
+	for cnt<3 {
+		out+="1337,2,5,50,Random issues:"
+		cnt++
 	}
 	return out[:len(out)-1]
 }

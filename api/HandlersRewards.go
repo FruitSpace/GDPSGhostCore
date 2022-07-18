@@ -28,7 +28,7 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		cq:=core.CQuests{DB: db}
 		if cq.Exists(core.QUEST_TYPE_CHALLENGE) {
 			chalk, _ := base64.StdEncoding.DecodeString(Post.Get("chk")[5:])
-			chk := core.DoXOR(string(chalk), "59182")
+			chk := core.DoXOR(string(chalk), "19847")
 			var uid int
 			core.TryInt(&uid,Post.Get("accountID"))
 			io.WriteString(resp,connectors.ChallengesOutput(cq,uid,chk,Post.Get("udid")))
