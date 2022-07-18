@@ -2,7 +2,6 @@ package modules
 
 import (
 	amqp "github.com/rabbitmq/amqp091-go"
-	"reflect"
 )
 
 type DiscordPacker struct {
@@ -17,7 +16,7 @@ func (mod *DiscordPacker) PreInit(pch *PluginCore, data ...interface{}){
 		mod.Passive=true
 		return
 	}
-	rchan:=channel[0].Convert(reflect.TypeOf(amqp.Channel{}))
+	rchan:=channel[0].Interface().(amqp.Channel)
 	rchan.QueueDeclare("bot_"+mod.ID,true,false,false,false,nil)
 }
 
