@@ -22,6 +22,7 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	db:=core.MySQLConn{}
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	//!WHATEVER THE FUCK IS GOING ON HERE
+	io.WriteString(resp,"!!!")
 }
 
 func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
