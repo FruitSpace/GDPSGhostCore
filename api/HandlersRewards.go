@@ -25,7 +25,7 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if Post.Get("chk")!="" && Post.Get("udid")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		//!Implement Da Quests
+		
 	}else{
 		io.WriteString(resp,"-1")
 	}
