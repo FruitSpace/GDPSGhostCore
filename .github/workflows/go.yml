@@ -24,8 +24,19 @@ jobs:
     - name: Test
       run: go test -v ./...
 
-    - name: Discord Report
-      uses: distributhor/workflow-webhook@v2
-      env:
-        webhook_url: https://discord.com/api/webhooks/998519688680177666/GQbhxOvtw2B06N5JCdnsOb30Rx2LFdh1bE-dHJUHQIQVbbSe0URZIWVnczesMJlGtKEp/github
-        webhook_secret: none
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    needs:
+      - Build
+      - Test
+    if: ${{ always() }} # You always want to be notified: success, failure, or cancelled
+
+    steps:
+      - name: Notify
+        uses: nobrayner/discord-webhook@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          discord-webhook: https://discord.com/api/webhooks/998519688680177666/GQbhxOvtw2B06N5JCdnsOb30Rx2LFdh1bE-dHJUHQIQVbbSe0URZIWVnczesMJlGtKEp
+          username: 'Github Pipelines'
+          avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
