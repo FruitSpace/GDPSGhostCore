@@ -20,3 +20,21 @@ func (cq *CQuests) Exists(cType int) bool {
 	cq.DB.MustQueryRow("SELECT count(*) as cnt FROM quests WHERE type"+xType).Scan(&cnt)
 	return cnt>0
 }
+
+func (cq *CQuests) GetDaily() (int,int) {
+	var id, lvlId int
+	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM quests WHERE type=0 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id,&lvlId)
+	return id, lvlId
+}
+
+func (cq *CQuests) GetWeekly() (int,int) {
+	var id, lvlId int
+	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM quests WHERE type=1 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id,&lvlId)
+	return id, lvlId
+}
+
+func (cq *CQuests) GetEvent() (int,int) {
+	var id, lvlId int
+	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM quests WHERE type=-1 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id,&lvlId)
+	return id, lvlId
+}
