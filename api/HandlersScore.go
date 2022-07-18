@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -61,7 +62,58 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	var users []int
 	switch xType {
 	case "relative":
+		core.TryInt(&acc.Uid,Post.Get("accountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !acc.VerifySession(acc.Uid,IPAddr,gjp,true) {
+				users=[]int{}
+				break
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !acc.VerifySession(acc.Uid,IPAddr,gjp,false) {
+				users=[]int{}
+				break
+			}
+		}
+		acc.LoadStats()
+		users=acc.GetLeaderboard(core.CLEADERBOARD_GLOBAL,[]string{},acc.Stars)
+		break
 	case "friends":
+		core.TryInt(&acc.Uid,Post.Get("accountID"))
+		if core.GetGDVersion(Post)==22{
+			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
+			if !acc.VerifySession(acc.Uid,IPAddr,gjp,true) {
+				io.WriteString(resp,"-2")
+				return
+			}
+		}else{
+			gjp:=core.ClearGDRequest(Post.Get("gjp"))
+			if !acc.VerifySession(acc.Uid,IPAddr,gjp,false) {
+				io.WriteString(resp,"-2")
+				return
+			}
+		}
+		acc.LoadSocial()
+		if acc.FriendsCount==0 {
+			users=[]int{}
+			break
+		}
+		cf:=core.CFriendship{DB: db}
+		frs:=strings.Split(acc.FriendshipIds,",")
+		var friends []string
+		for _,fr:=range frs {
+			id,err:=strconv.Atoi(fr)
+			if err!=nil {continue}
+			uid1,uid2:=cf.GetFriendByFID(id)
+			if uid1==0 {continue}
+			xuid:=uid1
+			if acc.Uid==uid1 {xuid=uid2}
+			friends=append(friends,strconv.Itoa(xuid))
+		}
+		friends=append(friends, strconv.Itoa(acc.Uid))
+		users=acc.GetLeaderboard(core.CLEADERBOARD_FRIENDS,friends,0)
+		break
 	case "creators":
 		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0)
 		break

@@ -299,7 +299,7 @@ func (acc *CAccount) GetLeaderboardRank() int {
 	return cnt
 }
 
-func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStras int) []int {
+func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStars int) []int {
 	var query string
 	switch atype {
 	case CLEADERBOARD_BY_STARS:
@@ -309,8 +309,8 @@ func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStras int) [
 		query="SELECT uid FROM users WHERE cpoints>0 AND isBanned=0 ORDER BY cpoints DESC LIMIT 100"
 		break
 	case CLEADERBOARD_GLOBAL:
-		query="SELECT X.uid as uid,X.stars FROM ((SELECT uid,stars FROM users WHERE stars>"+ strconv.Itoa(globalStras) +" AND isBanned=0 ORDER BY stars ASC LIMIT 50)"
-		query+=" UNION (SELECT uid,stars FROM users WHERE stars<="+ strconv.Itoa(globalStras) +" AND stars>0 AND isBanned=0 ORDER BY stars DESC LIMIT 50)) as X ORDER BY X.stars DESC"
+		query="SELECT X.uid as uid,X.stars FROM ((SELECT uid,stars FROM users WHERE stars>"+ strconv.Itoa(globalStars) +" AND isBanned=0 ORDER BY stars ASC LIMIT 50)"
+		query+=" UNION (SELECT uid,stars FROM users WHERE stars<="+ strconv.Itoa(globalStars) +" AND stars>0 AND isBanned=0 ORDER BY stars DESC LIMIT 50)) as X ORDER BY X.stars DESC"
 		break
 	case CLEADERBOARD_FRIENDS:
 		friends:=strings.Join(grep,",")
@@ -324,7 +324,12 @@ func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStras int) [
 	var users []int
 	for rows.Next() {
 		var uid int
-		rows.Scan(&uid)
+		if atype==CLEADERBOARD_GLOBAL {
+			var stars int
+			rows.Scan(&uid,&stars) //Workaround for Globals
+		}else {
+			rows.Scan(&uid)
+		}
 		users=append(users,uid)
 	}
 	return users
