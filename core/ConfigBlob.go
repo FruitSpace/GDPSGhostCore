@@ -24,8 +24,7 @@ type ChestConfig struct {
 	ChestSmallOrbsMax int
 	ChestSmallDiamondsMin int
 	ChestSmallDiamondsMax int
-	ChestSmallShardsMin int
-	ChestSmallShardsMax int
+	ChestSmallShards []int
 	ChestSmallKeysMin int
 	ChestSmallKeysMax int
 	ChestSmallWait int
@@ -34,8 +33,7 @@ type ChestConfig struct {
 	ChestBigOrbsMax int
 	ChestBigDiamondsMin int
 	ChestBigDiamondsMax int
-	ChestBigShardsMin int
-	ChestBigShardsMax int
+	ChestBigShards []int
 	ChestBigKeysMin int
 	ChestBigKeysMax int
 	ChestBigWait int

@@ -5,11 +5,23 @@ import (
 	"io"
 	"net/http"
 	gorilla "github.com/gorilla/mux"
+	"os"
+	"strings"
 )
 
 func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	db:=core.MySQLConn{}
+	if logger.Should(db.ConnectBlob(config))!=nil {return}
+	//!WHATEVER THE FUCK IS GOING ON HERE
 }
 
 func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){

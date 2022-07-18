@@ -53,6 +53,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
+	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	page:=0
 	core.TryInt(&page,Post.Get("page"))
 	if page<0 {page=0}

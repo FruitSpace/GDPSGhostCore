@@ -9,6 +9,7 @@ import (
 	"html"
 	"io"
 	"log"
+	"math/rand"
 	"net/url"
 	"strconv"
 	"strings"
@@ -191,4 +192,19 @@ func CheckGDAuth(post url.Values) bool {
 		return true
 	}
 	return false
+}
+
+func MaxInt(a, b int) int {
+	if a>b {return a}
+	return b
+}
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }

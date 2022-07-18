@@ -2,7 +2,10 @@ package connectors
 
 import (
 	"HalogenGhostCore/core"
+	"encoding/base64"
+	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -19,6 +22,19 @@ func GetUserProfile(acc core.CAccount, isFriend bool) string {
 
 func UserProfilePersonal(frReq int,msgNewCnt int) string {
 	return ":38:"+strconv.Itoa(msgNewCnt)+":39:"+strconv.Itoa(frReq)+":40:0"
+}
+
+func UserListItem(acc core.CAccount) string {
+	s:=strconv.Itoa
+	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":9:"+s(acc.GetShownIcon())+":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+
+		":14:"+s(acc.IconType)+":15:"+s(acc.Special)+":16:"+s(acc.Uid)+":18:0:41:1|"
+}
+
+func UserSearchItem(acc core.CAccount) string {
+	s:=strconv.Itoa
+	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":3:"+s(acc.Stars)+":4:"+s(acc.Demons)+":8:"+s(acc.CPoints)+":9:"+s(acc.GetShownIcon())+
+		":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+":13:"+s(acc.Coins)+":14:"+s(acc.IconType)+":15:"+s(acc.Special)+
+		":16:"+s(acc.Uid)+":17:"+s(acc.UCoins)+"#1:0:10"
 }
 
 func GetAccountComment(comment core.CComment) string {
@@ -96,4 +112,33 @@ func GetTopArtists(artists map[string]string) string {
 		out+="4:"+artist+":7:"+youtube+"|"
 	}
 	return out[:len(out)-1]
+}
+
+
+func GenerateChestSmall(config core.ConfigBlob) string {
+	s:=strconv.Itoa
+	rand.Seed(time.Now().UnixNano())
+	intR:= func(min, max int) int {return rand.Intn(max-min+1)+min}
+	return s(intR(config.ChestConfig.ChestSmallOrbsMin,config.ChestConfig.ChestSmallOrbsMax))+","+
+		s(intR(config.ChestConfig.ChestSmallDiamondsMin,config.ChestConfig.ChestSmallDiamondsMax))+ ","+
+		s(config.ChestConfig.ChestSmallShards[rand.Intn(len(config.ChestConfig.ChestSmallShards))])+","+
+		s(intR(config.ChestConfig.ChestSmallKeysMin,config.ChestConfig.ChestSmallKeysMax))
+}
+
+func GenerateChestBig(config core.ConfigBlob) string {
+	s:=strconv.Itoa
+	rand.Seed(time.Now().UnixNano())
+	intR:= func(min, max int) int {return rand.Intn(max-min+1)+min}
+	return s(intR(config.ChestConfig.ChestBigOrbsMin,config.ChestConfig.ChestBigOrbsMax))+","+
+		s(intR(config.ChestConfig.ChestBigDiamondsMin,config.ChestConfig.ChestBigDiamondsMax))+ ","+
+		s(config.ChestConfig.ChestBigShards[rand.Intn(len(config.ChestConfig.ChestBigShards))])+","+
+		s(intR(config.ChestConfig.ChestBigKeysMin,config.ChestConfig.ChestBigKeysMax))
+}
+
+func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) string {
+	s:=strconv.Itoa
+	out:=core.RandStringBytes(5)+":"+s(acc.Uid)+":"+chk+":"+udid+":"+s(acc.Uid)+":"+s(smallLeft)+GenerateChestSmall(config)+":"+s(acc.ChestSmallCount)+":"+
+		s(bigLeft)+GenerateChestBig(config)+":"+s(acc.ChestBigCount)+":"+s(chestType)
+	out=strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out,"59182"))),"/","_"),"+","-")
+	return core.RandStringBytes(5)+out+"|"+core.HashSolo4(out)
 }
