@@ -1,3 +1,4 @@
+// Package modules is an ultimate plugin core with plugin autoload
 package modules
 
 import (
@@ -19,9 +20,10 @@ func (pch *PluginCore) Load(name string, plugin Plugin) {
 }
 
 func (pch *PluginCore) CallPlugin(endpoint string, args ...interface{}) []reflect.Value {
-	_endpoint:=strings.Split(endpoint,"::")
+	_endpoint:=strings.Split(endpoint,"::") // PluginName::Method
 	if plug,ok:=pch.HalPlugins[_endpoint[0]]; ok {
 		if _,ok:=reflect.TypeOf(plug).MethodByName(_endpoint[1]); ok{
+			//if plugin exists and has a method then convert all data to reflect.Value, call method and return its output
 			inputs := make([]reflect.Value, len(args)+1)
 			inputs=append(inputs, reflect.ValueOf(pch))
 			for i := range args {

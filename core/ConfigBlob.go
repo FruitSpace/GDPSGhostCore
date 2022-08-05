@@ -48,7 +48,14 @@ type ServerConfig struct {
 	MaxPosts int
 	HalMusic bool
 	Locked bool
+	TopSize int
 }
+
+//type SecurityConfig struct {
+//	DisableProtection bool
+//	DisableCaptcha bool
+//
+//}
 
 type GlobalConfig struct {
 	ApiEndpoint string

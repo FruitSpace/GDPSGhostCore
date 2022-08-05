@@ -1,3 +1,5 @@
+// Package connectors allow translating beautiful typed data to a hell of a mess RobTop format
+// and also to communicate with outside world
 package connectors
 
 import (
@@ -9,6 +11,7 @@ import (
 	"time"
 )
 
+// GetUserProfile used at getUserInfo (w/o trailing hash)
 func GetUserProfile(acc core.CAccount, isFriend bool) string {
 	s:=strconv.Itoa
 	role:=acc.GetRoleObj(false)
@@ -20,16 +23,19 @@ func GetUserProfile(acc core.CAccount, isFriend bool) string {
 		":45:"+acc.Twitch+":46:"+s(acc.Diamonds)+":48:"+s(acc.Death)+":49:"+s(role.ModLevel)+":50:"+s(acc.CS)
 }
 
+// UserProfilePersonal used at getUserInfo to append some data if user is requesting themselves (w/o trailing hash)
 func UserProfilePersonal(frReq int,msgNewCnt int) string {
 	return ":38:"+strconv.Itoa(msgNewCnt)+":39:"+strconv.Itoa(frReq)+":40:0"
 }
 
+// UserListItem used at getUserList to provide minimum data for user lists (iterative, w/o hash)
 func UserListItem(acc core.CAccount) string {
 	s:=strconv.Itoa
 	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":9:"+s(acc.GetShownIcon())+":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+
 		":14:"+s(acc.IconType)+":15:"+s(acc.Special)+":16:"+s(acc.Uid)+":18:0:41:1|"
 }
 
+// UserSearchItem used at getUsers (w/ trailing hash)
 func UserSearchItem(acc core.CAccount) string {
 	s:=strconv.Itoa
 	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":3:"+s(acc.Stars)+":4:"+s(acc.Demons)+":8:"+s(acc.CPoints)+":9:"+s(acc.GetShownIcon())+
@@ -37,6 +43,7 @@ func UserSearchItem(acc core.CAccount) string {
 		":16:"+s(acc.Uid)+":17:"+s(acc.UCoins)+"#1:0:10"
 }
 
+// GetAccountComment used to retrieve account comments (iterative, w/o hash)
 func GetAccountComment(comment core.CComment) string {
 	s:=strconv.Itoa
 	t,err:=time.Parse("2006-01-02 15:04:05",comment.PostedTime)
@@ -45,6 +52,7 @@ func GetAccountComment(comment core.CComment) string {
 	return "2~"+comment.Comment+"~3~"+s(comment.Uid)+"~4~"+s(comment.Likes)+"~5~0~6~"+s(comment.Id)+"~7~"+s(core.ToInt(comment.IsSpam))+"~9~"+age+"|"
 }
 
+// GetLevelComment used to retrieve level comment (iterative, w/o hash)
 func GetLevelComment(comment core.CComment) string {
 	s:=strconv.Itoa
 	t,err:=time.Parse("2006-01-02 15:04:05",comment.PostedTime)
@@ -62,6 +70,7 @@ func GetLevelComment(comment core.CComment) string {
 		"~10~"+s(acc.ColorPrimary)+"~11~"+s(acc.ColorSecondary)+"~14~"+s(acc.IconType)+"~15~"+s(acc.Special)+s(acc.Uid)+"|"
 }
 
+// GetCommentHistory used to retrieve level comment history of a user (iterative, w/o hash)
 func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role) string {
 	s:=strconv.Itoa
 	t,err:=time.Parse("2006-01-02 15:04:05",comment.PostedTime)
@@ -73,6 +82,7 @@ func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role)
 		"~10~"+s(acc.ColorPrimary)+"~11~"+s(acc.ColorSecondary)+"~14~"+s(acc.IconType)+"~15~"+s(acc.Special)+s(acc.Uid)+"|"
 }
 
+// GetFriendRequest used to get friend request item (iterative, w/o hash)
 func GetFriendRequest(frq map[string]string) string {
 	t,err:=time.Parse("2006-01-02 15:04:05",frq["date"])
 	if err!=nil {t=time.Now()}
@@ -81,6 +91,7 @@ func GetFriendRequest(frq map[string]string) string {
 		":14:"+frq["iconType"]+":15:"+frq["special"]+":16:"+frq["uid"]+":32:"+frq["id"]+":35:"+frq["comment"]+":37:"+age+":41:"+frq["isNew"]+"|"
 }
 
+// GetMessage used to retrieve single message (w/o trailing hash)
 func GetMessage(msg core.CMessage, uid int) string {
 	s:=strconv.Itoa
 	t,err:=time.Parse("2006-01-02 15:04:05",msg.PostedTime)
@@ -94,6 +105,7 @@ func GetMessage(msg core.CMessage, uid int) string {
 		":8:"+s(core.ToInt(!msg.IsNew))+":9:"+s(core.ToInt(uid==msg.UidSrc))
 }
 
+// GetMessageStr used to get message item (iterative, w/o hash)
 func GetMessageStr(msg map[string]string, getSent bool) string {
 	t,err:=time.Parse("2006-01-02 15:04:05",msg["date"])
 	if err!=nil {t=time.Now()}
@@ -102,10 +114,12 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 		":8:"+msg["isOld"]+":9:"+strconv.Itoa(core.ToInt(getSent))+"|"
 }
 
+// GetMusic used to get simple music string (w/o traling hash)
 func GetMusic(mus core.CMusic) string {
 	return "1~|~"+strconv.Itoa(mus.Id)+"~|~2~|~"+mus.Name+"~|~3~|~1~|~4~|~"+mus.Artist+"~|~5~|~"+mus.Size+"~|~6~|~~|~10~|~"+mus.Url
 }
 
+//used to get simple top artists string (w/o trailing hash)
 func GetTopArtists(artists map[string]string) string {
 	out:=""
 	for artist, youtube := range artists {
@@ -114,7 +128,7 @@ func GetTopArtists(artists map[string]string) string {
 	return out[:len(out)-1]
 }
 
-
+// GenerateChestSmall used to generate small chest loot
 func GenerateChestSmall(config core.ConfigBlob) string {
 	s:=strconv.Itoa
 	rand.Seed(time.Now().UnixNano())
@@ -125,6 +139,7 @@ func GenerateChestSmall(config core.ConfigBlob) string {
 		s(intR(config.ChestConfig.ChestSmallKeysMin,config.ChestConfig.ChestSmallKeysMax))
 }
 
+// GenerateChestBig used to generate big chest loot
 func GenerateChestBig(config core.ConfigBlob) string {
 	s:=strconv.Itoa
 	rand.Seed(time.Now().UnixNano())
@@ -135,6 +150,7 @@ func GenerateChestBig(config core.ConfigBlob) string {
 		s(intR(config.ChestConfig.ChestBigKeysMin,config.ChestConfig.ChestBigKeysMax))
 }
 
+// ChestOutput used to retrieve all chest data (w/ trailing hash)
 func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) string {
 	s:=strconv.Itoa
 	out:=core.RandStringBytes(5)+":"+s(acc.Uid)+":"+chk+":"+udid+":"+s(acc.Uid)+":"+s(smallLeft)+":"+GenerateChestSmall(config)+":"+s(acc.ChestSmallCount)+":"+
@@ -143,6 +159,7 @@ func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk str
 	return core.RandStringBytes(5)+out+"|"+core.HashSolo4(out)
 }
 
+// ChallengesOutput used to retrieve all quests/challenges data (w/ trailing hash)
 func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string{
 	s:=strconv.Itoa
 	virt:=core.RandStringBytes(5)
@@ -154,6 +171,7 @@ func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string{
 	return virt+out+"|"+core.HashSolo3(out)
 }
 
+// GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/ trailing hash)
 func GetAccLeaderboardItem(acc core.CAccount,lk int) string {
 	s:=strconv.Itoa
 	acc.LoadAuth(core.CAUTH_UID)

@@ -7,6 +7,7 @@ import (
 	"os"
 )
 
+// OutputConnector used to write anything to anywhere (stdio/http/files)
 type OutputConnector interface {
 	Write()
 }
