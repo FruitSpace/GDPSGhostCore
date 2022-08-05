@@ -208,3 +208,33 @@ func RandStringBytes(n int) string {
 	}
 	return string(b)
 }
+
+func CleanDoubles(src string, req string) string {
+	for strings.Contains(src,req+req) {
+		src=strings.ReplaceAll(src,req+req,req)
+	}
+	return src
+}
+
+func Decompose(src string,del string) []int {
+	mako:=strings.Split(src,del)
+	var vs []int
+	for _,l := range mako {
+		i, err := strconv.Atoi(l)
+		if err!=nil {continue}
+		vs=append(vs,i)
+	}
+	return vs
+}
+
+func ArrTranslate(arr []int) []string {
+	var vs []string
+	for _,l := range arr {
+		vs=append(vs,strconv.Itoa(l))
+	}
+	return vs
+}
+
+func QuickComma(str string) string {
+	return strings.Join(ArrTranslate(Decompose(CleanDoubles(str,","),",")),",")
+}
