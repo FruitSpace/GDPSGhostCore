@@ -97,6 +97,7 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 	return whereq
 }
 
+// SearchLevels searches Levels with filters given
 func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xtype int) []int {
 	suffix:=filter.GenerateQueryString(params)
 	query:=" FROM levels WHERE versionGame<=?"
@@ -134,7 +135,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 	default:
 		query+=" AND 1=0" //Because I can
 	}
-	sortstr:=" ORDER BY "+orderBy+" LIMIT 10 OFFSET"+strconv.Itoa(page)
+	sortstr:=" ORDER BY "+orderBy+" LIMIT 10 OFFSET "+strconv.Itoa(page)
 
 	var levels []int
 
@@ -153,8 +154,8 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 		}else{
 			// But if it's just text we search title
 			compq:=query+" AND name LIKE ? AND isUnlisted=0"+suffix
-			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
-			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
+			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],"%"+sterm+"%")
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],"%"+sterm+"%").Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
 				rows.Scan(&lvlid)
@@ -174,4 +175,135 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 	}
 
 	return levels
+}
+
+// SearchUserLevels searches levels of Followed users or by UID
+func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string, followMode bool) []int {
+	suffix:=filter.GenerateQueryString(params)
+	query:=" FROM levels WHERE versionGame<=?"
+	sortstr:=" ORDER BY downloads DESC LIMIT 10 OFFSET "+strconv.Itoa(page)
+
+	var levels []int
+
+	if sterm, ok := params["sterm"]; ok {
+		if followMode {
+			if _,err := strconv.Atoi(sterm); err!=nil {
+				query+=" AND isUnlisted=0 AND name LIKE ?"
+				sterm="%"+sterm+"%"
+			}else{
+				query+=" AND id=?"
+			}
+			compq:=query+" AND uid IN ("+QuickComma(params["followList"])+")"+suffix
+			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
+			for rows.Next() {
+				var lvlid int
+				rows.Scan(&lvlid)
+				levels=append(levels,lvlid)
+			}
+		}else{
+			if stermi,err := strconv.Atoi(sterm); err==nil {
+				compq:=query+" AND uid=?"+suffix
+				rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],stermi)
+				filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],stermi).Scan(&filter.Count)
+				for rows.Next() {
+					var lvlid int
+					rows.Scan(&lvlid)
+					levels=append(levels,lvlid)
+				}
+			}
+		}
+	}else{
+		if followMode {
+			compq:=query+" AND isUnlisted=0 AND uid IN ("+QuickComma(params["followList"])+")"+suffix
+			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+			for rows.Next() {
+				var lvlid int
+				rows.Scan(&lvlid)
+				levels=append(levels,lvlid)
+			}
+		}else{
+			compq:=query+suffix
+			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+			for rows.Next() {
+				var lvlid int
+				rows.Scan(&lvlid)
+				levels=append(levels,lvlid)
+			}
+		}
+	}
+
+	return levels
+}
+
+// SearchListLevels searches levels for Gauntlets/Mappacks via sterm list
+func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string) []int {
+	suffix:=filter.GenerateQueryString(params)
+	query:=" FROM levels WHERE versionGame<=?"
+	sortstr:=" LIMIT 10 OFFSET "+strconv.Itoa(page)
+
+	var levels []int
+
+	if sterm, ok := params["sterm"]; ok {
+		compq:=query+" AND id IN ("+QuickComma(sterm)+")"+suffix
+		rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+		for rows.Next() {
+			var lvlid int
+			rows.Scan(&lvlid)
+			levels=append(levels,lvlid)
+		}
+	}
+
+	return levels
+}
+
+// GetGauntlets retrieves gauntlet list and levels (w/ trailing hash)
+func (filter *CLevelFilter) GetGauntlets() string {
+	rows:=filter.DB.ShouldQuery("SELECT packName, levels FROM levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
+
+	var gau, hashstr string
+	for rows.Next() {
+		var packName, levels string
+		rows.Scan(&packName,&levels)
+		if len(Decompose(CleanDoubles(levels,","),","))!=5 {continue}
+		if _,err:=strconv.Atoi(packName); err!=nil {continue}
+		gau+="1:"+packName+":3:"+levels+"|"
+		hashstr+=packName+levels
+	}
+	if len(gau)==0 {return "-2"}
+	return gau[:len(gau)-1]+"#"+HashSolo2(hashstr)
+}
+
+// GetGauntletLevels returns gauntlet level IDs
+func (filter *CLevelFilter) GetGauntletLevels(gau int) []int {
+	var levels string
+	filter.DB.ShouldQueryRow("SELECT levels FROM levelpacks WHERE packType=1 AND packName=? LIMIT 1",gau).Scan(&levels)
+	malevels:=Decompose(CleanDoubles(levels,","),",")
+	if len(malevels)<5 {return []int{}}
+	return []int{malevels[0],malevels[1],malevels[2],malevels[3],malevels[4]}
+}
+
+func (filter *CLevelFilter) CountMapPacks() int {
+	var cnt int
+	filter.DB.ShouldQueryRow("SELECT count(*) FROM levelpacks WHERE packType=0").Scan(&cnt)
+	return cnt
+}
+
+// GetMapPacks retrieves MapPacks list and levels (w/ trailing hash)
+func (filter *CLevelFilter) GetMapPacks(page int) string {
+	rows:=filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET "+strconv.Itoa(page))
+
+	var pack, hashstr string
+	for rows.Next() {
+		var id, packName, levels, packStars, packCoins, packDiff, packColor string
+		rows.Scan(&id, &packName, &levels, &packStars, &packCoins, &packDiff, &packColor)
+
+		pack+="1:"+id+":2:"+packName+":3:"+levels+":4:"+packStars+":5:"+packCoins+":6:"+packDiff+":7:"+packColor+":8:"+packColor+"|"
+		hashstr+=string(id[0])+string(id[len(id)-1])+packStars+packCoins
+	}
+	if len(pack)==0 {return "-2"}
+	return pack[:len(pack)-1]+"#"+strconv.Itoa(filter.CountMapPacks())+":"+strconv.Itoa(page)+":10#"+HashSolo2(hashstr)
 }
