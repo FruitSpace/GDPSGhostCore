@@ -2,6 +2,8 @@ package core
 
 import (
 	"strconv"
+	"strings"
+	"time"
 )
 
 const (
@@ -78,9 +80,9 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 	if _,ok:=params["coins"]; ok {whereq+=" AND coins>0"}
 
 	//Is starred
-	if completed, ok := params["star"]; ok {
+	if star, ok := params["star"]; ok {
 		whereq+=" AND starsGot"
-		if completed=="0" {whereq+="="}else{whereq+=">"}
+		if star=="0" {whereq+="="}else{whereq+=">"}
 		whereq+="0"
 	}
 
@@ -93,4 +95,83 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 	}
 
 	return whereq
+}
+
+func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xtype int) []int {
+	suffix:=filter.GenerateQueryString(params)
+	query:=" FROM levels WHERE versionGame<=?"
+	orderBy:=""
+
+	switch xtype {
+	case CLEVELFILTER_MOSTLIKED:
+		orderBy="likes DESC, downloads DESC"
+		break
+	case CLEVELFILTER_MOSTDOWNLOADED:
+		orderBy="downloads DESC, likes DESC"
+		break
+	case CLEVELFILTER_TRENDING:
+		date:=time.Now().AddDate(0,0,-7).Format("2006-01-02 15:04:05")
+		query+=" AND uploadDate>'"+date+"'"
+		orderBy="likes DESC, downloads DESC"
+		break
+	case CLEVELFILTER_LATEST:
+		orderBy="uploadDate DESC, downloads DESC"
+		break
+	case CLEVELFILTER_MAGIC:
+		orderBy="uploadDate DESC, downloads DESC"
+		if strings.Contains(suffix,"starsGot>0") {
+			// Old magic
+			query+=" AND objects>9999 AND length>=3 AND original_id=0"
+		}else{
+			// New magic
+			query+=" WHERE EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
+		}
+		break
+	case CLEVELFILTER_HALL:
+		query+=" AND isEpic=1"
+		orderBy="likes DESC, downloads DESC"
+		break
+	default:
+		query+=" AND 1=0" //Because I can
+	}
+	sortstr:=" ORDER BY "+orderBy+" LIMIT 10 OFFSET"+strconv.Itoa(page)
+
+	var levels []int
+
+	//If we actually search for something
+	if sterm, ok := params["sterm"]; ok {
+		// If it's an ID
+		if _,err := strconv.Atoi(sterm); err==nil {
+			compq:=query+" AND id=?"+suffix
+			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
+			for rows.Next() {
+				var lvlid int
+				rows.Scan(&lvlid)
+				levels=append(levels,lvlid)
+			}
+		}else{
+			// But if it's just text we search title
+			compq:=query+" AND name LIKE ? AND isUnlisted=0"+suffix
+			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
+			for rows.Next() {
+				var lvlid int
+				rows.Scan(&lvlid)
+				levels=append(levels,lvlid)
+			}
+		}
+	}else{
+		// Or if we're just wandering and clicking buttons
+		compq:=query+" AND isUnlisted=0"+suffix
+		rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+		for rows.Next() {
+			var lvlid int
+			rows.Scan(&lvlid)
+			levels=append(levels,lvlid)
+		}
+	}
+
+	return levels
 }

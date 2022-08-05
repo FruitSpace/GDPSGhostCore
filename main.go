@@ -74,6 +74,7 @@ func GenConfig() core.ConfigBlob {
 			1000,
 			true,
 			false,
+			100,
 		},
 	}
 }
@@ -86,7 +87,7 @@ func GenGConfig() core.GlobalConfig {
 		false,
 		"localhost",
 		"6379",
-		"",
+		"3XTR4OrD1nArY_K3Y_1907",
 		7,
 		"./",
 
