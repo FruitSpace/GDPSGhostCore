@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"errors"
 )
 
 type MysqlConfig struct {
@@ -77,6 +78,7 @@ type ConfigBlob struct {
 	ServerConfig ServerConfig
 }
 
+
 func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
 	rdb:=RedisConn{}
 	log:=Logger{}
@@ -96,4 +98,22 @@ func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
 	}
 	rdb.DB.Close()
 	return conf, nil
+}
+
+func (glob *GlobalConfig) PushById(Srvid string, conf ConfigBlob) error {
+	rdb:=RedisConn{}
+	log:=Logger{}
+	if err:=rdb.ConnectBlob(*glob); err!=nil {
+		log.LogWarn(rdb,err.Error())
+		return err
+	}
+	if len(conf.DBConfig.Password)<3 {
+		err:= errors.New("Empty blob")
+		log.LogWarn(conf,err.Error())
+		return err
+	}
+	data, err:=json.Marshal(conf)
+	if log.Should(err)!=nil {return err}
+	if err:=log.Should(rdb.DB.Set(rdb.context, Srvid, string(data), 0).Err()); err!=nil {return err}
+	return nil
 }

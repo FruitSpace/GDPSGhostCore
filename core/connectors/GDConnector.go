@@ -171,7 +171,7 @@ func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string{
 	return virt+out+"|"+core.HashSolo3(out)
 }
 
-// GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/ trailing hash)
+// GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/o trailing hash)
 func GetAccLeaderboardItem(acc core.CAccount,lk int) string {
 	s:=strconv.Itoa
 	acc.LoadAuth(core.CAUTH_UID)
@@ -180,4 +180,19 @@ func GetAccLeaderboardItem(acc core.CAccount,lk int) string {
 	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":3:"+s(acc.Stars)+":4:"+s(acc.Demons)+":6:"+s(lk)+":7:"+s(acc.Uid)+
 		":8:"+s(acc.CPoints)+":9:"+s(acc.GetShownIcon())+":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+":13:"+s(acc.Coins)+
 		":14:"+s(acc.IconType)+":15:"+s(acc.Special)+":16:"+s(acc.Uid)+":17:"+s(acc.UCoins)+":46:"+s(acc.Diamonds)+"|"
+}
+
+// GetLeaderboardScore used to retrieve leaderboard scores (iterative, w/o trailing hash)
+func GetLeaderboardScore(score core.CScores) string {
+	s:=strconv.Itoa
+	acc:=core.CAccount{DB: score.DB, Uid: score.Uid}
+	acc.LoadAuth(core.CAUTH_UID)
+	acc.LoadVessels()
+	acc.LoadStats()
+	t,err:=time.Parse("2006-01-02 15:04:05",score.PostedTime)
+	if err!=nil {t=time.Now()}
+	age:=core.GetDateAgo(t.Unix())
+	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":3:"+s(score.Percent)+":6:"+s(score.Ranking)+":9:"+s(acc.GetShownIcon())+
+		":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+":13:"+s(score.Coins)+":14:"+s(acc.IconType)+":15:"+s(acc.Special)+
+		":16:"+s(acc.Uid)+":42:"+age+"|"
 }

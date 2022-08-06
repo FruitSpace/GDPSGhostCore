@@ -18,16 +18,17 @@ type CScores struct {
 	LvlId int
 	PostedTime string
 	Percent int
+	Ranking int
 	Attempts int
 	Coins int
 
 	DB MySQLConn
 }
 
-func (cs *CScores) ScoreExistsByUid(uid int, lvlId int) int {
+func (cs *CScores) ScoreExistsByUid(uid int, lvlId int) bool {
 	var cnt int
 	cs.DB.MustQueryRow("SELECT count(*) as cnt FROM scores WHERE uid=? AND lvl_id=?",uid,lvlId).Scan(&cnt)
-	return cnt
+	return cnt>0
 }
 
 func (cs *CScores) LoadScoreById() {
@@ -56,6 +57,7 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 	for req.Next() {
 		xcs:=CScores{}
 		req.Scan(&xcs.Uid,&xcs.LvlId,&xcs.PostedTime,&xcs.Percent,&xcs.Attempts,&xcs.Coins)
+		if xcs.Percent==100 { xcs.Ranking=1 }else if xcs.Percent>=75 { xcs.Ranking=2 }else{ xcs.Ranking=3 }
 		scores=append(scores,xcs)
 	}
 	return scores
