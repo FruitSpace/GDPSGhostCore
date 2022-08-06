@@ -24,14 +24,14 @@ jobs:
     - name: Test
       run: go test -v ./...
 
-#  notify:
-#    name: Discord Notification
-#    runs-on: ubuntu-latest
-#    needs:
-#      - build
-#    if: ${{ always() }} # You always want to be notified: success, failure, or cancelled
-#
-#    steps:
+  notify:
+    name: Discord Notification
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    if: ${{ always() }} # You always want to be notified: success, failure, or cancelled
+
+    steps:
 #      - name: Notify xHydra
 #        uses: nobrayner/discord-webhook@v1
 #        with:
@@ -39,10 +39,10 @@ jobs:
 #          discord-webhook: https://discord.com/api/webhooks/998519688680177666/GQbhxOvtw2B06N5JCdnsOb30Rx2LFdh1bE-dHJUHQIQVbbSe0URZIWVnczesMJlGtKEp
 #          username: 'Github Pipelines'
 #          avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
-#      - name: Notify HalHost
-#        uses: nobrayner/discord-webhook@v1
-#        with:
-#           github-token: ${{ secrets.GITHUB_TOKEN }}
-#           discord-webhook: https://discord.com/api/webhooks/998533902736052224/TlemW7jLxA3RxIrLDyXgF8A7_U0l8O2iLLqXNbttHwp9LWBzDeTb9IxypdXLft0c39Mz
-#           username: 'Github Pipelines'
-#           avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
+      - name: Notify HalHost
+        uses: nobrayner/discord-webhook@v1
+        with:
+           github-token: ${{ secrets.GITHUB_TOKEN }}
+           discord-webhook: https://discord.com/api/webhooks/998533902736052224/TlemW7jLxA3RxIrLDyXgF8A7_U0l8O2iLLqXNbttHwp9LWBzDeTb9IxypdXLft0c39Mz
+           username: 'Github Pipelines'
+           avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'

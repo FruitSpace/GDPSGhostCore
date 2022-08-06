@@ -35,8 +35,8 @@ func MaintainTasks(config GlobalConfig) {
 		//Start real stuff
 		mus:=CMusic{DB: db}
 		mus.CountDownloads()
-		//protect.ResetUserLimits
-		//protect.CountDownloads
+		//!protect.ResetUserLimits
+		//!protect.CountDownloads
 	}
 
 }

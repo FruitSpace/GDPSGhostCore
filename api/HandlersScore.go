@@ -239,6 +239,7 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		core.TryInt(&xacc.IconType, Post.Get("iconType"))
 		core.TryInt(&xacc.Coins, Post.Get("coins"))
 		core.TryInt(&xacc.UCoins, Post.Get("userCoins"))
+		core.TryInt(&xacc.Moons, Post.Get("moons"))
 		core.TryInt(&xacc.Special, Post.Get("special"))
 		core.TryInt(&xacc.Cube, Post.Get("accIcon"))
 		core.TryInt(&xacc.Ship, Post.Get("accShip"))

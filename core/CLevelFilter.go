@@ -13,6 +13,9 @@ const (
 	CLEVELFILTER_LATEST int = 703
 	CLEVELFILTER_MAGIC int = 704
 	CLEVELFILTER_HALL int = 705
+	CLEVELFILTER_SAFE_DAILY int = 706
+	CLEVELFILTER_SAFE_WEEKLY int = 707
+	CLEVELFILTER_SAFE_EVENT int = 708
 )
 
 type CLevelFilter struct {
@@ -131,6 +134,19 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 	case CLEVELFILTER_HALL:
 		query+=" AND isEpic=1"
 		orderBy="likes DESC, downloads DESC"
+		break
+	// Here be The Safe
+	case CLEVELFILTER_SAFE_DAILY:
+		query+=" WHERE EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
+		orderBy="uploadDate DESC, downloads DESC"
+		break
+	case CLEVELFILTER_SAFE_WEEKLY:
+		query+=" WHERE EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
+		orderBy="uploadDate DESC, downloads DESC"
+		break
+	case CLEVELFILTER_SAFE_EVENT:
+		query+=" WHERE EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
+		orderBy="uploadDate DESC, downloads DESC"
 		break
 	default:
 		query+=" AND 1=0" //Because I can
