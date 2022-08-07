@@ -2,6 +2,7 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
 	gorilla "github.com/gorilla/mux"
 	"io"
@@ -97,7 +98,6 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var lvl_id, quest_id int
 		core.TryInt(&lvl_id,Post.Get("levelID"))
-		cl:=core.CLevel{DB: db}
 		if lvl_id<0 {
 			cq:=core.CQuests{DB: db}
 			if !cq.Exists(lvl_id){
@@ -174,7 +174,7 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			t,_:=base64.StdEncoding.DecodeString(cl.Description)
 			cl.Description=base64.StdEncoding.EncodeToString([]byte(string(t)+" [Suggest: "+diffName+" ("+strconv.Itoa(diffCount)+")]"))
 		}
-
+		io.WriteString(resp,connectors.GetLevelFull(cl,passwd,phash,quest_id))
 	}else{
 		io.WriteString(resp,"-1")
 	}
