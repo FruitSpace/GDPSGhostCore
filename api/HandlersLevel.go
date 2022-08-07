@@ -180,7 +180,6 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	}
 }
 
-
 func LevelGetDaily(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	IPAddr:=req.Header.Get("CF-Connecting-IP")
 	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
@@ -233,13 +232,122 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 }
 
 func LevelUpdateDescription(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
+		var lvl_id int
+		core.TryInt(&lvl_id,Post.Get("levelID"))
+		cl:=core.CLevel{DB: db, Id: lvl_id}
+		if !cl.IsOwnedBy(xacc.Uid) {
+			io.WriteString(resp,"-1")
+			return
+		}
+		desc:=core.ClearGDRequest(Post.Get("levelDesc"))
+		if cl.UpdateDescription(desc) {
+			io.WriteString(resp, "1")
+		}else{
+			io.WriteString(resp,"-1")
+		}
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
 func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("levelString")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
+		cl:=core.CLevel{DB: db}
+
+		var pwd, is2p, isUnlisted, isFUnlisted, isLDM int
+		cl.Uid=xacc.Uid
+		cl.VersionGame=core.GetGDVersion(Post)
+		cl.StringLevel=core.ClearGDRequest(Post.Get("levelString"))
+		cl.Name=core.ClearGDRequest(Post.Get("levelName"))
+		if cl.Name=="" {cl.Name="Unnamed"}
+		cl.Description=core.ClearGDRequest(Post.Get("levelDesc"))
+		core.TryInt(&cl.Version,Post.Get("levelVersion"))
+		if cl.Version==0 {cl.Version=1}
+		core.TryInt(&cl.Length,Post.Get("levelLength"))
+		core.TryInt(&cl.TrackId,Post.Get("audioTrack"))
+		core.TryInt(&pwd,Post.Get("audioTrack"))
+		cl.Password=strconv.Itoa(pwd)
+		core.TryInt(&cl.OrigId,Post.Get("original"))
+		core.TryInt(&cl.SongId,Post.Get("songID"))
+		core.TryInt(&cl.Objects,Post.Get("objects"))
+		core.TryInt(&cl.Ucoins,Post.Get("coins"))
+		core.TryInt(&cl.StarsRequested,Post.Get("requestedStars"))
+		if cl.StarsRequested==0 {cl.StarsRequested=1}
+		core.TryInt(&is2p,Post.Get("original"))
+		cl.Is2p=is2p!=0
+		core.TryInt(&isUnlisted,Post.Get("levelVersion"))
+		core.TryInt(&isFUnlisted,Post.Get("levelVersion"))
+		cl.IsUnlisted=isUnlisted%2+isFUnlisted%2
+		core.TryInt(&isLDM,Post.Get("ldm"))
+		cl.IsLDM=isLDM!=0
+		cl.StringExtra=core.ClearGDRequest(Post.Get("extraString"))
+		if cl.StringExtra=="" {cl.StringExtra="29_29_29_40_29_29_29_29_29_29_29_29_29_29_29_29"}
+		cl.StringLevelInfo=core.ClearGDRequest(Post.Get("levelInfo"))
+		core.TryInt(&cl.VersionBinary,Post.Get("binaryVersion"))
+		core.TryInt(&cl.Id,Post.Get("levelID"))
+
+		if cl.IsOwnedBy(xacc.Uid){
+			res:=cl.UpdateLevel()
+			io.WriteString(resp,strconv.Itoa(res))
+			if res>0 {
+				core.RegisterAction(core.ACTION_LEVEL_UPDATE, xacc.Uid, res, map[string]string{
+					"name": cl.Name, "version": strconv.Itoa(cl.Version),
+					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
+				}, db)
+				//!Here be plug
+			}else{
+				io.WriteString(resp,"-1")
+			}
+		}else{
+			res:=cl.UploadLevel()
+			io.WriteString(resp,strconv.Itoa(res))
+			if res>0 {
+				core.RegisterAction(core.ACTION_LEVEL_UPLOAD, xacc.Uid, res, map[string]string{
+					"name": cl.Name, "version": strconv.Itoa(cl.Version),
+					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
+				}, db)
+				//!Here be plug
+			}else{
+				io.WriteString(resp,"-1")
+			}
+		}
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
 func RateDemon(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){

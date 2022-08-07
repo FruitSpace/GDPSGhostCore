@@ -48,11 +48,11 @@ type CLevel struct {
 
 	//Params
 	Is2p bool
-	Isverified bool
+	IsVerified bool
 	IsFeatured bool
 	ISHall bool
 	IsEpic int
-	IsUnlisted bool
+	IsUnlisted int
 	IsLDM bool
 
 	//Dates
@@ -77,12 +77,12 @@ func (lvl *CLevel) CountLevels() int {
 
 func (lvl *CLevel) LoadParams() {
 	lvl.DB.MustQueryRow("SELECT is2p, isVerified, isFeatured, isHall, isEpic, isUnlisted, isLDM FROM levels WHERE id=?",lvl.Id).Scan(
-		&lvl.Is2p,&lvl.Isverified,&lvl.IsFeatured,&lvl.ISHall,&lvl.IsEpic,&lvl.IsUnlisted,&lvl.IsLDM)
+		&lvl.Is2p,&lvl.IsVerified,&lvl.IsFeatured,&lvl.ISHall,&lvl.IsEpic,&lvl.IsUnlisted,&lvl.IsLDM)
 }
 
 func (lvl *CLevel) PushParams() {
 	lvl.DB.ShouldQuery("UPDATE levels SET is2p=?,isVerified=?,isFeatured=?,isHall=?,isEpic=?,isUnlisted=?,isLDM=? WHERE id=?",
-		lvl.Is2p,lvl.Isverified,lvl.IsFeatured,lvl.ISHall,lvl.IsEpic,lvl.IsUnlisted,lvl.IsLDM,lvl.Id)
+		lvl.Is2p,lvl.IsVerified,lvl.IsFeatured,lvl.ISHall,lvl.IsEpic,lvl.IsUnlisted,lvl.IsLDM,lvl.Id)
 }
 
 func (lvl *CLevel) LoadDates() {
@@ -140,7 +140,7 @@ func (lvl *CLevel) UploadLevel() int {
 	if !lvl.CheckParams() {return -1}
 	date:=time.Now().Format("2006-01-02 15:04:05")
 	q:="INSERT INTO levels (name, description, uid, password, version, length, track_id, song_id, versionGame, versionBinary, stringSettings, stringLevel, stringLevelInfo, original_id, objects, starsRequested, ucoins, is2p, isVerified, isUnlisted, isLDM, uploadDate, updateDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
-	r:=lvl.DB.ShouldPrepareExec(q,lvl.Name,lvl.Description,lvl.Uid,lvl.Password,lvl.Version,lvl.Length,lvl.TrackId,lvl.SongId,lvl.VersionGame,lvl.VersionBinary,lvl.StringSettings,lvl.StringLevel,lvl.StringLevelInfo,lvl.OrigId,lvl.Objects,lvl.StarsRequested,lvl.Ucoins,lvl.Is2p,lvl.Isverified,lvl.IsUnlisted,lvl.IsUnlisted,lvl.IsLDM,date,date)
+	r:=lvl.DB.ShouldPrepareExec(q,lvl.Name,lvl.Description,lvl.Uid,lvl.Password,lvl.Version,lvl.Length,lvl.TrackId,lvl.SongId,lvl.VersionGame,lvl.VersionBinary,lvl.StringSettings,lvl.StringLevel,lvl.StringLevelInfo,lvl.OrigId,lvl.Objects,lvl.StarsRequested,lvl.Ucoins,lvl.Is2p,lvl.IsVerified,lvl.IsUnlisted,lvl.IsUnlisted,lvl.IsLDM,date,date)
 	id,_:=r.LastInsertId()
 	return int(id)
 }
@@ -149,7 +149,7 @@ func (lvl *CLevel) UpdateLevel() int {
 	if !lvl.CheckParams() {return -1}
 	date:=time.Now().Format("2006-01-02 15:04:05")
 	q:="UPDATE levels SET name=?, description=?, password=?, version=?, length=?, track_id=?, song_id=?, versionGame=?, versionBinary=?, stringSettings=?, stringLevel=?, stringLevelInfo=?, original_id=?, objects=?, starsRequested=?, ucoins=?, is2p=?, isVerified=?, isUnlisted=?, isLDM=?, updateDate=? WHERE id=?"
-	lvl.DB.ShouldQuery(q,lvl.Name,lvl.Description,lvl.Password,lvl.Version,lvl.Length,lvl.TrackId,lvl.SongId,lvl.VersionGame,lvl.VersionBinary,lvl.StringSettings,lvl.StringLevel,lvl.StringLevelInfo,lvl.OrigId,lvl.Objects,lvl.StarsRequested,lvl.Ucoins,lvl.Is2p,lvl.Isverified,lvl.IsUnlisted,lvl.IsLDM,date,lvl.Id)
+	lvl.DB.ShouldQuery(q,lvl.Name,lvl.Description,lvl.Password,lvl.Version,lvl.Length,lvl.TrackId,lvl.SongId,lvl.VersionGame,lvl.VersionBinary,lvl.StringSettings,lvl.StringLevel,lvl.StringLevelInfo,lvl.OrigId,lvl.Objects,lvl.StarsRequested,lvl.Ucoins,lvl.Is2p,lvl.IsVerified,lvl.IsUnlisted,lvl.IsLDM,date,lvl.Id)
 	return lvl.Id
 }
 
