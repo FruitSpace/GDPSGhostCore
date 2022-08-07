@@ -196,3 +196,28 @@ func GetLeaderboardScore(score core.CScores) string {
 		":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+":13:"+s(score.Coins)+":14:"+s(acc.IconType)+":15:"+s(acc.Special)+
 		":16:"+s(acc.Uid)+":42:"+age+"|"
 }
+
+// GetLevelFull used to retrieve full Level data (w/ trailing hash)
+func GetLevelFull(cl core.CLevel, password string) string {
+	s:=strconv.Itoa
+	t,err:=time.Parse("2006-01-02 15:04:05",cl.UploadDate)
+	if err!=nil {t=time.Now()}
+	uplAge:=core.GetDateAgo(t.Unix())
+	t2,err:=time.Parse("2006-01-02 15:04:05",cl.UpdateDate)
+	if err!=nil {t=time.Now()}
+	updAge:=core.GetDateAgo(t.Unix())
+	diffNom:=0
+	isDemon:=0
+	if cl.DemonDifficulty>=0 {isDemon=1}
+	if cl.Difficulty>0 {diffNom=10}
+	var auto int
+	if cl.Difficulty<0 {
+		auto=1
+		cl.Difficulty=0
+	}
+	return "1:"+s(cl.Id)+":2:"+cl.Name+":3:"+cl.Description+":4:"+cl.StringLevel+":5:"+s(cl.Version)+":6:"+s(cl.Uid)+":8:"+s(diffNom)+
+		":9:"+s(cl.Difficulty)+":10:"+s(cl.Downloads)+":11:1:12:"+s(cl.TrackId)+":13:"+s(cl.VersionGame)+":14:"+s(cl.Likes)+
+		":15:"+s(cl.Length)+":16:0:17:"+s(isDemon)+":18:"+s(cl.StarsGot)+":19:"+s(core.ToInt(cl.IsFeatured))+":25:"+s(auto)+
+		":27:"+password+":28:"+uplAge+":29:"+updAge+":30:"+s(cl.OrigId)+":31:"+s(core.ToInt(cl.Is2p))+":35:"+s(cl.SongId)+
+		":36:"+cl.str
+}

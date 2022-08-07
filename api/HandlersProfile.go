@@ -30,13 +30,8 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		core.TryInt(&acc.Uid,Post.Get("targetAccountID"))
 		if core.CheckGDAuth(Post) {
 			xacc:=core.CAccount{DB: db}
-			core.TryInt(&uidSelf,Post.Get("accountID"))
-			if core.GetGDVersion(Post)==22{
-				gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-				if !xacc.VerifySession(uidSelf,IPAddr,gjp,true) {uidSelf=0}
-			}else{
-				gjp:=core.ClearGDRequest(Post.Get("gjp"))
-				if !xacc.VerifySession(uidSelf,IPAddr,gjp,false) {uidSelf=0}
+			if !xacc.PerformGJPAuth(Post, IPAddr){
+				uidSelf=0
 			}
 		}
 		if !acc.Exists(acc.Uid) {
@@ -77,19 +72,9 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		var cType int
 		core.TryInt(&cType,Post.Get("type"))
 		xacc:=core.CAccount{DB: db}
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-					return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		xacc.LoadSocial()
 		switch cType {
@@ -179,19 +164,9 @@ func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request, conf *co
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 
 		core.TryInt(&xacc.MS,Post.Get("mS"))

@@ -68,7 +68,7 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	"/database/getGJMapPacks.php": GetMapPacks,
 	"/database/getGJMapPacks20.php": GetMapPacks,
 	"/database/getGJMapPacks21.php": GetMapPacks,
-	"/database/getGJMessages20.php": MessageGet,
+	"/database/getGJMessages20.php": MessageGetAll,
 	"/database/getGJRewards.php": GetRewards,
 	"/database/getGJScores.php": GetScores,
 	"/database/getGJScores19.php": GetScores,

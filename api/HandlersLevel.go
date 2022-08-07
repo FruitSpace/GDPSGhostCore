@@ -5,8 +5,10 @@ import (
 	"encoding/base64"
 	gorilla "github.com/gorilla/mux"
 	"io"
+	"math"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -59,32 +61,21 @@ func LevelDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		var lvl_id int
 		core.TryInt(&lvl_id,Post.Get("levelID"))
 		cl:=core.CLevel{DB: db, Id: lvl_id}
-		if !cl.IsOwnedBy(uid) {
+		if !cl.IsOwnedBy(xacc.Uid) {
 			io.WriteString(resp,"-1")
 			return
 		}
 		cl.DeleteLevel() //!Fetch before that shit
-		cl.RecalculateCPoints(uid)
-		core.RegisterAction(core.ACTION_LEVEL_DELETE, uid, lvl_id, map[string]string{"uname":xacc.Uname,"type":"Delete:Owner"},db)
+		cl.RecalculateCPoints(xacc.Uid)
+		core.RegisterAction(core.ACTION_LEVEL_DELETE, xacc.Uid, lvl_id, map[string]string{"uname":xacc.Uname,"type":"Delete:Owner"},db)
 		io.WriteString(resp,"1")
 	}else{
 		io.WriteString(resp,"-1")
@@ -135,30 +126,53 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		}
 		cl.LoadAll()
 		cl.OnDownloadLevel()
-		var auto int
-		if cl.Difficulty<0 {
-			auto=1
-			cl.Difficulty=0
-		}
 		passwd:="0"
-		if cl.Password!="0" {passwd:=base64.StdEncoding.EncodeToString([]byte(core.DoXOR(cl.Password,"26364")))}
+		phash:=cl.Password
+		if cl.Password!="0" {passwd=base64.StdEncoding.EncodeToString([]byte(core.DoXOR(cl.Password,"26364")))}
 		if core.CheckGDAuth(Post){
 			var uid int
 			core.TryInt(&uid,Post.Get("accountID"))
 			xacc:=core.CAccount{DB: db}
-			if core.GetGDVersion(Post)==22{
-				gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-				if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-					io.WriteString(resp,"-1")
-					return
-				}
-			}else{
-				gjp:=core.ClearGDRequest(Post.Get("gjp"))
-				if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-					io.WriteString(resp,"-1")
-					return
+			if xacc.PerformGJPAuth(Post, IPAddr){
+				role:=xacc.GetRoleObj(true)
+				if len(role.Privs)>0 && role.Privs["aReqMod"]>0 {
+					passwd=base64.StdEncoding.EncodeToString([]byte(core.DoXOR("1","26364")))
+					phash="1"
 				}
 			}
+		}
+
+		if cl.SuggestDifficultyCnt>0 && cl.StarsGot==0 {
+			diffCount:=int(math.Round(cl.SuggestDifficulty))
+			diffName:="Unspecified"
+			switch diffCount {
+			case 1:
+				diffName="Auto"
+				break
+			case 2:
+				diffName="Easy"
+				break
+			case 3:
+				diffName="Normal"
+				break
+			case 4:
+			case 5:
+				diffName="Hard"
+				break
+			case 6:
+			case 7:
+				diffName="Harder"
+				break
+			case 8:
+			case 9:
+				diffName="Insane"
+				break
+			case 10:
+				diffName="Demon"
+				break
+			}
+			t,_:=base64.StdEncoding.DecodeString(cl.Description)
+			cl.Description=base64.StdEncoding.EncodeToString([]byte(string(t)+" [Suggest: "+diffName+" ("+strconv.Itoa(diffCount)+")]"))
 		}
 
 	}else{

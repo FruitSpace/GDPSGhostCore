@@ -84,22 +84,12 @@ func FriendAcceptRequest(resp http.ResponseWriter, req *http.Request, conf *core
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var requestId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&requestId,Post.Get("requestID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var requestId int
+		core.TryInt(&requestId,Post.Get("requestID"))
 		if requestId>0 {
 			cf:=core.CFriendship{DB: db}
 			io.WriteString(resp,strconv.Itoa(cf.AcceptFriendRequest(requestId,xacc.Uid)))
@@ -125,22 +115,12 @@ func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var targetId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&targetId,Post.Get("targetAccountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var targetId int
+		core.TryInt(&targetId,Post.Get("targetAccountID"))
 		if targetId>0 {
 			cf:=core.CFriendship{DB: db}
 			issender:= Post.Get("isSender")=="1"
@@ -169,19 +149,9 @@ func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.G
 		page:=0
 		core.TryInt(&page,Post.Get("page"))
 		getSent:= Post.Get("getSent")=="1"
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		cf:=core.CFriendship{DB: db}
 		count, frqs:=cf.GetFriendRequests(xacc.Uid,page,getSent)
@@ -213,22 +183,12 @@ func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.G
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var requestId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&requestId,Post.Get("requestID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var requestId int
+		core.TryInt(&requestId,Post.Get("requestID"))
 		if requestId>0 {
 			cf:=core.CFriendship{DB: db}
 			cf.ReadFriendRequest(requestId)
@@ -253,22 +213,12 @@ func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var targetId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&targetId,Post.Get("targetAccountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var targetId int
+		core.TryInt(&targetId,Post.Get("targetAccountID"))
 		if targetId>0 {
 			cf:=core.CFriendship{DB: db}
 			cf.DeleteFriendship(xacc.Uid,targetId)
@@ -293,22 +243,12 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var targetId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&targetId,Post.Get("toAccountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var targetId int
+		core.TryInt(&targetId,Post.Get("targetAccountID"))
 		if targetId>0 {
 			cf:=core.CFriendship{DB: db}
 			comment:=Post.Get("comment")
@@ -337,22 +277,12 @@ func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var msgId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&msgId,Post.Get("messageID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var msgId int
+		core.TryInt(&msgId,Post.Get("messageID"))
 		if msgId>0 {
 			cm:=core.CMessage{DB: db, Id: msgId}
 			cm.DeleteMessage(xacc.Uid)
@@ -377,22 +307,12 @@ func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var msgId int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&msgId,Post.Get("messageID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var msgId int
+		core.TryInt(&msgId,Post.Get("messageID"))
 		cm:=core.CMessage{DB: db}
 		if cm.Exists(msgId) {
 			cm.LoadMessageById(msgId)
@@ -424,24 +344,13 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
 		page:=0
 		core.TryInt(&page,Post.Get("page"))
 		getSent:= Post.Get("getSent")=="1"
-
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}
 		cm:=core.CMessage{DB: db}
 		count,msgs:=cm.GetMessageForUid(xacc.Uid,page,getSent)
 		if len(msgs)==0 {
@@ -473,24 +382,14 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
 		var uidDest int
 		core.TryInt(&uidDest,Post.Get("toAccountID"))
 		body:=core.ClearGDRequest(Post.Get("body"))
 		subject:=core.ClearGDRequest(Post.Get("subject"))
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}
 		cm:=core.CMessage{
 			DB: db,
 			UidSrc: xacc.Uid,

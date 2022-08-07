@@ -54,19 +54,9 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		var chestType int
 		core.TryInt(&chestType,Post.Get("rewardType"))

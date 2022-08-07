@@ -77,24 +77,14 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
 		var itemId, cType int
 		like:=Post.Get("like")=="1"
 		core.TryInt(&itemId,Post.Get("itemID"))
 		core.TryInt(&cType,Post.Get("type"))
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}
 		switch cType {
 		case 1:
 			cl:=core.CLevel{DB: db}
@@ -147,21 +137,10 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
-		xacc.LoadAuth(core.CAUTH_UID)
 		role:=xacc.GetRoleObj(true)
 		if len(role.Privs)>0 && role.Privs["aReqMod"]>0 {
 			io.WriteString(resp,"1")

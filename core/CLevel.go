@@ -22,7 +22,7 @@ type CLevel struct {
 	Difficulty int
 	DemonDifficulty int
 
-	SuggestDifficulty float32
+	SuggestDifficulty float64
 	SuggestDifficultyCnt int
 
 	//Level
@@ -30,6 +30,7 @@ type CLevel struct {
 	SongId int
 	VersionGame int
 	VersionBinary int
+	StringExtra string
 	StringSettings string
 	StringLevel string
 	StringLevelInfo string
@@ -159,8 +160,8 @@ func (lvl *CLevel) UpdateDescription(desc string) bool {
 }
 
 func (lvl *CLevel) DoSuggestDifficulty(diffx int){
-	diff:=float32(diffx)
-	lvl.SuggestDifficulty=(lvl.SuggestDifficulty*float32(lvl.SuggestDifficultyCnt)+diff)/float32(lvl.SuggestDifficultyCnt+1)
+	diff:=float64(diffx)
+	lvl.SuggestDifficulty=(lvl.SuggestDifficulty*float64(lvl.SuggestDifficultyCnt)+diff)/float64(lvl.SuggestDifficultyCnt+1)
 	lvl.DB.ShouldQuery("UPDATE levels SET suggestDifficulty=?,suggestDifficultyCnt=? WHERE id=?",lvl.SuggestDifficulty,lvl.SuggestDifficultyCnt,lvl.Id)
 }
 

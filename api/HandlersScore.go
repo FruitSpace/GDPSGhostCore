@@ -53,21 +53,10 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 
 		cs:=core.CScores{DB: db}
@@ -84,12 +73,12 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			// Upload score
 			if attempts<8355 { attempts=1 }else{ attempts-=8354 }
 			if coins<5820 { coins=0 }else{ coins=(coins-5819)%4 }
-			cs.Uid=uid
+			cs.Uid=xacc.Uid
 			cs.LvlId=lvlId
 			cs.Percent=percent
 			cs.Attempts=attempts
 			cs.Coins=coins
-			if cs.ScoreExistsByUid(uid,lvlId) {
+			if cs.ScoreExistsByUid(xacc.Uid,lvlId) {
 				cs.UpdateLevelScore()
 			}else{
 				cs.UploadLevelScore()
@@ -129,37 +118,17 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	var users []int
 	switch xType {
 	case "relative":
-		core.TryInt(&acc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !acc.VerifySession(acc.Uid,IPAddr,gjp,true) {
-				users=[]int{}
-				break
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !acc.VerifySession(acc.Uid,IPAddr,gjp,false) {
-				users=[]int{}
-				break
-			}
+		if !acc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		acc.LoadStats()
 		users=acc.GetLeaderboard(core.CLEADERBOARD_GLOBAL,[]string{},acc.Stars)
 		break
 	case "friends":
-		core.TryInt(&acc.Uid,Post.Get("accountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !acc.VerifySession(acc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-2")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !acc.VerifySession(acc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-2")
-				return
-			}
+		if !acc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		acc.LoadSocial()
 		if acc.FriendsCount==0 {
@@ -214,21 +183,10 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if core.CheckGDAuth(Post) {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		xacc.LoadStats()
 		core.TryInt(&xacc.ColorPrimary, Post.Get("color1"))
