@@ -208,5 +208,7 @@ CREATE TABLE rateQueue
     lvl_id          int(11)          NOT NULL,
     name            varchar(32)      NOT NULL DEFAULT 'Unnamed',
     uid             int(11)          NOT NULL,
-    mod_uid         int(11)          NOT NULL
+    mod_uid         int(11)          NOT NULL,
+    stars           int(11)          NOT NULL DEFAULT 0,
+    isFeatured      tinyint(1)       NOT NULL DEFAULT 0
 );

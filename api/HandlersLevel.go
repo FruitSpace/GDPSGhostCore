@@ -351,16 +351,133 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 }
 
 func RateDemon(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
+		var lvl_id int
+		core.TryInt(&lvl_id,Post.Get("levelID"))
+		cl:=core.CLevel{DB: db, Id: lvl_id}
+		if !cl.Exists(cl.Id) {
+			io.WriteString(resp,"-1")
+			return
+		}
+		role:=xacc.GetRoleObj(true)
+		var diff, mode int
+		core.TryInt(&mode, Post.Get("mode"))
+		core.TryInt(&diff, Post.Get("rating"))
+		if len(role.Privs)>0 && role.Privs["aRateDemon"]>0 && mode!=0 {
+			cl.RateDemon(diff%6)
+			io.WriteString(resp,strconv.Itoa(cl.Id))
+		}else{
+			io.WriteString(resp,"-1")
+		}
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
 func RateStar(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
+		var lvl_id int
+		core.TryInt(&lvl_id,Post.Get("levelID"))
+		cl:=core.CLevel{DB: db, Id: lvl_id}
+		if !cl.Exists(cl.Id) {
+			io.WriteString(resp,"-1")
+			return
+		}
+		var diff int
+		core.TryInt(&diff, Post.Get("stars"))
+		cl.LoadMain()
+		cl.DoSuggestDifficulty(diff%11)
+		io.WriteString(resp,"1")
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }
 
 func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
+		db:=core.MySQLConn{}
+		if logger.Should(db.ConnectBlob(config))!=nil {return}
+		xacc:=core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
+		}
+		var lvl_id int
+		core.TryInt(&lvl_id,Post.Get("levelID"))
+		cl:=core.CLevel{DB: db, Id: lvl_id}
+		if !cl.Exists(cl.Id) {
+			io.WriteString(resp,"-1")
+			return
+		}
+		cl.LoadMain()
+		role:=xacc.GetRoleObj(true)
+		var diff, isFeature int
+		core.TryInt(&isFeature, Post.Get("feature"))
+		core.TryInt(&diff, Post.Get("stars"))
+		if len(role.Privs)>0 {
+			if role.Privs["aRateStars"]>0 {
+				cl.RateLevel(diff%11)
+				cl.FeatureLevel(isFeature!=0)
+				core.RegisterAction(core.ACTION_LEVEL_RATE,xacc.Uid,cl.Id, map[string]string{
+					"uname": xacc.Uname, "type": "StarRate:"+strconv.Itoa(diff%11),
+				},db)
+				if isFeature!=0 {
+					core.RegisterAction(core.ACTION_LEVEL_RATE,xacc.Uid,cl.Id, map[string]string{
+						"uname": xacc.Uname, "type": "Feature",
+					},db)
+				}
+			}else if role.Privs["aRateReq"]>0 {
+				cl.SendReq(xacc.Uid,diff%11,isFeature)
+			}else{
+				io.WriteString(resp,"-1")
+				return
+			}
+			io.WriteString(resp,"1")
+		}else{
+			io.WriteString(resp,"-1")
+		}
+	}else{
+		io.WriteString(resp,"-1")
+	}
 }

@@ -282,3 +282,13 @@ func (lvl *CLevel) RecalculateCPoints(uid int) {
 		lvl.DB.ShouldQuery("UPDATE users SET cpoints=cpoints+? WHERE uid=?",cpoints,uid)
 	}
 }
+
+
+func (lvl *CLevel) SendReq(modUid int, stars int, isFeatured int) bool {
+	var cnt int
+	lvl.DB.MustQueryRow("SELECT count(*) AS cnt FROM rateQueue WHERE lvl_id=? AND mod_uid=?",lvl.Id,modUid).Scan(&cnt)
+	if cnt!=0 {return false}
+	lvl.DB.ShouldQuery("INSERT INTO rateQueue (lvl_id,name,uid,mod_uid,stars,isFeatured) VALUES(?,?,?,?,?,?)",
+		lvl.Id,lvl.Name,lvl.Uid,modUid,stars,isFeatured)
+	return true
+}
