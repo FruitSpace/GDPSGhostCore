@@ -304,18 +304,18 @@ func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStars int) [
 	var query string
 	switch atype {
 	case CLEADERBOARD_BY_STARS:
-		query="SELECT uid FROM users WHERE stars>0 AND isBanned=0 ORDER BY stars DESC LIMIT 100"
+		query="SELECT uid FROM users WHERE stars>0 AND isBanned=0 ORDER BY stars DESC, uname ASC LIMIT 100"
 		break
 	case CLEADERBOARD_BY_CPOINTS:
-		query="SELECT uid FROM users WHERE cpoints>0 AND isBanned=0 ORDER BY cpoints DESC LIMIT 100"
+		query="SELECT uid FROM users WHERE cpoints>0 AND isBanned=0 ORDER BY cpoints DESC, uname ASC LIMIT 100"
 		break
 	case CLEADERBOARD_GLOBAL:
-		query="SELECT X.uid as uid,X.stars FROM ((SELECT uid,stars FROM users WHERE stars>"+ strconv.Itoa(globalStars) +" AND isBanned=0 ORDER BY stars ASC LIMIT 50)"
-		query+=" UNION (SELECT uid,stars FROM users WHERE stars<="+ strconv.Itoa(globalStars) +" AND stars>0 AND isBanned=0 ORDER BY stars DESC LIMIT 50)) as X ORDER BY X.stars DESC"
+		query="SELECT X.uid as uid,X.stars FROM ((SELECT uid,stars,uname FROM users WHERE stars>"+ strconv.Itoa(globalStars) +" AND isBanned=0 ORDER BY stars ASC LIMIT 50)"
+		query+=" UNION (SELECT uid,stars,uname FROM users WHERE stars<="+ strconv.Itoa(globalStars) +" AND stars>0 AND isBanned=0 ORDER BY stars DESC LIMIT 50)) as X ORDER BY X.stars DESC, X.uname ASC"
 		break
 	case CLEADERBOARD_FRIENDS:
 		friends:=strings.Join(grep,",")
-		query="SELECT uid FROM users WHERE stars>0 AND isBanned=0 and uid IN ("+friends+") ORDER BY stars DESC LIMIT 100";
+		query="SELECT uid FROM users WHERE stars>0 AND isBanned=0 and uid IN ("+friends+") ORDER BY stars DESC, uname ASC";
 		break
 	default:
 		query="SELECT uid FROM users WHERE 1=0" //IDK WHY I DID THIS
