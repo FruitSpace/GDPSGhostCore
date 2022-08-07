@@ -103,6 +103,7 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 
 // SearchLevels searches Levels with filters given
 func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xtype int) []int {
+	page=int(math.Abs(float64(page)))*10
 	suffix:=filter.GenerateQueryString(params)
 	query:=" FROM levels WHERE versionGame<=?"
 	orderBy:=""
@@ -197,6 +198,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 
 // SearchUserLevels searches levels of Followed users or by UID
 func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string, followMode bool) []int {
+	page=int(math.Abs(float64(page)))*10
 	suffix:=filter.GenerateQueryString(params)
 	query:=" FROM levels WHERE versionGame<=?"
 	sortstr:=" ORDER BY downloads DESC LIMIT 10 OFFSET "+strconv.Itoa(page)
@@ -258,6 +260,7 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 
 // SearchListLevels searches levels for Gauntlets/Mappacks via sterm list
 func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string) []int {
+	page=int(math.Abs(float64(page)))*10
 	suffix:=filter.GenerateQueryString(params)
 	query:=" FROM levels WHERE versionGame<=?"
 	sortstr:=" LIMIT 10 OFFSET "+strconv.Itoa(page)
@@ -312,7 +315,7 @@ func (filter *CLevelFilter) CountMapPacks() int {
 
 // GetMapPacks retrieves MapPacks list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetMapPacks(page int) string {
-	page= int(math.Abs(float64(page)))*10
+	page=int(math.Abs(float64(page)))*10
 	rows:=filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET "+strconv.Itoa(page))
 
 	var pack, hashstr string

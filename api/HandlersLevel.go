@@ -9,6 +9,7 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -204,8 +205,176 @@ func LevelGetDaily(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 }
 
 func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
+	IPAddr:=req.Header.Get("CF-Connecting-IP")
+	if IPAddr=="" {IPAddr=req.Header.Get("X-Real-IP")}
+	if IPAddr=="" {IPAddr=strings.Split(req.RemoteAddr,":")[0]}
 	vars:= gorilla.Vars(req)
-    io.WriteString(resp,vars["gdps"])
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	//Get:=req.URL.Query()
+	Post:=ReadPost(req)
+
+	var mode, page int
+	core.TryInt(&mode,Post.Get("type"))
+	core.TryInt(&page,Post.Get("page"))
+
+	s:=strconv.Itoa
+	var Params map[string]string
+	Params["versionGame"]=s(core.GetGDVersion(Post))
+	if sterm:=Post.Get("str"); sterm!="" {Params["sterm"]=core.ClearGDRequest(Post.Get("str"))}
+
+	//Difficulty selector
+	if diff:=Post.Get("diff"); diff!=""{
+		preg, err:= regexp.Compile("[^0-9,-]")
+		if logger.Should(err)!=nil {return}
+		diff=core.CleanDoubles(preg.ReplaceAllString(diff,""),",")
+		if diff!="-" && diff!="," {
+			// The real diff filter begins
+			difflist:=strings.Split(diff,",")
+			var diffl []string
+			for _,sdiff := range difflist {
+				if sdiff=="" || sdiff=="-" {continue}
+				switch sdiff {
+				case "-1":
+					diffl=append(diffl,"0") //N/A
+					break
+				case "-2":
+					switch Post.Get("demonFilter") {
+					case "1":
+						Params["demonDiff"]="3"
+						break
+					case "2":
+						Params["demonDiff"]="4"
+						break
+					case "3":
+						Params["demonDiff"]="0"
+						break
+					case "4":
+						Params["demonDiff"]="5"
+						break
+					case "5":
+						Params["demonDiff"]="6"
+						break
+					}
+					break
+				case "1": //EASY
+				case "2": //NORMAL
+				case "3": //HARD
+				case "4": //HARDER
+				case "5": //INSANE
+					diffl=append(diffl,sdiff+"0")
+					break
+				default:
+					diffl=append(diffl,"-1") //AUTO
+				}
+			}
+			Params["diff"]=strings.Join(diffl,",")
+		}
+	}
+
+	//Other params
+	if plen:=Post.Get("len"); plen!="" {
+		preg, err := regexp.Compile("[^0-9,-]")
+		if logger.Should(err) != nil {return}
+		plen = core.CleanDoubles(preg.ReplaceAllString(plen, ""), ",")
+		if plen != "-" && plen != "," {
+			Params["length"]=plen
+		}
+	}
+	var uncompleted, onlyCompleted, featured, original, twoPlayer, coins, epic, star, noStar, song, Gauntlet int
+	core.TryInt(&uncompleted,Post.Get("uncompleted"))
+	core.TryInt(&onlyCompleted,Post.Get("onlyCompleted"))
+	if uncompleted!=0 {Params["completed"]="0"}
+	if onlyCompleted!=0 {Params["completed"]="1"}
+	if completed:=Post.Get("completedLevels"); completed!="" {
+		preg, err := regexp.Compile("[^0-9,-]")
+		if logger.Should(err) != nil {return}
+		completed = core.CleanDoubles(preg.ReplaceAllString(completed, ""), ",")
+		Params["completedLevels"]=completed
+	}else{
+		delete(Params,"completed")
+	}
+
+	core.TryInt(&featured,Post.Get("featured"))
+	if featured!=0 {Params["isFeatured"]="1"}
+	core.TryInt(&epic,Post.Get("epic"))
+	if epic!=0 {Params["isEpic"]="1"}
+	core.TryInt(&original,Post.Get("original"))
+	if original!=0 {Params["isOrig"]="1"}
+	core.TryInt(&twoPlayer,Post.Get("twoPlayer"))
+	if twoPlayer!=0 {Params["is2p"]="1"}
+	core.TryInt(&coins,Post.Get("coins"))
+	if coins!=0 {Params["coins"]="1"}
+	core.TryInt(&star,Post.Get("star"))
+	if star!=0 {Params["star"]="1"}
+	core.TryInt(&noStar,Post.Get("noStar"))
+	if noStar!=0 {Params["star"]="0"}
+	core.TryInt(&song,Post.Get("song"))
+	if song!=0 {
+		if !Post.Has("songCustom"){song*=-1}
+		Params["songid"]=strconv.Itoa(song)
+	}
+
+
+	db:=core.MySQLConn{}
+	if logger.Should(db.ConnectBlob(config))!=nil {return}
+	filter:=core.CLevelFilter{DB: db}
+	var levels []int
+
+	core.TryInt(&Gauntlet,Post.Get("gauntlet"))
+
+	if Gauntlet!=0 {
+		//get GAU levels
+		levels=filter.GetGauntletLevels(Gauntlet)
+	}else{
+		switch Post.Get("type") {
+		case "1":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTDOWNLOADED)
+			break
+		case "3":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_TRENDING)
+			break
+		case "4":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_LATEST)
+			break
+		case "5":
+			levels=filter.SearchUserLevels(page,Params,false) //User levels (uid in sterm)
+			break
+		case "6":
+		case "17":
+			Params["isFeatured"]="1"
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_LATEST) //Search featured
+			break
+		case "7":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MAGIC) //Magic (New+Old)
+			break //Old = >=10k obj & long
+		case "10":
+			levels=filter.SearchListLevels(page,Params) //List levels (id1,id2,... in sterm)
+			break
+		case "11":
+			Params["star"]="1"
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_LATEST) //Awarded tab
+			break
+		case "12":
+			//Follow levels
+			preg, err := regexp.Compile("[^0-9,-]")
+			if logger.Should(err) != nil {return}
+			Params["followList"]=preg.ReplaceAllString(core.ClearGDRequest(Post.Get("followed")), "")
+			if Params["followList"]=="" {break}
+			levels=filter.SearchUserLevels(page,Params,true)
+			break
+		case "13":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTDOWNLOADED)
+			break
+		default:
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTLIKED)
+		}
+	}
+
+
+
+
 }
 
 func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
