@@ -50,7 +50,7 @@ type CLevel struct {
 	Isverified bool
 	IsFeatured bool
 	ISHall bool
-	IsEpic bool
+	IsEpic int
 	IsUnlisted bool
 	IsLDM bool
 

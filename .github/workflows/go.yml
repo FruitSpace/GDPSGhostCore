@@ -43,6 +43,6 @@ jobs:
         uses: nobrayner/discord-webhook@v1
         with:
            github-token: ${{ secrets.GITHUB_TOKEN }}
-           discord-webhook: https://discord.com/api/webhooks/998533902736052224/TlemW7jLxA3RxIrLDyXgF8A7_U0l8O2iLLqXNbttHwp9LWBzDeTb9IxypdXLft0c39Mz
+           discord-webhook: https://discord.com/api/webhooks/1005819284301291572/qnyDf9_ZCiMVS7kPd6ovusqNB0T0P1McdrEs4oRv7VbPAygkK4LZodN7_5xV9nG3u2GC
            username: 'Github Pipelines'
            avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'

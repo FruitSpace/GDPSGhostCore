@@ -25,26 +25,15 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		cc:=core.CComment{DB: db}
 		var id int
 		core.TryInt(&id,Post.Get("commentID"))
-		cc.DeleteAccComment(id, uid)
+		cc.DeleteAccComment(id, xacc.Uid)
 		io.WriteString(resp,"1")
 	}else{
 		io.WriteString(resp,"-1")
@@ -63,9 +52,7 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 	Post:=ReadPost(req)
 	if Post.Get("accountID")!="" {
 		page:=0
-		if Post.Has("page") {
-			if c, err:= strconv.Atoi(Post.Get("page")); err==nil {page=c}
-		}
+		core.TryInt(&page, Post.Get("page"))
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var uid int
@@ -100,24 +87,13 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	if core.CheckGDAuth(Post) && Post.Get("comment")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		comment:=core.ClearGDRequest(Post.Get("comment"))
-		cc:=core.CComment{DB: db, Uid: uid, Comment: comment}
+		cc:=core.CComment{DB: db, Uid: xacc.Uid, Comment: comment}
 		c:="-1"
 		if cc.PostAccComment() {c="1"}
 		io.WriteString(resp,c)
@@ -140,31 +116,20 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		cc:=core.CComment{DB: db}
-		cl:=core.CLevel{DB: db}
 		var id, lvl_id int
 		core.TryInt(&id,Post.Get("commentID"))
 		core.TryInt(&lvl_id,Post.Get("levelID"))
-		if cl.IsOwnedBy(uid) {
+		cl:=core.CLevel{DB: db, Id: lvl_id}
+		if cl.IsOwnedBy(xacc.Uid) {
 			cc.DeleteOwnerLevelComment(id,lvl_id)
 		}else{
-			cc.DeleteLevelComment(id,uid)
+			cc.DeleteLevelComment(id,xacc.Uid)
 		}
 		io.WriteString(resp,"1")
 	}else{
@@ -184,11 +149,9 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	Post:=ReadPost(req)
 	if Post.Get("levelID")!="" {
 		page:=0
-		if Post.Has("page") {
-			if c, err:= strconv.Atoi(Post.Get("page")); err==nil {page=c}
-		}
+		core.TryInt(&page, Post.Get("page"))
 		mode:=false
-		if Post.Has("mode") && Post.Get("mode")!="0" {mode=true}
+		if Post.Get("mode")!="0" {mode=true}
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var lvlId int
@@ -222,11 +185,9 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 	Post:=ReadPost(req)
 	if Post.Get("userID")!="" {
 		page:=0
-		if Post.Has("page") {
-			if c, err:= strconv.Atoi(Post.Get("page")); err==nil {page=c}
-		}
+		core.TryInt(&page, Post.Get("page"))
 		mode:=false
-		if Post.Has("mode") && Post.Get("mode")!="0" {mode=true}
+		if Post.Get("mode")!="0" {mode=true}
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
@@ -269,27 +230,14 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckGDAuth(Post) && Post.Get("comment")!="" && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		var uid int
-		core.TryInt(&uid,Post.Get("accountID"))
 		xacc:=core.CAccount{DB: db}
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
 		comment:=core.ClearGDRequest(Post.Get("comment"))
 		percent:=0
-		if Post.Has("percent") {
-			core.TryInt(&percent,Post.Get("percent"))
-		}
+		core.TryInt(&percent,Post.Get("percent"))
 		percent%=101
 		cl:=core.CLevel{DB: db}
 		core.TryInt(&cl.Id,Post.Get("levelID"))
@@ -297,10 +245,10 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			io.WriteString(resp,"-1")
 			return
 		}
-		acc:=core.CAccount{DB: db, Uid: uid}
+		acc:=core.CAccount{DB: db, Uid: xacc.Uid}
 		acc.LoadAuth(core.CAUTH_UID)
 		role:=acc.GetRoleObj(true)
-		isOwned:=cl.IsOwnedBy(uid)
+		isOwned:=cl.IsOwnedBy(xacc.Uid)
 		if len(role.Privs)>0 || isOwned {
 			modCommentByte,err:=base64.StdEncoding.DecodeString(comment)
 			modComment:=string(modCommentByte)
@@ -312,7 +260,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 					io.WriteString(resp,"-1")
 				}
 			}else{
-				cc:=core.CComment{DB: db, Uid: uid, LvlId: cl.Id, Comment: comment, Percent: percent}
+				cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 				if cc.PostLevelComment() {
 					io.WriteString(resp,"1")
 				}else{
@@ -321,7 +269,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			}
 
 		}else{
-			cc:=core.CComment{DB: db, Uid: uid, LvlId: cl.Id, Comment: comment, Percent: percent}
+			cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 			if cc.PostLevelComment() {
 				io.WriteString(resp,"1")
 			}else{

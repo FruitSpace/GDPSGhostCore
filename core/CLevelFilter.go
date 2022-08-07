@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -169,6 +170,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 			}
 		}else{
 			// But if it's just text we search title
+			//! To support unlisted2 aka friendList maybe we should use isUnlisted<>1 or "isUnlisted=ANY(0"+",2"+")
 			compq:=query+" AND name LIKE ? AND isUnlisted=0"+suffix
 			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],"%"+sterm+"%")
 			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],"%"+sterm+"%").Scan(&filter.Count)
@@ -310,6 +312,7 @@ func (filter *CLevelFilter) CountMapPacks() int {
 
 // GetMapPacks retrieves MapPacks list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetMapPacks(page int) string {
+	page= int(math.Abs(float64(page)))*10
 	rows:=filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET "+strconv.Itoa(page))
 
 	var pack, hashstr string

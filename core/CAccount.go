@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"golang.org/x/exp/slices"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -420,7 +421,11 @@ func (acc *CAccount) VerifySession(uid int, ip string, gjp string, is22 bool) bo
 		return false
 	}
 	ptime,_:=time.Parse("2006-01-02 15:04:05",aDate)
-	if ip==lastIP && (time.Now().Unix()-ptime.Unix())<3600 {return true}
+	if ip==lastIP && (time.Now().Unix()-ptime.Unix())<3600 {
+		acc.Uid=uid
+		acc.LoadAuth(CAUTH_UID)
+		return true
+	}
 	if is22 {
 		acc.Uid=uid
 		acc.LoadAuth(CAUTH_UID)
@@ -438,6 +443,18 @@ func (acc *CAccount) VerifySession(uid int, ip string, gjp string, is22 bool) bo
 	return false
 }
 
+func (acc *CAccount) PerformGJPAuth(Post url.Values, IPAddr string) bool {
+	var uid int
+	TryInt(&uid,Post.Get("accountID"))
+	if GetGDVersion(Post)==22{
+		gjp:=ClearGDRequest(Post.Get("gjp2"))
+		if !acc.VerifySession(uid,IPAddr,gjp,true) {return false}
+	}else{
+		gjp:=ClearGDRequest(Post.Get("gjp"))
+		if !acc.VerifySession(uid,IPAddr,gjp,false) {return false}
+	}
+	return true
+}
 
 //Role
 type Role struct {

@@ -25,22 +25,12 @@ func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var uidTarget int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&uidTarget,Post.Get("targetAccountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var uidTarget int
+		core.TryInt(&uidTarget,Post.Get("targetAccountID"))
 		if uidTarget>0 {
 			xacc.UpdateBlacklist(core.CBLACKLIST_BLOCK,uidTarget)
 		}
@@ -64,22 +54,12 @@ func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
-		var uidTarget int
-		core.TryInt(&xacc.Uid,Post.Get("accountID"))
-		core.TryInt(&uidTarget,Post.Get("targetAccountID"))
-		if core.GetGDVersion(Post)==22{
-			gjp:=core.ClearGDRequest(Post.Get("gjp2"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,true) {
-				io.WriteString(resp,"-1")
-				return
-			}
-		}else{
-			gjp:=core.ClearGDRequest(Post.Get("gjp"))
-			if !xacc.VerifySession(xacc.Uid,IPAddr,gjp,false) {
-				io.WriteString(resp,"-1")
-				return
-			}
+		if !xacc.PerformGJPAuth(Post, IPAddr){
+			io.WriteString(resp,"-1")
+			return
 		}
+		var uidTarget int
+		core.TryInt(&uidTarget,Post.Get("targetAccountID"))
 		if uidTarget>0 {
 			xacc.UpdateBlacklist(core.CBLACKLIST_UNBLOCK,uidTarget)
 		}

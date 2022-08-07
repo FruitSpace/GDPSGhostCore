@@ -248,6 +248,10 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		core.TryInt(&xacc.Ufo, Post.Get("accBird"))
 		core.TryInt(&xacc.Robot, Post.Get("accRobot"))
 		core.TryInt(&xacc.Spider, Post.Get("accSpider"))
+		//!Unconfirmed jetpack and swing
+		core.TryInt(&xacc.Swing, Post.Get("accSwing"))
+		core.TryInt(&xacc.Jetpack, Post.Get("accJetpack"))
+
 		core.TryInt(&xacc.Trace, Post.Get("accGlow"))
 		core.TryInt(&xacc.Death, Post.Get("accExplosion"))
 		xacc.PushVessels()
