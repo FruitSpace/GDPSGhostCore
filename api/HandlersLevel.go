@@ -365,15 +365,67 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			levels=filter.SearchUserLevels(page,Params,true)
 			break
 		case "13":
-			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTDOWNLOADED)
+			//Friend levels
+			xacc:=core.CAccount{DB: db}
+			if ! (core.CheckGDAuth(Post) && xacc.PerformGJPAuth(Post, IPAddr)) {break}
+			xacc.LoadSocial()
+			if xacc.FriendsCount==0 {break}
+			fr:=core.CFriendship{DB: db}
+			friendships:=core.Decompose(core.CleanDoubles(xacc.FriendshipIds,","),",")
+			friends:=[]int{xacc.Uid}
+			for _, frid := range friendships {
+				id1,id2:=fr.GetFriendByFID(frid)
+				fid:=id1
+				if id1==xacc.Uid {fid=id2}
+				friends=append(friends,fid)
+			}
+			Params["followList"]=strings.Join(core.ArrTranslate(friends),",")
+			levels=filter.SearchUserLevels(page,Params,true)
+			break
+		case "16":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_HALL)
+			break
+		case "21":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_SAFE_DAILY)
+			break
+		case "22":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_SAFE_WEEKLY)
+			break
+		case "23":
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_SAFE_EVENT)
 			break
 		default:
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTLIKED)
 		}
 	}
 
+	//Output, begins!
+	if len(levels)==0 {
+		io.WriteString(resp,"-2")
+		return
+	}
+	out:=""
+	lvlHash:=""
+	usrstring:=""
+	musStr:=""
+	for _,lvl:= range levels {
+		cl:=core.CLevel{DB: db, Id: lvl}
+		cl.LoadAll()
+		lvlS,lvlH,usrH:=connectors.GetLevelSearch(cl, Gauntlet!=0)
+		out+=lvlS
+		lvlHash+=lvlH
+		usrstring+=usrH
+		mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
+		if cl.SongId!=0 &&mus.GetSong(cl.SongId){
+			musStr+=connectors.GetMusic(mus)+"~:~"
+		}
 
-
+	}
+	io.WriteString(resp,out[:len(out)-1]+"#"+
+		usrstring[:len(usrstring)-1]+"#"+
+		musStr[:len(musStr)-3]+"#"+
+		s(filter.Count)+":"+s(page*10)+":10#"+
+		core.HashSolo2(lvlHash))
 
 }
 

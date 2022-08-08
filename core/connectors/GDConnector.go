@@ -241,3 +241,44 @@ func GetLevelFull(cl core.CLevel, password string, phash string, quest_id int) s
 
 	//44 isGauntlet
 }
+
+// GetLevelSearch used to retrieve data about level in search (iterative, w/ half-hash), returns (lvlString, lvlHash, usrString)
+func GetLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
+	s:=strconv.Itoa
+	diffNom:=0
+	if cl.Difficulty>0 {diffNom=10}
+	var auto int
+	if cl.Difficulty<0 {
+		auto=1
+		cl.Difficulty=0
+	}
+	coinsVer:=0
+	if cl.Coins>0 {coinsVer=1}
+	demonDiff:=3
+	isDemon:=0
+	if cl.DemonDifficulty>=0 {
+		isDemon=1
+		demonDiff=cl.DemonDifficulty
+	}
+	acc:=core.CAccount{DB: cl.DB, Uid: cl.Uid}
+	if acc.Exists(acc.Uid) {
+		acc.LoadAuth(core.CAUTH_UID)
+	}else{
+		acc.Uname="[DELETED]"
+	}
+
+	gaustr:=""
+	if gau {gaustr=":44:1"}
+	//lvlString
+	return "1:"+s(cl.Id)+":2:"+cl.Name+":3:"+cl.Description+":5:"+s(cl.Version)+":6:"+s(cl.Uid)+":8:"+s(diffNom)+
+		":9:"+s(cl.Difficulty)+":10:"+s(cl.Downloads)+":11:1:12:"+s(cl.TrackId)+":13:"+s(cl.VersionGame)+":14:"+s(cl.Likes)+
+		":15:"+s(cl.Length)+":16:0:17:"+s(isDemon)+":18:"+s(cl.StarsGot)+":19:"+s(core.ToInt(cl.IsFeatured))+":25:"+s(auto)+
+		":30:"+s(cl.OrigId)+":31:"+s(core.ToInt(cl.Is2p))+":35:"+s(cl.SongId)+":37:"+s(cl.Ucoins)+ ":38:"+s(coinsVer)+
+		":39:"+s(cl.StarsRequested)+ ":42:"+s(cl.IsEpic)+":43:"+s(demonDiff)+gaustr+":45:"+s(cl.Objects)+":46:1:47:2|",
+		//lvlHash
+		string(s(cl.Id)[0])+s(cl.Id)[:len(s(cl.Id))-1]+s(cl.StarsGot)+s(coinsVer),
+		//usrString
+		s(acc.Uid)+":"+acc.Uname+":"+s(acc.Uid)+"|"
+
+	//44 isGauntlet
+}
