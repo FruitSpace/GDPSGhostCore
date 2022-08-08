@@ -4,6 +4,7 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"math"
@@ -220,7 +221,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	core.TryInt(&page,Post.Get("page"))
 
 	s:=strconv.Itoa
-	var Params map[string]string
+	Params:= make(map[string]string)
 	Params["versionGame"]=s(core.GetGDVersion(Post))
 	if sterm:=Post.Get("str"); sterm!="" {Params["sterm"]=core.ClearGDRequest(Post.Get("str"))}
 
@@ -404,6 +405,9 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		io.WriteString(resp,"-2")
 		return
 	}
+
+	fmt.Println(levels)
+	fmt.Println(Params)
 	out:=""
 	lvlHash:=""
 	usrstring:=""
@@ -421,6 +425,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		}
 
 	}
+	if len(musStr)==0 {musStr="lll"}
 	io.WriteString(resp,out[:len(out)-1]+"#"+
 		usrstring[:len(usrstring)-1]+"#"+
 		musStr[:len(musStr)-3]+"#"+
