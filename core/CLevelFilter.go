@@ -130,7 +130,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 			query+=" AND objects>9999 AND length>=3 AND original_id=0"
 		}else{
 			// New magic
-			query+=" WHERE EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
+			query+=" AND EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
 		}
 		break
 	case CLEVELFILTER_HALL:
@@ -139,15 +139,15 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 		break
 	// Here be The Safe
 	case CLEVELFILTER_SAFE_DAILY:
-		query+=" WHERE EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
+		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
 		orderBy="uploadDate DESC, downloads DESC"
 		break
 	case CLEVELFILTER_SAFE_WEEKLY:
-		query+=" WHERE EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
+		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
 		orderBy="uploadDate DESC, downloads DESC"
 		break
 	case CLEVELFILTER_SAFE_EVENT:
-		query+=" WHERE EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
+		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
 		orderBy="uploadDate DESC, downloads DESC"
 		break
 	default:
