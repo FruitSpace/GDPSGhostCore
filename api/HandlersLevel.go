@@ -109,13 +109,10 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			switch lvl_id {
 			case -1:
 				lvl_id,quest_id = cq.GetDaily()
-				break
 			case -2:
 				lvl_id,quest_id = cq.GetWeekly()
-				break
 			case -3:
 				lvl_id,quest_id = cq.GetEvent()
-				break
 			default:
 				io.WriteString(resp,"-2")
 				return
@@ -147,31 +144,28 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		if cl.SuggestDifficultyCnt>0 && cl.StarsGot==0 {
 			diffCount:=int(math.Round(cl.SuggestDifficulty))
 			diffName:="Unspecified"
+			//! Change that to array and get %11 index
 			switch diffCount {
 			case 1:
 				diffName="Auto"
-				break
 			case 2:
 				diffName="Easy"
-				break
 			case 3:
 				diffName="Normal"
-				break
 			case 4:
+				fallthrough
 			case 5:
 				diffName="Hard"
-				break
 			case 6:
+				fallthrough
 			case 7:
 				diffName="Harder"
-				break
 			case 8:
+				fallthrough
 			case 9:
 				diffName="Insane"
-				break
 			case 10:
 				diffName="Demon"
-				break
 			}
 			t,_:=base64.StdEncoding.DecodeString(cl.Description)
 			cl.Description=base64.StdEncoding.EncodeToString([]byte(string(t)+" [Suggest: "+diffName+" ("+strconv.Itoa(diffCount)+")]"))
@@ -239,30 +233,31 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 				switch sdiff {
 				case "-1":
 					diffl=append(diffl,"0") //N/A
-					break
 				case "-2":
+					//! Change switch to array with index %6
 					switch Post.Get("demonFilter") {
 					case "1":
 						Params["demonDiff"]="3"
-						break
 					case "2":
 						Params["demonDiff"]="4"
-						break
 					case "3":
 						Params["demonDiff"]="0"
-						break
 					case "4":
 						Params["demonDiff"]="5"
-						break
 					case "5":
 						Params["demonDiff"]="6"
-						break
+					default:
+						Params["demonDiff"]="0"
 					}
 					break
 				case "1": //EASY
+					fallthrough
 				case "2": //NORMAL
+					fallthrough
 				case "3": //HARD
+					fallthrough
 				case "4": //HARDER
+					fallthrough
 				case "5": //INSANE
 					diffl=append(diffl,sdiff+"0")
 					break
@@ -332,31 +327,24 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		switch Post.Get("type") {
 		case "1":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTDOWNLOADED)
-			break
 		case "3":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_TRENDING)
-			break
 		case "4":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_LATEST)
-			break
 		case "5":
 			levels=filter.SearchUserLevels(page,Params,false) //User levels (uid in sterm)
-			break
 		case "6":
+			fallthrough
 		case "17":
 			Params["isFeatured"]="1"
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_LATEST) //Search featured
-			break
 		case "7":
-			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MAGIC) //Magic (New+Old)
-			break //Old = >=10k obj & long
+			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MAGIC) //Magic (New+Old) | Old = >=10k obj & long
 		case "10":
 			levels=filter.SearchListLevels(page,Params) //List levels (id1,id2,... in sterm)
-			break
 		case "11":
 			Params["star"]="1"
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_LATEST) //Awarded tab
-			break
 		case "12":
 			//Follow levels
 			preg, err := regexp.Compile("[^0-9,-]")
@@ -364,7 +352,6 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			Params["followList"]=preg.ReplaceAllString(core.ClearGDRequest(Post.Get("followed")), "")
 			if Params["followList"]=="" {break}
 			levels=filter.SearchUserLevels(page,Params,true)
-			break
 		case "13":
 			//Friend levels
 			xacc:=core.CAccount{DB: db}
@@ -382,19 +369,14 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			}
 			Params["followList"]=strings.Join(core.ArrTranslate(friends),",")
 			levels=filter.SearchUserLevels(page,Params,true)
-			break
 		case "16":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_HALL)
-			break
 		case "21":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_SAFE_DAILY)
-			break
 		case "22":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_SAFE_WEEKLY)
-			break
 		case "23":
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_SAFE_EVENT)
-			break
 		default:
 			levels=filter.SearchLevels(page,Params,core.CLEVELFILTER_MOSTLIKED)
 		}

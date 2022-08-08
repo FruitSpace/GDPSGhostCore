@@ -96,7 +96,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 			}else{
 				io.WriteString(resp, "-1")
 			}
-			break
 		case 2:
 			comm:=core.CComment{DB: db}
 			if comm.ExistsLevelComment(itemId) {
@@ -105,7 +104,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 			}else{
 				io.WriteString(resp, "-1")
 			}
-			break
 		case 3:
 			comm:=core.CComment{DB: db}
 			if comm.ExistsAccComment(itemId) {
@@ -114,7 +112,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 			}else{
 				io.WriteString(resp, "-1")
 			}
-			break
 		default:
 			io.WriteString(resp,"-1")
 		}

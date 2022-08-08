@@ -42,7 +42,6 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 	case CSCORE_TYPE_WEEK:
 		date:=strings.Split(time.Now().AddDate(0,0,8-int(time.Now().Weekday())).Format("2006-01-02 15:04:05")," ")[0]+" 00:00:00"
 		suffix="AND postedTime>='"+date+"'"
-		break
 	case CSCORE_TYPE_FRIENDS:
 		acc.LoadSocial()
 		cf:=CFriendship{DB: cs.DB}
@@ -50,7 +49,6 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 		frs=append(frs,acc.Uid)
 		xfrs:=strings.Trim(strings.Join(strings.Fields(fmt.Sprint(frs)), ","), "[]")
 		suffix="AND uid IN("+strings.ReplaceAll(xfrs,",,",",")+")"
-		break
 	}
 	req:=cs.DB.ShouldQuery("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM scores WHERE lvl_id=? "+suffix+" ORDER BY percent DESC")
 	var scores []CScores

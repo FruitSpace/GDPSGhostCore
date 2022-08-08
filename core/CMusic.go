@@ -46,16 +46,12 @@ func (mus *CMusic) TransformHalResource() bool {
 	switch arn[1] {
 	case "ng":
 		if f,_:=regexp.MatchString(`[0-9]`,arn[2]); !f {return false}
-		break
 	case "sc":
 		if f,_:=regexp.MatchString(`(?i)([a-z\d\-\_])+[\\\\\/]([a-z\d\-\_])+$`,arn[2]); !f {return false}
-		break
 	case "yt":
 		if f,_:=regexp.MatchString(`(?i)^([a-z\d\-\_])+$`,arn[2]); !f {return false}
-		break
 	case "vk":
 		if f,_:=regexp.MatchString(`^(\d)+\_(\d)+$`,arn[2]); !f {return false}
-		break
 	default:
 		return false
 	}

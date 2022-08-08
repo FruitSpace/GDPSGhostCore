@@ -98,7 +98,6 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				}
 				io.WriteString(resp,out[:len(out)-1])
 			}
-			break
 		case 1:
 			blacklist:=strings.Split(xacc.Blacklist,",")
 			if len(blacklist)==0 {

@@ -88,25 +88,18 @@ func InvokeCommands(db MySQLConn, cl CLevel, acc CAccount, comment string, isOwn
 		switch strings.ToLower(command[1]) {
 		case "auto":
 			diff="-1"
-			break
 		case "easy":
 			diff="10"
-			break
 		case "normal":
 			diff="20"
-			break
 		case "hard":
 			diff="30"
-			break
 		case "harder":
 			diff="40"
-			break
 		case "insane":
 			diff="50"
-			break
 		case "reset":
 			diff="0,starsGot=0"
-			break
 		default:
 			return false
 		}

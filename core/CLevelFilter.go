@@ -79,8 +79,8 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 	if _,ok:=params["isFeatured"]; ok {whereq+=" AND isFeatured=1"}
 	if _,ok:=params["is2p"]; ok {whereq+=" AND is2p=1"}
 	if _,ok:=params["isOrig"]; ok {whereq+=" AND original_id=0"}
-	if _,ok:=params["isEpic"]; ok {whereq+=" AND isFeatured=1"}
-	if _,ok:=params["isFeatured"]; ok {whereq+=" AND isEpic=1"}
+	if _,ok:=params["isFeatured"]; ok {whereq+=" AND isFeatured=1"}
+	if _,ok:=params["isEpic"]; ok {whereq+=" AND isEpic=1"}
 	if _,ok:=params["coins"]; ok {whereq+=" AND coins>0"}
 
 	//Is starred
@@ -111,18 +111,14 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 	switch xtype {
 	case CLEVELFILTER_MOSTLIKED:
 		orderBy="likes DESC, downloads DESC"
-		break
 	case CLEVELFILTER_MOSTDOWNLOADED:
 		orderBy="downloads DESC, likes DESC"
-		break
 	case CLEVELFILTER_TRENDING:
 		date:=time.Now().AddDate(0,0,-7).Format("2006-01-02 15:04:05")
 		query+=" AND uploadDate>'"+date+"'"
 		orderBy="likes DESC, downloads DESC"
-		break
 	case CLEVELFILTER_LATEST:
 		orderBy="uploadDate DESC, downloads DESC"
-		break
 	case CLEVELFILTER_MAGIC:
 		orderBy="uploadDate DESC, downloads DESC"
 		if strings.Contains(suffix,"starsGot>0") {
@@ -132,24 +128,19 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 			// New magic
 			query+=" AND EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
 		}
-		break
 	case CLEVELFILTER_HALL:
 		query+=" AND isEpic=1"
 		orderBy="likes DESC, downloads DESC"
-		break
 	// Here be The Safe
 	case CLEVELFILTER_SAFE_DAILY:
 		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
 		orderBy="uploadDate DESC, downloads DESC"
-		break
 	case CLEVELFILTER_SAFE_WEEKLY:
 		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
 		orderBy="uploadDate DESC, downloads DESC"
-		break
 	case CLEVELFILTER_SAFE_EVENT:
 		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
 		orderBy="uploadDate DESC, downloads DESC"
-		break
 	default:
 		query+=" AND 1=0" //Because I can
 	}

@@ -124,7 +124,6 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		}
 		acc.LoadStats()
 		users=acc.GetLeaderboard(core.CLEADERBOARD_GLOBAL,[]string{},acc.Stars)
-		break
 	case "friends":
 		if !acc.PerformGJPAuth(Post, IPAddr){
 			io.WriteString(resp,"-1")
@@ -149,10 +148,8 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		}
 		friends=append(friends, strconv.Itoa(acc.Uid))
 		users=acc.GetLeaderboard(core.CLEADERBOARD_FRIENDS,friends,0)
-		break
 	case "creators":
 		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0)
-		break
 	default:
 		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_STARS,[]string{},0)
 	}

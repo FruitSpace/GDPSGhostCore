@@ -78,7 +78,6 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 				io.WriteString(resp,"-1")
 				return
 			}
-			break
 		case 2:
 			if chestBigLeft==0 {
 				xacc.ChestBigCount++
@@ -89,7 +88,6 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 				io.WriteString(resp,"-1")
 				return
 			}
-			break
 		}
 		io.WriteString(resp,connectors.ChestOutput(xacc,config,Post.Get("udid"),chk,chestSmallLeft,chestBigLeft,chestType))
 	}else{

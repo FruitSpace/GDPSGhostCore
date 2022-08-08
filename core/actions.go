@@ -39,87 +39,66 @@ func RegisterAction(action int, uid int, target_id int, data map[string]string, 
 	case ACTION_USER_REGISTER:
 		types=0
 		data["action"]="Register"
-		break
 	case ACTION_USER_LOGIN:
 		types=1
 		data["action"]="Login"
-		break
 	case ACTION_USER_DELETE:
 		types=2
 		data["action"]="Delete"
-		break
 	case ACTION_BAN_BAN:
 		types=3
 		data["action"]="Ban"
-		break
 	case ACTION_BAN_UNBAN:
 		types=3
 		data["action"]="Unban"
-		break
 	case ACTION_LEVEL_UPLOAD:
 		types=4
 		data["action"]="Upload"
-		break
 	case ACTION_LEVEL_DELETE:
 		types=4
 		data["action"]="Delete"
-		break
 	case ACTION_LEVEL_UPDATE:
 		types=4
 		data["action"]="Update"
-		break
 	case ACTION_LEVEL_RATE:
 		types=4
 		data["action"]="Rate"
-		break
 	case ACTION_PANEL_GAUNTLET_ADD:
 		types=5
 		data["action"]="GauntletAdd"
-		break
 	case ACTION_PANEL_GAUNTLET_DELETE:
 		types=5
 		data["action"]="GauntletDelete"
-		break
 	case ACTION_PANEL_GAUNTLET_EDIT:
 		types=5
 		data["action"]="GauntletEdit"
-		break
 	case ACTION_PANEL_MAPPACK_ADD:
 		types=5
 		data["action"]="MapPackAdd"
-		break
 	case ACTION_PANEL_MAPPACK_DELETE:
 		types=5
 		data["action"]="MapPackDelete"
-		break
 	case ACTION_PANEL_MAPPACK_EDIT:
 		types=5
 		data["action"]="MapPackEdit"
-		break
 	case ACTION_PANEL_QUEST_ADD:
 		types=5
 		data["action"]="QuestAdd"
-		break
 	case ACTION_PANEL_QUEST_DELETE:
 		types=5
 		data["action"]="QuestDelete"
-		break
 	case ACTION_PANEL_QUEST_EDIT:
 		types=5
 		data["action"]="QuestEdit"
-		break
 	case ACTION_LEVEL_LIKE:
 		types=6
 		data["action"]="LikeLevel"
-		break
 	case ACTION_ACCCOMMENT_LIKE:
 		types=7
 		data["action"]="LikeAcccomment"
-		break
 	case ACTION_COMMENT_LIKE:
 		types=8
 		data["action"]="LikeComment"
-		break
 	default:
 		return
 	}
@@ -146,13 +125,10 @@ func IsLiked(itemType int, uid int, dest_id int, db MySQLConn) bool {
 	switch itemType {
 	case ITEMTYPE_LEVEL:
 		event_id=6
-		break
 	case ITEMTYPE_ACCCOMMENT:
 		event_id=7
-		break
 	case ITEMTYPE_COMMENT:
 		event_id=8
-		break
 	default:
 		return true
 	}

@@ -172,29 +172,25 @@ func (lvl *CLevel) RateLevel(stars int) {
 	switch stars {
 	case 1:
 		diff=-1 //Auto
-		break
 	case 2:
 		diff=10 //Easy
-		break
 	case 3:
 		diff=20 //Normal
-		break
 	case 4:
+		fallthrough
 	case 5:
 		diff=30 //Hard
-		break
 	case 6:
+		fallthrough
 	case 7:
 		diff=40 //Harder
-		break
 	case 8:
+		fallthrough
 	case 9:
 		diff=50 //Insane
-		break
 	case 10:
 		diff=50 //Demon
 		postfix=",demonDifficulty=3"
-		break
 	default:
 		diff=0 //N/A Unrated
 	}
@@ -207,16 +203,12 @@ func (lvl *CLevel) RateDemon(diff int) {
 	switch diff {
 	case 5:
 		xdiff=6
-		break
 	case 4:
 		xdiff=5
-		break
 	case 3:
 		xdiff=0
-		break
 	case 2:
 		xdiff=4
-		break
 	default:
 		xdiff=3
 	}

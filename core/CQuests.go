@@ -78,14 +78,13 @@ func (cq *CQuests) GetSpecialLevel(xType int) string {
 	tme,_:=time.Parse("2006-01-02 15:04:05",strings.Split(time.Now().Format("2006-01-02 15:04:05")," ")[0]+" 00:00:00")
 	switch xType {
 	case -1:
+		fallthrough
 	case 0:
 		//!Additional 10800 Review is needed
 		timeLeft=int(tme.AddDate(0,0,1).Unix()-(time.Now().Unix()+10800))
-		break
 	case 1:
 		timeLeft=int(tme.AddDate(0,0,7).Unix()-(time.Now().Unix()+10800))
 		lvlId=100001
-		break
 	}
 	cq.DB.ShouldQueryRow("SELECT lvl_id FROM quests WHERE type="+strconv.Itoa(xType)+" AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&xLvlid)
 	return strconv.Itoa(xLvlid+lvlId)+"|"+strconv.Itoa(timeLeft)
