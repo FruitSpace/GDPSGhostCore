@@ -4,7 +4,6 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
-	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"math"
@@ -314,6 +313,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 
 
 	db:=core.MySQLConn{}
+	defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	filter:=core.CLevelFilter{DB: db}
 	var levels []int
@@ -388,8 +388,8 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		return
 	}
 
-	fmt.Println(levels)
-	fmt.Println(Params)
+	//fmt.Println(levels)
+	//fmt.Println(Params)
 	out:=""
 	lvlHash:=""
 	usrstring:=""
@@ -401,10 +401,10 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		out+=lvlS
 		lvlHash+=lvlH
 		usrstring+=usrH
-		mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
-		if cl.SongId!=0 &&mus.GetSong(cl.SongId){
-			musStr+=connectors.GetMusic(mus)+"~:~"
-		}
+		//mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
+		//if cl.SongId!=0 &&mus.GetSong(cl.SongId){
+		//	musStr+=connectors.GetMusic(mus)+"~:~"
+		//}
 
 	}
 	if len(musStr)==0 {musStr="lll"}

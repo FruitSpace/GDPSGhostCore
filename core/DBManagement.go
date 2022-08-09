@@ -23,6 +23,8 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 	return err
 }
 
+func (db *MySQLConn) CloseDB() {db.DB.Close()}
+
 func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result, error) {
 	stmt, err:=db.DB.Prepare(query)
 	if err!=nil {return nil, err}

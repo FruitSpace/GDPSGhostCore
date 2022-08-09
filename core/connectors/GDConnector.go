@@ -272,14 +272,14 @@ func GetLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
 	//lvlString
 	strID:=s(cl.Id)
 	sliceL:=len(strID)-1
-	if sliceL==0 {sliceL=1}
+	//if sliceL==0 {sliceL=1}
 	return "1:"+s(cl.Id)+":2:"+cl.Name+":3:"+cl.Description+":5:"+s(cl.Version)+":6:"+s(cl.Uid)+":8:"+s(diffNom)+
 		":9:"+s(cl.Difficulty)+":10:"+s(cl.Downloads)+":12:"+s(cl.TrackId)+":13:"+s(cl.VersionGame)+":14:"+s(cl.Likes)+
 		":15:"+s(cl.Length)+":17:"+s(isDemon)+":18:"+s(cl.StarsGot)+":19:"+s(core.ToInt(cl.IsFeatured))+":25:"+s(auto)+
 		":30:"+s(cl.OrigId)+":31:"+s(core.ToInt(cl.Is2p))+":35:"+s(cl.SongId)+":37:"+s(cl.Ucoins)+ ":38:"+s(coinsVer)+
 		":39:"+s(cl.StarsRequested)+ ":42:"+s(cl.IsEpic)+":43:"+s(demonDiff)+gaustr+":45:"+s(cl.Objects)+":46:1:47:2|",
 		//lvlHash
-		string(strID[0])+string(strID[:sliceL])+s(cl.StarsGot)+s(coinsVer),
+		string(strID[0])+string(strID[sliceL])+s(cl.StarsGot)+s(coinsVer),
 		//usrString
 		s(acc.Uid)+":"+acc.Uname+":"+s(acc.Uid)+"|"
 

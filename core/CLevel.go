@@ -109,11 +109,20 @@ func (lvl *CLevel) LoadMain() {
 }
 
 func (lvl *CLevel) LoadAll() {
-	lvl.LoadMain()
-	lvl.LoadLevel()
-	lvl.LoadStats()
-	lvl.LoadParams()
-	lvl.LoadDates()
+	query:="SELECT name,description,uid,password,version,length,difficulty,demonDifficulty,suggestDifficulty,suggestDifficultyCnt,"+
+		"track_id,song_id,versionGame,versionBinary,stringExtra,stringSettings,stringLevel,stringLevelInfo,original_id,objects,"+
+		"starsRequested,starsGot,ucoins,coins,downloads,likes,reports,is2p,isVerified,isFeatured,isHall,isEpic,isUnlisted,isLDM," +
+		"uploadDate,updateDate FROM levels WHERE id=?"
+	lvl.DB.MustQueryRow(query,lvl.Id).Scan(&lvl.Name,&lvl.Description,&lvl.Uid,&lvl.Password,&lvl.Version,&lvl.Length,&lvl.Difficulty,
+		&lvl.DemonDifficulty,&lvl.SuggestDifficulty,&lvl.SuggestDifficultyCnt,&lvl.TrackId,&lvl.SongId,&lvl.VersionGame,&lvl.VersionBinary,
+		&lvl.StringExtra,&lvl.StringSettings,&lvl.StringLevel,&lvl.StringLevelInfo,&lvl.OrigId,&lvl.Objects,&lvl.StarsRequested,
+		&lvl.StarsGot,&lvl.Ucoins,&lvl.Coins,&lvl.Downloads,&lvl.Likes,&lvl.Reports,&lvl.Is2p,&lvl.IsVerified,&lvl.IsFeatured,
+		&lvl.ISHall,&lvl.IsEpic,&lvl.IsUnlisted,&lvl.IsLDM,&lvl.UploadDate,&lvl.UpdateDate)
+	//lvl.LoadMain()
+	//lvl.LoadLevel()
+	//lvl.LoadStats()
+	//lvl.LoadParams()
+	//lvl.LoadDates()
 }
 
 func (lvl *CLevel) LoadBase() {
