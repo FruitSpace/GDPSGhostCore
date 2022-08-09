@@ -139,7 +139,7 @@ func (lvl *CLevel) DeleteLevel() {
 func (lvl *CLevel) UploadLevel() int {
 	if !lvl.CheckParams() {return -1}
 	date:=time.Now().Format("2006-01-02 15:04:05")
-	q:="INSERT INTO levels (name, description, uid, password, version, length, track_id, song_id, versionGame, versionBinary, stringExtra, stringSettings, stringLevel, stringLevelInfo, original_id, objects, starsRequested, ucoins, is2p, isVerified, isUnlisted, isLDM, uploadDate, updateDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+	q:="INSERT INTO levels (name, description, uid, password, version, length, track_id, song_id, versionGame, versionBinary, stringExtra, stringSettings, stringLevel, stringLevelInfo, original_id, objects, starsRequested, ucoins, is2p, isVerified, isUnlisted, isLDM, uploadDate, updateDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 	r:=lvl.DB.ShouldPrepareExec(q,lvl.Name,lvl.Description,lvl.Uid,lvl.Password,lvl.Version,lvl.Length,lvl.TrackId,lvl.SongId,lvl.VersionGame,lvl.VersionBinary,lvl.StringExtra,lvl.StringSettings,lvl.StringLevel,lvl.StringLevelInfo,lvl.OrigId,lvl.Objects,lvl.StarsRequested,lvl.Ucoins,lvl.Is2p,lvl.IsVerified,lvl.IsUnlisted,lvl.IsLDM,date,date)
 	id,_:=r.LastInsertId()
 	return int(id)

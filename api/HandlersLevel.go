@@ -516,8 +516,9 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if cl.StarsRequested==0 {cl.StarsRequested=1}
 		core.TryInt(&is2p,Post.Get("original"))
 		cl.Is2p=is2p!=0
-		core.TryInt(&isUnlisted,Post.Get("levelVersion"))
-		core.TryInt(&isFUnlisted,Post.Get("levelVersion"))
+		core.TryInt(&isUnlisted,Post.Get("unlisted"))
+		if unl:=Post.Get("unlisted1"); unl!="" {core.TryInt(&isUnlisted, unl)}
+		core.TryInt(&isFUnlisted,Post.Get("unlisted2"))
 		cl.IsUnlisted=isUnlisted%2+isFUnlisted%2
 		core.TryInt(&isLDM,Post.Get("ldm"))
 		cl.IsLDM=isLDM!=0
