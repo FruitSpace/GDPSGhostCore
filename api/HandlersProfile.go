@@ -100,7 +100,7 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			}
 		case 1:
 			blacklist:=strings.Split(xacc.Blacklist,",")
-			if len(blacklist)==0 {
+			if len(xacc.Blacklist)==0 || len(blacklist)==0 {
 				io.WriteString(resp,"-2")
 			}else{
 				out:=""

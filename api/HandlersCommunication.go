@@ -248,7 +248,7 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			return
 		}
 		var targetId int
-		core.TryInt(&targetId,Post.Get("targetAccountID"))
+		core.TryInt(&targetId,Post.Get("toAccountID"))
 		if targetId>0 {
 			cf:=core.CFriendship{DB: db}
 			comment:=Post.Get("comment")

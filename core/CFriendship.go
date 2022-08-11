@@ -50,7 +50,7 @@ func (cf *CFriendship) GetFriendRequests(uid int, page int, sent bool) (int,[]ma
 		)
 		rows.Scan(&id,&src,&dest,&date,&comment,&isNew)
 		cnt++
-		var user map[string]string
+		user:= make(map[string]string)
 		user["id"]=strconv.Itoa(id)
 		user["comment"]=comment
 		acc:=CAccount{DB:cf.DB}
@@ -144,7 +144,7 @@ func (cf *CFriendship) AcceptFriendRequest(id int, uid int) int {
 		src int
 		dest int
 	)
-	cf.DB.ShouldQueryRow("SELECT uid_src, uid_dest FROM friendreqs WHERE id=",id).Scan(&src,&dest)
+	cf.DB.ShouldQueryRow("SELECT uid_src,uid_dest FROM friendreqs WHERE id=?",id).Scan(&src,&dest)
 	if src==dest || uid!=dest {return -1}
 	req,_:=cf.DB.DB.Prepare("INSERT INTO friendships (uid1, uid2) VALUES (?,?)")
 	rq,_:=req.Exec(uid,dest)

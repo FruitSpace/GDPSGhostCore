@@ -82,9 +82,10 @@ func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) (int,[]map[st
 			"isOld": strconv.Itoa(ToInt(!msg.IsNew)),
 			"date": msg.PostedTime,
 		}
-		acc:=CAccount{DB: cm.DB}
+
 		uid:=msg.UidSrc
 		if sent{uid=msg.UidDest}
+		acc:=CAccount{DB: cm.DB, Uid: uid}
 		if acc.Exists(uid) {
 			acc.LoadAuth(CAUTH_UID)
 			blk["uname"]=acc.Uname
