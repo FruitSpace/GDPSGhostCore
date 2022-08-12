@@ -82,7 +82,7 @@ func (cc *CComment) GetAllLevelComments(lvlId int, page int, sortMode bool) []CC
 	rows:=cc.DB.ShouldQuery("SELECT id,uid,comment,postedTime,likes,isSpam,percent FROM comments WHERE lvl_id=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page),lvlId)
 	var out []CComment
 	for rows.Next() {
-		comm:=CComment{LvlId: lvlId}
+		comm:=CComment{LvlId: lvlId, DB: cc.DB}
 		rows.Scan(&comm.Id,&comm.Uid,&comm.Comment,&comm.PostedTime,&comm.Likes,&comm.IsSpam,&comm.Percent)
 		out=append(out,comm)
 	}

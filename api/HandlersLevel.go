@@ -553,7 +553,6 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				io.WriteString(resp,"-1")
 			}
 		}
-		io.WriteString(resp,"1")
 	}else{
 		io.WriteString(resp,"-1")
 	}

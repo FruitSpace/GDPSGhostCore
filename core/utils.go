@@ -153,6 +153,7 @@ func TryInt(target *int, str string) bool {
 		*target=c
 		return true
 	}
+	fmt.Println("Cannot intify",str)
 	return false
 }
 
@@ -171,14 +172,14 @@ func GetGDVersion(post url.Values) int {
 	}
 	if version==20 {
 		if post.Has("binaryVersion") {
-			if c, err:=strconv.Atoi(post.Get("gameVersion")); err==nil && c>27 {
+			if c, err:=strconv.Atoi(post.Get("binaryVersion")); err==nil && c>27 {
 				version++
 			}
 		}
 	}
 	if version==21 {
 		if post.Has("binaryVersion") {
-			if c, err:=strconv.Atoi(post.Get("gameVersion")); err==nil && c>36 {
+			if c, err:=strconv.Atoi(post.Get("binaryVersion")); err==nil && c>36 {
 				version++
 			}
 		}

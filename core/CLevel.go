@@ -126,7 +126,7 @@ func (lvl *CLevel) LoadAll() {
 }
 
 func (lvl *CLevel) LoadBase() {
-	lvl.DB.MustQueryRow("SELECT uid,name,version FROM levels WHERE id=?",lvl.Id).Scan(&lvl.Uid,&lvl.Name,&lvl.Version)
+	lvl.DB.MustQueryRow("SELECT uid,name FROM levels WHERE id=?",lvl.Id).Scan(&lvl.Uid,&lvl.Name)
 }
 
 func (lvl *CLevel) IsOwnedBy(uid int) bool {
