@@ -101,8 +101,6 @@ type Logger struct {
 	Output io.Writer
 }
 
-
-
 func (lg *Logger) LogErr(module interface{}, message string) {
 	log.SetOutput(lg.Output)
 
@@ -153,7 +151,6 @@ func TryInt(target *int, str string) bool {
 		*target=c
 		return true
 	}
-	fmt.Println("Cannot intify",str)
 	return false
 }
 

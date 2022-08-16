@@ -35,14 +35,14 @@ func MaintainTasks(config GlobalConfig) {
 		//Start real stuff
 		mus:=CMusic{DB: db}
 		mus.CountDownloads()
-		//!protect.ResetUserLimits
-		//!protect.CountDownloads
+		protect:=CProtect{DB: db, Savepath: config.SavePath+"/"+Srvid+"/levelModel.json"}
+		protect.FillLevelModel()
+		protect.ResetUserLimits()
 	}
 
 }
 
 func MaintainRoutines(config GlobalConfig) {
-
 	gocron.Every(1).Day().At("00:00").Do(MaintainTasks, config)
 }
 

@@ -162,5 +162,4 @@ func ReadPost(req *http.Request) url.Values {
 		vals[rkey]=append(vals[rkey],rval)
 	}
 	return vals
-
 }

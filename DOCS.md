@@ -439,17 +439,3 @@ if($weekly == 1){
 	echo "-1";
 }
 ```
-
-## Integra.cc
-
-- [X] Roles
-- [X] Users [+upanel]
-- [X] Quests
-- [ ] LevelPacks [upanel]
-- [ ] Actions
-- [X] Chests
-- [X] IP Ban
-- [X] Server CTRL
-- [X] Stats
-- [ ] Advanced stats
-- [ ] Integra.cc

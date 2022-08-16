@@ -397,6 +397,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	for _,lvl:= range levels {
 		cl:=core.CLevel{DB: db, Id: lvl}
 		cl.LoadAll()
+		if core.GetGDVersion(Post)==22 {cl.VersionGame=21}
 		lvlS,lvlH,usrH:=connectors.GetLevelSearch(cl, Gauntlet!=0)
 		out+=lvlS
 		lvlHash+=lvlH
