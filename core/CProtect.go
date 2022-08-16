@@ -22,7 +22,7 @@ type ProtectModel struct {
 }
 
 
-func (protect *CProtect) LoadModel(srvId string) {
+func (protect *CProtect) LoadModel() {
 	model, err:= os.ReadFile(protect.Savepath+"/levelModel.json")
 	if err!=nil{
 		os.WriteFile(protect.Savepath+"/levelModel.json",[]byte("{}"),0755)

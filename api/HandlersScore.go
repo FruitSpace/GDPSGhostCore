@@ -209,6 +209,12 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 
 		core.TryInt(&xacc.Trace, Post.Get("accGlow"))
 		core.TryInt(&xacc.Death, Post.Get("accExplosion"))
+		protect:=core.CProtect{DB: db, Savepath: conf.SavePath+"/"+vars["gdps"]}
+		protect.LoadModel()
+		if !protect.DetectStats(xacc.Uid, xacc.Stars, xacc.Diamonds, xacc.Demons, xacc.Coins, xacc.UCoins) {
+			io.WriteString(resp,"-1")
+			return
+		}
 		xacc.PushVessels()
 		xacc.PushStats()
 		io.WriteString(resp,strconv.Itoa(xacc.Uid))

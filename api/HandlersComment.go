@@ -94,8 +94,9 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 		}
 		comment:=core.ClearGDRequest(Post.Get("comment"))
 		cc:=core.CComment{DB: db, Uid: xacc.Uid, Comment: comment}
+		protect:=core.CProtect{DB: db}
 		c:="-1"
-		if cc.PostAccComment() {c="1"}
+		if protect.DetectPosts(xacc.Uid) && cc.PostAccComment() {c="1"}
 		io.WriteString(resp,c)
 	}else{
 		io.WriteString(resp,"-1")
@@ -261,7 +262,8 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 				}
 			}else{
 				cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
-				if cc.PostLevelComment() {
+				protect:=core.CProtect{DB: db}
+				if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 					io.WriteString(resp,"1")
 				}else{
 					io.WriteString(resp,"-1")
@@ -270,7 +272,8 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 
 		}else{
 			cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
-			if cc.PostLevelComment() {
+			protect:=core.CProtect{DB: db}
+			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 				io.WriteString(resp,"1")
 			}else{
 				io.WriteString(resp,"-1")

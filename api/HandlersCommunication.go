@@ -397,7 +397,8 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			Subject: subject,
 			Message: body,
 		}
-		if cm.SendMessageObj(){
+		protect:=core.CProtect{DB: db}
+		if protect.DetectMessages(xacc.Uid) && cm.SendMessageObj(){
 			io.WriteString(resp, "1")
 		}else{
 			io.WriteString(resp, "-1")

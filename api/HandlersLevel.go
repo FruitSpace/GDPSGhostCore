@@ -542,7 +542,10 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				io.WriteString(resp,"-1")
 			}
 		}else{
-			res:=cl.UploadLevel()
+			protect:=core.CProtect{DB: db, Savepath: conf.SavePath+"/"+vars["gdps"]}
+			protect.LoadModel()
+			res:=-1
+			if protect.DetectLevelModel(xacc.Uid) {res=cl.UploadLevel()}
 			io.WriteString(resp,strconv.Itoa(res))
 			if res>0 {
 				core.RegisterAction(core.ACTION_LEVEL_UPLOAD, xacc.Uid, res, map[string]string{
