@@ -7,12 +7,21 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"fmt"
+	"github.com/getsentry/sentry-go"
+	"log"
+	"time"
 )
 
 func main() {
-	//x:=core.ConfigBlob{}
-	//err:=json.Unmarshal([]byte(`{"DBConfig":{"Host":"localhost","Port":3306,"User":"halogen","Password":"D0wn_Th3_r4BB1t_H0lE_731","DBName":"gdps_0002"},"LogConfig":{"LogEnable":true,"LogDB":false,"LogEndpoints":false,"LogRequests":false},"ChestConfig":{"ChestSmallOrbsMin":200,"ChestSmallOrbsMax":400,"ChestSmallDiamondsMin":2,"ChestSmallDiamondsMax":10,"ChestSmallShardsMin":1,"ChestSmallShardsMax":6,"ChestSmallKeysMin":1,"ChestSmallKeysMax":6,"ChestSmallWait":3600,"ChestBigOrbsMin":2000,"ChestBigOrbsMax":4000,"ChestBigDiamondsMin":20,"ChestBigDiamondsMax":100,"ChestBigShardsMin":1,"ChestBigShardsMax":6,"ChestBigKeysMin":1,"ChestBigKeysMax":6,"ChestBigWait":14400},"ServerConfig":{"SrvID":"0002","SrvKey":"SRV_KEY","MaxUsers":100,"MaxLevels":500,"MaxComments":1000,"MaxPosts":1000,"HalMusic":true,"Locked":false}} `),&x)
-	//fmt.Println(x,err)
+	// Start Sentry so I can sleep well
+	err := sentry.Init(sentry.ClientOptions{
+		Dsn: "https://5ee98ff065064ac5a4d3e96a55f8cd08@o1368861.ingest.sentry.io/6671765",
+		TracesSampleRate: 1.0,
+	})
+	if err != nil {
+		log.Fatalf("sentry.Init: %s", err)
+	}
+	defer sentry.Flush(2*time.Second)
 	ghostServer:= api.GhostServer{
 		Log: core.Logger{
 			Output: connectors.GetWriter("",""),
@@ -60,6 +69,7 @@ func GenConfig() core.ConfigBlob {
 
 func GenGConfig() core.GlobalConfig {
 	return core.GlobalConfig{
+		"Zero",
 		"https://halhost.cc/app/api/gdps_api.php",
 		"stdout",
 		"null",

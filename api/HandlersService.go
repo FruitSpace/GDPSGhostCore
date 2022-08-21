@@ -2,6 +2,7 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"encoding/json"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -35,4 +36,39 @@ type NotFoundHandler int
 
 func (n NotFoundHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 	io.WriteString(resp,strings.ReplaceAll(NotFoundTemplate,"[PATH]",req.URL.Path))
+}
+
+// Private API
+
+func ModifyGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	//vars:= gorilla.Vars(req)
+	Post:=ReadPost(req)
+	response:=map[string]string{"status":"ok"}
+	if Post.Get("key")!=conf.MasterKey {
+		response["status"]="error"
+		response["error"]="Unauthenticated"
+		SendJson(resp, response)
+		return
+	}
+	switch req.Method {
+	case "GET":
+	}
+}
+
+func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	//vars:= gorilla.Vars(req)
+	Post:=ReadPost(req)
+	response:=map[string]string{"status":"ok"}
+	if Post.Get("key")!=conf.MasterKey {
+		response["status"]="error"
+		response["error"]="Unauthenticated"
+		SendJson(resp, response)
+		return
+	}
+
+}
+
+func SendJson(resp http.ResponseWriter, jsonData map[string]string){
+	data,_:=json.Marshal(jsonData)
+	io.WriteString(resp,string(data))
 }

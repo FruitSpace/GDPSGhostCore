@@ -22,6 +22,7 @@ type GhostServer struct {
 var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalConfig){
 	"/": Shield,
 
+	// Geometry Dash
 	"/database/accounts/accountManagement.php": AccountManagement,
 	"/database/accounts/backupGJAccount.php": AccountBackup,
 	"/database/accounts/loginGJAccount.php": AccountLogin,
@@ -111,7 +112,9 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	"/database/uploadGJLevel21.php": LevelUpload,
 	"/database/uploadGJMessage20.php": MessageUpload,
 
-
+	// PRIVATE API
+	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}": ModifyGDPS,
+	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}/event": EventAction,
 }
 
 func GetFunctionName(i interface{}) string {

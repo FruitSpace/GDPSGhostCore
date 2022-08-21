@@ -59,6 +59,7 @@ type ServerConfig struct {
 //}
 
 type GlobalConfig struct {
+	MasterKey string
 	ApiEndpoint string
 	LogConnector string
 	LogEndpoint string

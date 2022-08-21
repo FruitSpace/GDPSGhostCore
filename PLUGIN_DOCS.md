@@ -13,12 +13,12 @@ package modules
 
 // Plugin describes Plugin type; PluginCore is also Plugin
 type Plugin interface {
-	PreInit(...interface{})
+	PreInit(*PluginCore, ...interface{})
 	Unload(...interface{})
 }
 
 // PreInit Invoked to load anything
-func PreInit(args ...interface{})
+func PreInit(pch *PluginCore, args ...interface{})
 
 // Unload Unloads everything
 func Unload(args ...interface{})

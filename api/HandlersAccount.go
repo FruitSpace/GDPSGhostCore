@@ -38,7 +38,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			datax,err:=taes.EncryptRaw(saveData)
 			if logger.Should(err)!=nil {return}
 			os.MkdirAll(savepath,os.ModePerm)
-			if logger.Should(os.WriteFile(savepath+strconv.Itoa(acc.Uid)+".hal",datax,0644))!=nil {return}
+			if logger.Should(os.WriteFile(savepath+strconv.Itoa(acc.Uid)+".hsv",datax,0644))!=nil {return}
 			saveData=strings.ReplaceAll(strings.ReplaceAll(strings.Split(saveData,";")[0],"_","/"),"-","+")
 			b,err:=base64.StdEncoding.DecodeString(saveData)
 			if logger.Should(err)!=nil {return}
@@ -51,6 +51,8 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			acc.Orbs,_=strconv.Atoi(strings.Split(strings.Split(saveData,"</s><k>14</k><s>")[1],"</s>")[0])
 			acc.LvlsCompleted,_=strconv.Atoi(strings.Split(strings.Split(strings.Split(saveData,"<k>GS_value</k>")[1],"</s><k>4</k><s>")[1],"</s>")[0])
 			acc.PushStats()
+			//! Temp
+			os.Remove("/var/www/gdps/"+vars["gdps"]+"/files/savedata/"+strconv.Itoa(acc.Uid)+".hal")
 			io.WriteString(resp,"1")
 		}else{io.WriteString(resp,"-2")}
 	}else{
@@ -75,10 +77,19 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
-			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hal"
+			savepath:=conf.SavePath+"/"+vars["gdps"]+"/savedata/"+strconv.Itoa(acc.Uid)+".hsv"
 			if _, err := os.Stat(savepath); err==nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(config.ServerConfig.SrvKey))!=nil {return}
+				if logger.Should(taes.Init())!=nil {return}
+				d,err:=os.ReadFile(savepath)
+				data,err:=taes.DecryptRaw(d)
+				if logger.Should(err)!=nil {return}
+				io.WriteString(resp,data+";21;30;a;a")
+				//! Temp transitional
+			}else if  _, err := os.Stat("/var/www/gdps/"+vars["gdps"]+"/files/savedata/"+strconv.Itoa(acc.Uid)+".hal"); err==nil{
+				taes := core.ThunderAES{}
+				if logger.Should(taes.GenKey(pass))!=nil {return}
 				if logger.Should(taes.Init())!=nil {return}
 				d,err:=os.ReadFile(savepath)
 				data,err:=taes.DecryptRaw(d)

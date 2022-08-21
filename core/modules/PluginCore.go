@@ -7,7 +7,7 @@ import (
 )
 
 type Plugin interface {
-	PreInit(...interface{})
+	PreInit(*PluginCore, ...interface{})
 	Unload(...interface{})
 }
 
@@ -24,12 +24,11 @@ func (pch *PluginCore) CallPlugin(endpoint string, args ...interface{}) []reflec
 	if plug,ok:=pch.HalPlugins[_endpoint[0]]; ok {
 		if _,ok:=reflect.TypeOf(plug).MethodByName(_endpoint[1]); ok{
 			//if plugin exists and has a method then convert all data to reflect.Value, call method and return its output
-			inputs := make([]reflect.Value, len(args)+1)
-			inputs=append(inputs, reflect.ValueOf(pch))
+			inputs := make([]reflect.Value, 0, len(args)+1)
 			for i := range args {
 				inputs = append(inputs,reflect.ValueOf(args[i]))
 			}
-			return reflect.ValueOf(&plug).MethodByName(_endpoint[1]).Call(inputs)
+			return reflect.ValueOf(plug).MethodByName(_endpoint[1]).Call(inputs)
 		}
 	}
 	return []reflect.Value{}
@@ -40,7 +39,7 @@ func (pch *PluginCore) CallPlugin(endpoint string, args ...interface{}) []reflec
 // PreInit Invoked to load anything
 func (pch *PluginCore) PreInit(args ...interface{}) {
 	for plug:= range pch.HalPlugins {
-		pch.CallPlugin(plug+"::PreInit",args)
+		pch.CallPlugin(plug+"::PreInit",pch,args)
 	}
 }
 
