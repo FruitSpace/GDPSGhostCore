@@ -6,7 +6,6 @@ import (
 	"HalogenGhostCore/api"
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
-	"fmt"
 	"github.com/getsentry/sentry-go"
 	"log"
 	"time"
@@ -63,6 +62,12 @@ func GenConfig() core.ConfigBlob {
 			true,
 			false,
 			100,
+			map[string]bool{"discord":true},
+		},
+		SecurityConfig: core.SecurityConfig{
+			DisableProtection: false,
+			AutoActivate: false,
+			BannedIPs: []string{},
 		},
 	}
 }
@@ -80,16 +85,10 @@ func GenGConfig() core.GlobalConfig {
 		7,
 		"./",
 
-		map[string]string{"rabbitmq_host":"auto"},
+		map[string]string{
+			"rabbitmq_host":"auto",
+			"rabbitmq_user":"m41dss",
+			"rabbitmq_password":"passw",
+		},
 	}
-}
-
-func PrintCAccount(acc core.CAccount){
-	fmt.Printf("[%d] %s (%s) [Role:%d] %d\nPass: %s\nS:%d | D:%d | C:%d | UC:%d | CP:%d | O:%d\nDemons: %d | Special: %d | Lvls: %d\nReg: %s | Acc: %s | IP: %s | Ver: %s\n",
-		acc.Uid,acc.Uname,acc.Email,acc.Role_id,acc.IsBanned,acc.Passhash,acc.Stars,acc.Diamonds,acc.Coins,acc.UCoins,acc.CPoints,acc.Orbs,acc.Demons,acc.Special,acc.LvlsCompleted,
-		acc.RegDate,acc.AccessDate,acc.LastIP,acc.GameVer)
-	fmt.Printf("Blacklist: %s | FrCnt: %d | Friends: %s\nfrS: %d | cS: %d | mS: %d | YT: %s | Tch: %s | Twr: %s\n",
-		acc.Blacklist,acc.FriendsCount,acc.FriendshipIds,acc.FrS,acc.CS,acc.MS,acc.Youtube,acc.Twitch,acc.Twitter)
-	fmt.Printf("Icon: %d | Clr1: %d | Clr2: %d | Trace: %d | Death: %d\nCube:%d | Ship: %d | Ball: %d | UFO: %d | Wave: %d | Robot: %d | Spider: %d\n",
-		acc.IconType,acc.ColorPrimary,acc.ColorSecondary,acc.Trace,acc.Death,acc.Cube,acc.Ship,acc.Ball,acc.Ufo,acc.Wave,acc.Robot,acc.Spider)
 }

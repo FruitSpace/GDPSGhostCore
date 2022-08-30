@@ -23,6 +23,16 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 	return err
 }
 
+func (db *MySQLConn) ConnectMultiBlob(config ConfigBlob) error {
+	db.DB, _ =sql.Open("mysql",fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?multiStatements=true",
+		config.DBConfig.User,config.DBConfig.Password,config.DBConfig.Host,config.DBConfig.Port,config.DBConfig.DBName))
+	err:= db.DB.Ping()
+	if err!=nil{
+		db.logger.LogWarn(err,err.Error())
+	}
+	return err
+}
+
 func (db *MySQLConn) CloseDB() {db.DB.Close()}
 
 func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result, error) {

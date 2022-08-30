@@ -50,13 +50,14 @@ type ServerConfig struct {
 	HalMusic bool
 	Locked bool
 	TopSize int
+	EnabledModules map[string]bool
 }
 
-//type SecurityConfig struct {
-//	DisableProtection bool
-//	DisableCaptcha bool
-//
-//}
+type SecurityConfig struct {
+	DisableProtection bool
+	AutoActivate bool
+	BannedIPs []string
+}
 
 type GlobalConfig struct {
 	MasterKey string
@@ -77,6 +78,7 @@ type ConfigBlob struct {
 	LogConfig    LogConfig
 	ChestConfig  ChestConfig
 	ServerConfig ServerConfig
+	SecurityConfig SecurityConfig
 }
 
 
