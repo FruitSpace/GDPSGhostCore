@@ -77,6 +77,7 @@ func LevelDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		}
 		cl.DeleteLevel() //!Fetch before that shit
 		cl.RecalculateCPoints(xacc.Uid)
+		core.OnLevel(db, conf, config)
 		core.RegisterAction(core.ACTION_LEVEL_DELETE, xacc.Uid, lvl_id, map[string]string{"uname":xacc.Uname,"type":"Delete:Owner"},db)
 		io.WriteString(resp,"1")
 	}else{
@@ -542,6 +543,10 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				io.WriteString(resp,"-1")
 			}
 		}else{
+			if !core.OnLevel(db, conf, config) {
+				io.WriteString(resp,"-1")
+				return
+			}
 			protect:=core.CProtect{DB: db, Savepath: conf.SavePath+"/"+vars["gdps"]}
 			protect.LoadModel()
 			res:=-1

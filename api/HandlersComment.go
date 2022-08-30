@@ -34,6 +34,7 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 		var id int
 		core.TryInt(&id,Post.Get("commentID"))
 		cc.DeleteAccComment(id, xacc.Uid)
+		core.OnPost(db, conf, config)
 		io.WriteString(resp,"1")
 	}else{
 		io.WriteString(resp,"-1")
@@ -96,6 +97,10 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 		cc:=core.CComment{DB: db, Uid: xacc.Uid, Comment: comment}
 		protect:=core.CProtect{DB: db}
 		c:="-1"
+		if !core.OnPost(db, conf, config) {
+			io.WriteString(resp,"-1")
+			return
+		}
 		if protect.DetectPosts(xacc.Uid) && cc.PostAccComment() {c="1"}
 		io.WriteString(resp,c)
 	}else{
@@ -132,6 +137,7 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		}else{
 			cc.DeleteLevelComment(id,xacc.Uid)
 		}
+		core.OnComment(db, conf, config)
 		io.WriteString(resp,"1")
 	}else{
 		io.WriteString(resp,"-1")
@@ -263,6 +269,10 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			}else{
 				cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 				protect:=core.CProtect{DB: db}
+				if !core.OnComment(db, conf, config) {
+					io.WriteString(resp,"-1")
+					return
+				}
 				if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 					io.WriteString(resp,"1")
 				}else{
@@ -273,6 +283,10 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		}else{
 			cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 			protect:=core.CProtect{DB: db}
+			if !core.OnComment(db, conf, config) {
+				io.WriteString(resp,"-1")
+				return
+			}
 			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 				io.WriteString(resp,"1")
 			}else{

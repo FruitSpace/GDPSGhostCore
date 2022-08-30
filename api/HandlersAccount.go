@@ -156,10 +156,14 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		db := core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc := core.CAccount{DB: db}
-		uid:=acc.Register(uname,pass,email,IPAddr)
-		io.WriteString(resp,strconv.Itoa(uid))
-		if uid>0 {
-			core.RegisterAction(core.ACTION_USER_REGISTER,0,uid, map[string]string{"uname":uname,"email":email},db)
+		if core.OnRegister(db, conf, config){
+			uid:=acc.Register(uname,pass,email,IPAddr)
+			io.WriteString(resp,strconv.Itoa(uid))
+			if uid>0 {
+				core.RegisterAction(core.ACTION_USER_REGISTER,0,uid, map[string]string{"uname":uname,"email":email},db)
+			}
+		}else{
+			io.WriteString(resp,"-1")
 		}
 	}else{
 		io.WriteString(resp,"-1")
