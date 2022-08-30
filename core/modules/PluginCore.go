@@ -2,6 +2,7 @@
 package modules
 
 import (
+	"HalogenGhostCore/core"
 	"reflect"
 	"strings"
 )
@@ -13,6 +14,18 @@ type Plugin interface {
 
 type PluginCore struct {
 	HalPlugins map[string]Plugin
+}
+
+func (pch *PluginCore) LoadPrepared(conf core.ConfigBlob) {
+	for mod,en:= range conf.ServerConfig.EnabledModules {
+		if en {
+			switch mod {
+			case "discord":
+				pch.Load("RabbitMQ",&RabbitMQ{})
+				pch.Load("Discord",&DiscordPacker{})
+			}
+		}
+	}
 }
 
 func (pch *PluginCore) Load(name string, plugin Plugin) {

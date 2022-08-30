@@ -7,7 +7,6 @@ import (
 
 type DiscordPacker struct {
 	Chan *amqp.Channel
-	ID string
 	Passive bool
 	pch *PluginCore
 }
@@ -20,7 +19,7 @@ func (mod *DiscordPacker) PreInit(pch *PluginCore, data ...interface{}){
 	}
 	rchan:=channel[0].Interface().(*amqp.Channel)
 	mod.Chan=rchan
-	rchan.QueueDeclare("bot_"+mod.ID,true,false,false,false,nil)
+	rchan.QueueDeclare("gdps_bot",true,false,false,false,nil)
 }
 
 func (mod *DiscordPacker) GenPayload(t string, data map[string]string) string {
@@ -33,7 +32,6 @@ func (mod *DiscordPacker) GenPayload(t string, data map[string]string) string {
 
 func (mod *DiscordPacker) OnPlayerActivate(uid int, uname string) {
 	mod.pch.CallPlugin("RabbitMQ::PublishText",)
-	mod.Chan.Publish()
 }
 
 func (mod *DiscordPacker) Unload(...interface{}){}
