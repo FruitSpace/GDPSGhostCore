@@ -95,7 +95,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 		}
 		comment:=core.ClearGDRequest(Post.Get("comment"))
 		cc:=core.CComment{DB: db, Uid: xacc.Uid, Comment: comment}
-		protect:=core.CProtect{DB: db}
+		protect:=core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 		c:="-1"
 		if !core.OnPost(db, conf, config) {
 			io.WriteString(resp,"-1")
@@ -268,7 +268,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 				}
 			}else{
 				cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
-				protect:=core.CProtect{DB: db}
+				protect:=core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 				if !core.OnComment(db, conf, config) {
 					io.WriteString(resp,"-1")
 					return
@@ -282,7 +282,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 
 		}else{
 			cc:=core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
-			protect:=core.CProtect{DB: db}
+			protect:=core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 			if !core.OnComment(db, conf, config) {
 				io.WriteString(resp,"-1")
 				return

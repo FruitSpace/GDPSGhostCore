@@ -12,6 +12,7 @@ type CProtect struct {
 	DB MySQLConn
 	LevelModel ProtectModel
 	Savepath string
+	DisableProtection bool
 }
 
 type ProtectModel struct {
@@ -75,6 +76,7 @@ func (protect *CProtect) ResetUserLimits() {
 }
 
 func (protect *CProtect) DetectLevelModel(uid int) bool {
+	if protect.DisableProtection {return true}
 	var lvlCnt int
 	protect.DB.ShouldQueryRow("SELECT protect_levelsToday as cnt FROM users WHERE uid=?",uid).Scan(&lvlCnt)
 	if lvlCnt>=protect.LevelModel.MaxLevelUpload {
@@ -87,6 +89,7 @@ func (protect *CProtect) DetectLevelModel(uid int) bool {
 }
 
 func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons int, coins int, ucoins int) bool {
+	if protect.DisableProtection {return true}
 	if stars<0 || diamonds<0 || demons<0 || coins<0 || ucoins<0 {
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
 		protect.DB.ShouldQuery("DELETE FROM levels WHERE uid=?",uid)
@@ -113,6 +116,7 @@ func (protect *CProtect) GetMeta(uid int) map[string]int{
 }
 
 func (protect *CProtect) DetectMessages(uid int) bool {
+	if protect.DisableProtection {return true}
 	meta:=protect.GetMeta(uid)
 	t :=int(time.Now().Unix())
 	if t-meta["msg_time"]<120 {return false}
@@ -123,6 +127,7 @@ func (protect *CProtect) DetectMessages(uid int) bool {
 }
 
 func (protect *CProtect) DetectPosts(uid int) bool {
+	if protect.DisableProtection {return true}
 	meta:=protect.GetMeta(uid)
 	t :=int(time.Now().Unix())
 	if t-meta["post_time"]<900 {return false}
@@ -133,10 +138,11 @@ func (protect *CProtect) DetectPosts(uid int) bool {
 }
 
 func (protect *CProtect) DetectComments(uid int) bool {
+	if protect.DisableProtection {return true}
 	meta:=protect.GetMeta(uid)
-	time:=int(time.Now().Unix())
-	if time-meta["comm_time"]<120 {return false}
-	meta["comm_time"]=time
+	t :=int(time.Now().Unix())
+	if t-meta["comm_time"]<120 {return false}
+	meta["comm_time"]= t
 	data,_:=json.Marshal(meta)
 	protect.DB.ShouldQuery("UPDATE users SET protect_meta=? WHERE uid=?",string(data), uid)
 	return true
