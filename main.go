@@ -8,6 +8,7 @@ import (
 	"HalogenGhostCore/core/connectors"
 	"github.com/getsentry/sentry-go"
 	"log"
+	"os"
 	"time"
 )
 
@@ -21,6 +22,8 @@ func main() {
 		log.Fatalf("sentry.Init: %s", err)
 	}
 	defer sentry.Flush(2*time.Second)
+
+
 	ghostServer:= api.GhostServer{
 		Log: core.Logger{
 			Output: connectors.GetWriter("",""),
@@ -74,21 +77,28 @@ func GenConfig() core.ConfigBlob {
 
 func GenGConfig() core.GlobalConfig {
 	return core.GlobalConfig{
-		"Zero",
-		"https://halhost.cc/app/api/gdps_api.php",
+		EnvOrDefault("MASTER_KEY", "3XTR4OrD1nArY_K3Y_1907"),
+		EnvOrDefault("API_ENDPOINT", "https://halhost.cc/app/api/gdps_api.php"),
 		"stdout",
 		"null",
 		false,
-		"localhost",
-		"6379",
-		"3XTR4OrD1nArY_K3Y_1907",
+		EnvOrDefault("REDIS_HOST", "localhost"),
+		EnvOrDefault("REDIS_PORT", "6379"),
+		EnvOrDefault("REDIS_PASSWORD", ""),
 		7,
-		"./",
+		EnvOrDefault("SAVE_PATH", "./"),
 
 		map[string]string{
 			"rabbitmq_host":"auto",
 			"rabbitmq_user":"m41dss",
-			"rabbitmq_password":"passw",
+			"rabbitmq_password":EnvOrDefault("RABBITMQ_PASSWORD", "None"),
 		},
 	}
+}
+
+func EnvOrDefault(key string, def string) string {
+	if val, ok := os.LookupEnv(key); ok {
+		return val
+	}
+	return def
 }

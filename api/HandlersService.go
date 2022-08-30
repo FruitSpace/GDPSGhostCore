@@ -6,6 +6,7 @@ import (
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -42,6 +43,26 @@ func (n NotFoundHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) 
 
 func ModifyGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
 	//vars:= gorilla.Vars(req)
+	//Post:=ReadPost(req)
+	//response:=map[string]string{"status":"ok"}
+	//if Post.Get("key")!=conf.MasterKey {
+	//	response["status"]="error"
+	//	response["error"]="Unauthenticated"
+	//	SendJson(resp, response)
+	//	return
+	//}
+	//logger:=core.Logger{Output: os.Stderr}
+	//config,err:=conf.LoadById(vars["gdps"])
+	//if logger.Should(err)!=nil {return}
+	//switch req.Method {
+	//case "GET":
+	//case "POST":
+	//
+	//}
+}
+
+func CreateGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	vars:= gorilla.Vars(req)
 	Post:=ReadPost(req)
 	response:=map[string]string{"status":"ok"}
 	if Post.Get("key")!=conf.MasterKey {
@@ -50,9 +71,10 @@ func ModifyGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		SendJson(resp, response)
 		return
 	}
-	switch req.Method {
-	case "GET":
-	}
+	logger:=core.Logger{Output: os.Stderr}
+	config,err:=conf.LoadById(vars["gdps"])
+	if logger.Should(err)!=nil {return}
+	core.HalInitialize(config, conf)
 }
 
 func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
@@ -65,7 +87,9 @@ func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		SendJson(resp, response)
 		return
 	}
+	switch req.Method {
 
+	}
 }
 
 func SendJson(resp http.ResponseWriter, jsonData map[string]string){

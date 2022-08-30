@@ -3,6 +3,7 @@ package core
 import (
 	_ "embed"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -15,11 +16,14 @@ import (
 //go:embed resources/database.sql
 var gdpsDatabase string
 
-func HalInitializeDB(configBlob ConfigBlob){
+func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) {
 	db:=MySQLConn{}
 	logger:=Logger{}
+	//Create DB
 	if logger.Should(db.ConnectMultiBlob(configBlob))!=nil {return}
 	db.ShouldQuery(gdpsDatabase)
+	//Create paths
+	os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata",0777)
 }
 
 //Count stuff

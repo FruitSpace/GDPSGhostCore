@@ -111,11 +111,15 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	"/database/uploadGJLevel20.php": LevelUpload,
 	"/database/uploadGJLevel21.php": LevelUpload,
 	"/database/uploadGJMessage20.php": MessageUpload,
+}
 
+var RouteIntegraMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalConfig){
 	// PRIVATE API
 	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}": ModifyGDPS,
 	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}/event": EventAction,
+	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}/new" : CreateGDPS,
 }
+
 
 func GetFunctionName(i interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(i).Pointer()).Name()
