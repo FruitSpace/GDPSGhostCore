@@ -20,6 +20,7 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" {
@@ -49,6 +50,7 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("accountID")!="" {
@@ -83,6 +85,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("comment")!="" {
@@ -117,6 +120,7 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" && Post.Get("levelID")!="" {
@@ -152,6 +156,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("levelID")!="" {
@@ -188,6 +193,7 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("userID")!="" {
@@ -232,6 +238,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("comment")!="" && Post.Get("levelID")!="" {

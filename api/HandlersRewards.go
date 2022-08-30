@@ -20,6 +20,7 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("chk")!="" && Post.Get("udid")!="" {
@@ -48,6 +49,7 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && len(Post.Get("chk"))>5 && Post.Get("udid")!="" {

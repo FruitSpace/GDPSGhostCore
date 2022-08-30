@@ -22,6 +22,7 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	//Post:=ReadPost(req)
 	db:=core.MySQLConn{}
@@ -38,6 +39,7 @@ func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
@@ -58,6 +60,7 @@ func LevelDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
@@ -93,6 +96,7 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("levelID")!="" {
@@ -184,6 +188,7 @@ func LevelGetDaily(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
@@ -207,6 +212,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 
@@ -426,6 +432,7 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("levelID")!="" {
@@ -449,6 +456,7 @@ func LevelUpdateDescription(resp http.ResponseWriter, req *http.Request, conf *c
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
@@ -485,6 +493,7 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelString")!="" {
@@ -575,6 +584,7 @@ func RateDemon(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
@@ -615,6 +625,7 @@ func RateStar(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
@@ -650,6 +661,7 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {

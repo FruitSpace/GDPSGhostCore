@@ -20,6 +20,7 @@ func GetCreators(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	//Post:=ReadPost(req)
 	db := core.MySQLConn{}
@@ -48,6 +49,7 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
@@ -108,6 +110,7 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	xType:=Post.Get("type")
@@ -175,6 +178,7 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) {

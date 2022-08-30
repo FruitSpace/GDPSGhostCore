@@ -147,3 +147,8 @@ func (protect *CProtect) DetectComments(uid int) bool {
 	protect.DB.ShouldQuery("UPDATE users SET protect_meta=? WHERE uid=?",string(data), uid)
 	return true
 }
+
+
+func CheckIPBan(IPAddr string, config ConfigBlob) bool {
+	return InArray(config.SecurityConfig.BannedIPs, IPAddr)
+}

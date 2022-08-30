@@ -384,7 +384,9 @@ func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
 	return -1
 }
 
-func (acc *CAccount) Register(uname string, pass string, email string, ip string) int {
+func (acc *CAccount) Register(uname string, pass string, email string, ip string, autoVerify bool) int {
+	isBanned:="1"
+	if autoVerify {isBanned="0"}
 	if len(uname)>16 || !FilterEmail(email) {return -1}
 	if acc.GetUIDByUname(uname,false)!=-1 {return -2}
 	var uid int
@@ -392,7 +394,8 @@ func (acc *CAccount) Register(uname string, pass string, email string, ip string
 	if uid!=0 {return -3}
 	passx:=MD5(MD5(pass+"HalogenCore1704")+"ae07")+MD5(pass)[:4]
 	rdate:=time.Now().Format("2006-01-02 15:04:05")
-	sreq:=acc.DB.MustPrepareExec("INSERT INTO users (uname,passhash,gjphash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,?,1)",
+	sreq:=acc.DB.MustPrepareExec(
+		"INSERT INTO users (uname,passhash,gjphash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,?,"+isBanned+")",
 		uname,passx,DoGjp2(pass),email,rdate,rdate)
 	vuid,_:=sreq.LastInsertId()
 	acc.Uid=int(vuid)

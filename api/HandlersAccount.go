@@ -21,6 +21,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("userName")!="" && Post.Get("password")!="" && Post.Get("saveData")!="" {
@@ -68,6 +69,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("userName")!="" && Post.Get("password")!="" {
@@ -119,6 +121,7 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("userName")!="" && Post.Get("password")!="" {
@@ -147,6 +150,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	logger:=core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("email")!="" {
@@ -157,7 +161,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc := core.CAccount{DB: db}
 		if core.OnRegister(db, conf, config){
-			uid:=acc.Register(uname,pass,email,IPAddr)
+			uid:=acc.Register(uname,pass,email,IPAddr,config.SecurityConfig.AutoActivate)
 			io.WriteString(resp,strconv.Itoa(uid))
 			if uid>0 {
 				core.RegisterAction(core.ACTION_USER_REGISTER,0,uid, map[string]string{"uname":uname,"email":email},db)

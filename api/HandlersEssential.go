@@ -24,6 +24,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if Post.Get("songID")!="" {
@@ -50,6 +51,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
@@ -71,6 +73,7 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("itemID")!="" && Post.Get("type")!=""{
@@ -128,6 +131,7 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
+	if core.CheckIPBan(IPAddr,config) {return}
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) {

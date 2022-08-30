@@ -236,3 +236,11 @@ func ArrTranslate(arr []int) []string {
 func QuickComma(str string) string {
 	return strings.Join(ArrTranslate(Decompose(CleanDoubles(str,","),",")),",")
 }
+
+
+func InArray(arr []string, ele string) bool {
+	for _,v:=range arr {
+		if v==ele {return true}
+	}
+	return false
+}
