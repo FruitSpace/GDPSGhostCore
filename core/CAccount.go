@@ -297,13 +297,13 @@ func (acc *CAccount) GetLeaderboardRank() int {
 	return cnt
 }
 
-func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStars int) []int {
+func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStars int, limit int) []int {
 	var query string
 	switch atype {
 	case CLEADERBOARD_BY_STARS:
-		query="SELECT uid FROM users WHERE stars>0 AND isBanned=0 ORDER BY stars DESC, uname ASC LIMIT 100"
+		query="SELECT uid FROM users WHERE stars>0 AND isBanned=0 ORDER BY stars DESC, uname ASC LIMIT "+strconv.Itoa(limit)
 	case CLEADERBOARD_BY_CPOINTS:
-		query="SELECT uid FROM users WHERE cpoints>0 AND isBanned=0 ORDER BY cpoints DESC, uname ASC LIMIT 100"
+		query="SELECT uid FROM users WHERE cpoints>0 AND isBanned=0 ORDER BY cpoints DESC, uname ASC LIMIT "+strconv.Itoa(limit)
 	case CLEADERBOARD_GLOBAL:
 		query="SELECT X.uid as uid,X.stars FROM ((SELECT uid,stars,uname FROM users WHERE stars>"+ strconv.Itoa(globalStars) +" AND isBanned=0 ORDER BY stars ASC LIMIT 50)"
 		query+=" UNION (SELECT uid,stars,uname FROM users WHERE stars<="+ strconv.Itoa(globalStars) +" AND stars>0 AND isBanned=0 ORDER BY stars DESC LIMIT 50)) as X ORDER BY X.stars DESC, X.uname ASC"
