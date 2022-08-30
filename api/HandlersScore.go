@@ -25,7 +25,7 @@ func GetCreators(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	db := core.MySQLConn{}
 	if logger.Should(db.ConnectBlob(config)) != nil {return}
 	acc:=core.CAccount{DB: db}
-	users:=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0)
+	users:=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0, config.ServerConfig.TopSize)
 	if len(users)==0 {
 		io.WriteString(resp,"-2")
 	}else{
@@ -123,7 +123,7 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 			return
 		}
 		acc.LoadStats()
-		users=acc.GetLeaderboard(core.CLEADERBOARD_GLOBAL,[]string{},acc.Stars)
+		users=acc.GetLeaderboard(core.CLEADERBOARD_GLOBAL,[]string{},acc.Stars, config.ServerConfig.TopSize)
 	case "friends":
 		if !acc.PerformGJPAuth(Post, IPAddr){
 			io.WriteString(resp,"-1")
@@ -147,11 +147,11 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 			friends=append(friends,strconv.Itoa(xuid))
 		}
 		friends=append(friends, strconv.Itoa(acc.Uid))
-		users=acc.GetLeaderboard(core.CLEADERBOARD_FRIENDS,friends,0)
+		users=acc.GetLeaderboard(core.CLEADERBOARD_FRIENDS,friends,0, config.ServerConfig.TopSize)
 	case "creators":
-		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0)
+		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0, config.ServerConfig.TopSize)
 	default:
-		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_STARS,[]string{},0)
+		users=acc.GetLeaderboard(core.CLEADERBOARD_BY_STARS,[]string{},0, config.ServerConfig.TopSize)
 	}
 	if len(users)==0 {
 		io.WriteString(resp,"-2")
