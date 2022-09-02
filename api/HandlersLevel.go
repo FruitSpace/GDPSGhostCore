@@ -556,7 +556,7 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				io.WriteString(resp,"-1")
 				return
 			}
-			protect:=core.CProtect{DB: db, Savepath: conf.SavePath+"/"+vars["gdps"], DisableProtection: config.SecurityConfig.DisableProtection}
+			protect:=core.CProtect{DB: &db, Savepath: conf.SavePath+"/"+vars["gdps"], DisableProtection: config.SecurityConfig.DisableProtection}
 			protect.LoadModel()
 			res:=-1
 			if protect.DetectLevelModel(xacc.Uid) {res=cl.UploadLevel()}

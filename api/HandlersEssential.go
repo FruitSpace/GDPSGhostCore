@@ -30,7 +30,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if Post.Get("songID")!="" {
 		db:=core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
-		mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
+		mus:=core.CMusic{DB: &db, ConfBlob: config, Config: conf}
 		var id int
 		core.TryInt(&id,Post.Get("songID"))
 		if mus.GetSong(id) {
@@ -60,7 +60,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	core.TryInt(&page,Post.Get("page"))
 	if page<0 {page=0}
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
-	mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
+	mus:=core.CMusic{DB: &db, ConfBlob: config, Config: conf}
 	artists:=mus.GetTopArtists()
 	io.WriteString(resp,connectors.GetTopArtists(artists)+"#"+strconv.Itoa(len(artists))+"0:"+strconv.Itoa(len(artists)))
 }

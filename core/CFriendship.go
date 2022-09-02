@@ -37,6 +37,7 @@ func (cf *CFriendship) GetFriendRequests(uid int, page int, sent bool) (int,[]ma
 	if sent {q+="uid_src=?"}else{q+="uid_dest=?"}
 	q+=" LIMIT 10 OFFSET "+strconv.Itoa(page*10)
 	rows:=cf.DB.MustQuery(q,uid)
+	defer rows.Close()
 	var users []map[string]string
 	var cnt int
 	for rows.Next() {

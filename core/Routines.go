@@ -31,11 +31,14 @@ func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig)
 	if log.Should(db.ConnectBlob(conf))!=nil {return}
 	//Start real stuff
 	os.MkdirAll(config.SavePath+"/"+Srvid+"/savedata",0777)
-	mus:=CMusic{DB: db}
+	mus:=CMusic{DB: &db}
+	fmt.Println("Before Count: ",db.DB.Stats().OpenConnections)
 	mus.CountDownloads()
-	protect:=CProtect{DB: db, Savepath: config.SavePath+"/"+Srvid}
+	fmt.Println("After Count: ",db.DB.Stats().OpenConnections)
+	protect:=CProtect{DB: &db, Savepath: config.SavePath+"/"+Srvid}
 	protect.FillLevelModel()
 	protect.ResetUserLimits()
+	fmt.Println("After Limits: ",db.DB.Stats().OpenConnections)
 }
 
 func MaintainTasks(config GlobalConfig) {

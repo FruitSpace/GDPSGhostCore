@@ -314,6 +314,7 @@ func (acc *CAccount) GetLeaderboard(atype int, grep []string, globalStars int, l
 		query="SELECT uid FROM users WHERE 1=0" //IDK WHY I DID THIS
 	}
 	rows:=acc.DB.ShouldQuery(query)
+	defer rows.Close()
 
 	var users []int
 	for rows.Next() {

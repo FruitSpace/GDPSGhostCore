@@ -19,7 +19,7 @@ type CMusic struct {
 	IsBanned bool
 	Downloads int
 
-	DB MySQLConn
+	DB *MySQLConn
 	Logger Logger
 	Config *GlobalConfig
 	ConfBlob ConfigBlob
@@ -84,6 +84,7 @@ func (mus *CMusic) BanMusic(id int, ban bool) {
 
 func (mus *CMusic) CountDownloads() {
 	req:=mus.DB.MustQuery("SELECT id FROM songs")
+	defer mus.Logger.Should(req.Close())
 	for req.Next() {
 		var id int
 		req.Scan(&id)
@@ -94,6 +95,7 @@ func (mus *CMusic) CountDownloads() {
 			creq.Scan(&downs)
 			cnt+=downs
 		}
+		mus.Logger.Should(creq.Close())
 		mus.DB.ShouldQuery("UPDATE songs SET downloads=? WHERE id=?",cnt,id)
 	}
 }

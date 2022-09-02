@@ -56,6 +56,7 @@ func (cq *CQuests) GetQuests(uid int) string{
 	req:=cq.DB.ShouldQuery("SELECT r1.id,type,needed,reward,name,timeExpire FROM quests AS r1 " +
 		"JOIN (SELECT CEIL("+fmt.Sprintf("%f",rand.Float64())+" * (SELECT MAX(id) FROM quests WHERE type>1)) AS id) AS r2 " +
 		"WHERE r1.id >= r2.id AND r1.timeExpire<now() AND r1.type>1 ORDER BY r1.id ASC LIMIT 3")
+	defer req.Close()
 	out:=""
 	var cnt int
 	for req.Next() {

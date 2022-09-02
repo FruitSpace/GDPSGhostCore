@@ -66,6 +66,7 @@ func (cc *CComment) LoadLevelComment() {
 func (cc *CComment) GetAllAccComments(uid int, page int) []CComment {
 	page*=10
 	rows:=cc.DB.ShouldQuery("SELECT id,comment,postedTime,likes,isSpam FROM acccomments WHERE uid=? ORDER BY postedTime DESC LIMIT 10 OFFSET "+strconv.Itoa(page),uid)
+	defer rows.Close()
 	var out []CComment
 	for rows.Next() {
 		comm:=CComment{Uid: uid}
@@ -80,6 +81,7 @@ func (cc *CComment) GetAllLevelComments(lvlId int, page int, sortMode bool) []CC
 	page*=10
 	if sortMode {filter="likes"}
 	rows:=cc.DB.ShouldQuery("SELECT id,uid,comment,postedTime,likes,isSpam,percent FROM comments WHERE lvl_id=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page),lvlId)
+	defer rows.Close()
 	var out []CComment
 	for rows.Next() {
 		comm:=CComment{LvlId: lvlId, DB: cc.DB}
@@ -94,6 +96,7 @@ func (cc *CComment) GetAllCommentsHistory(uid int, page int, sortMode bool) []CC
 	filter:="postedTime"
 	if sortMode {filter="likes"}
 	rows:=cc.DB.ShouldQuery("SELECT id,lvl_id,comment,postedTime,likes,isSpam,percent FROM comments WHERE uid=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page),uid)
+	defer rows.Close()
 	var out []CComment
 	for rows.Next() {
 		comm:=CComment{Uid: uid}

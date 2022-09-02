@@ -263,6 +263,7 @@ func (lvl *CLevel) ReportLevel() {
 
 func (lvl *CLevel) RecalculateCPoints(uid int) {
 	req:=lvl.DB.MustQuery("SELECT starsGot,isFeatured,isEpic,collab FROM levels WHERE uid=?",uid)
+	defer req.Close()
 	for req.Next() {
 		var (
 			starsGot int

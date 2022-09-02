@@ -154,6 +154,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 		if _,err := strconv.Atoi(sterm); err==nil {
 			compq:=query+" AND id=?"+suffix
 			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+			defer rows.Close()
 			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
@@ -165,6 +166,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 			//! To support unlisted2 aka friendList maybe we should use isUnlisted<>1 or "isUnlisted=ANY(0"+",2"+")
 			compq:=query+" AND name LIKE ? AND isUnlisted=0"+suffix
 			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],"%"+sterm+"%")
+			defer rows.Close()
 			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],"%"+sterm+"%").Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
@@ -176,6 +178,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 		// Or if we're just wandering and clicking buttons
 		compq:=query+" AND isUnlisted=0"+suffix
 		rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		defer rows.Close()
 		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
 		for rows.Next() {
 			var lvlid int
@@ -206,6 +209,7 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 			}
 			compq:=query+" AND uid IN ("+QuickComma(params["followList"])+")"+suffix
 			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+			defer rows.Close()
 			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
@@ -216,6 +220,7 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 			if stermi,err := strconv.Atoi(sterm); err==nil {
 				compq:=query+" AND uid=?"+suffix
 				rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],stermi)
+				defer rows.Close()
 				filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],stermi).Scan(&filter.Count)
 				for rows.Next() {
 					var lvlid int
@@ -228,6 +233,7 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 		if followMode {
 			compq:=query+" AND isUnlisted=0 AND uid IN ("+QuickComma(params["followList"])+")"+suffix
 			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+			defer rows.Close()
 			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
@@ -237,6 +243,7 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 		}else{
 			compq:=query+suffix
 			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+			defer rows.Close()
 			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
@@ -261,6 +268,7 @@ func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string)
 	if sterm, ok := params["sterm"]; ok {
 		compq:=query+" AND id IN ("+QuickComma(sterm)+")"+suffix
 		rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		defer rows.Close()
 		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
 		for rows.Next() {
 			var lvlid int
@@ -275,7 +283,7 @@ func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string)
 // GetGauntlets retrieves gauntlet list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetGauntlets() string {
 	rows:=filter.DB.ShouldQuery("SELECT packName, levels FROM levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
-
+	defer rows.Close()
 	var gau, hashstr string
 	for rows.Next() {
 		var packName, levels string
@@ -308,6 +316,7 @@ func (filter *CLevelFilter) CountMapPacks() int {
 func (filter *CLevelFilter) GetMapPacks(page int) string {
 	page=int(math.Abs(float64(page)))*10
 	rows:=filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET "+strconv.Itoa(page))
+	defer rows.Close()
 
 	var pack, hashstr string
 	for rows.Next() {

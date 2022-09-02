@@ -33,7 +33,7 @@ func (db *MySQLConn) ConnectMultiBlob(config ConfigBlob) error {
 	return err
 }
 
-func (db *MySQLConn) CloseDB() {db.DB.Close()}
+func (db *MySQLConn) CloseDB() {db.logger.Should(db.DB.Close())}
 
 func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result, error) {
 	stmt, err:=db.DB.Prepare(query)

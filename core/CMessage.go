@@ -71,6 +71,7 @@ func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) (int,[]map[st
 	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM messages WHERE "+pf+"=?",uid).Scan(&cnt)
 	if cnt==0 {return 0,[]map[string]string{}}
 	rows:=cm.DB.ShouldQuery("SELECT id,uid_src,uid_dest,subject,body,postedTime,isNew FROM messages WHERE "+pf+"=? ORDER BY id limit 10 OFFSET "+strconv.Itoa(page),uid)
+	defer rows.Close()
 	var out []map[string]string
 	for rows.Next() {
 		msg:=CMessage{}

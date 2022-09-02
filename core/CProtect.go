@@ -9,7 +9,7 @@ import (
 )
 
 type CProtect struct {
-	DB MySQLConn
+	DB *MySQLConn
 	LevelModel ProtectModel
 	Savepath string
 	DisableProtection bool
@@ -82,7 +82,7 @@ func (protect *CProtect) DetectLevelModel(uid int) bool {
 	protect.DB.ShouldQueryRow("SELECT protect_levelsToday as cnt FROM users WHERE uid=?",uid).Scan(&lvlCnt)
 	if lvlCnt>=protect.LevelModel.MaxLevelUpload {
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
-		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:LevelAuto"},protect.DB)
+		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:LevelAuto"},*protect.DB)
 		return false
 	}
 	protect.DB.ShouldQuery("UPDATE users SET protect_levelsToday=protect_levelsToday+1 WHERE uid=?",uid)
@@ -95,14 +95,14 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
 		protect.DB.ShouldQuery("DELETE FROM levels WHERE uid=?",uid)
 		protect.DB.ShouldQuery("DELETE FROM actions WHERE type=4 AND uid=?",uid)
-		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:StatsNegative"},protect.DB)
+		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:StatsNegative"},*protect.DB)
 		return false
 	}
 	var starCnt int
 	protect.DB.ShouldQuery("SELECT protect_todayStars as cnt FROM users WHERE uid=?",uid).Scan(&starCnt)
 	if stars-starCnt>protect.LevelModel.MaxStars {
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
-		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:StarsLimit"},protect.DB)
+		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:StarsLimit"},*protect.DB)
 		return false
 	}
 	return true
