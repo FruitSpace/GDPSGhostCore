@@ -203,12 +203,21 @@ func (acc *CAccount) LoadSocial() {
 }
 
 func (acc *CAccount) LoadAll() {
-	acc.LoadAuth(CAUTH_UID)
-	acc.LoadStats()
-	acc.LoadTechnical()
-	acc.LoadSocial()
-	acc.LoadVessels()
-	acc.LoadSettings()
+	var vessels,settings string
+	acc.DB.MustQueryRow("SELECT uid,uname,passhash,gjphash,email,role_id,isBanned,stars,diamonds,coins,ucoins," +
+		"demons,cpoints,orbs,moons,special,lvlsCompleted,regDate,accessDate,lastIP,gameVer,blacklist,friends_cnt,friendship_ids," +
+		"iconType,vessels,settings FROM users WHERE uid=?",acc.Uid).Scan(
+			&acc.Uid,&acc.Uname,&acc.Passhash,&acc.GjpHash,&acc.Email,&acc.Role_id,&acc.IsBanned,&acc.Stars,&acc.Diamonds,&acc.Coins,
+			&acc.UCoins,&acc.Demons,&acc.CPoints,&acc.Orbs,&acc.Moons,&acc.Special,&acc.LvlsCompleted,&acc.RegDate,&acc.AccessDate,
+			&acc.LastIP,&acc.GameVer,&acc.Blacklist,&acc.FriendsCount,&acc.FriendshipIds,&acc.IconType,&vessels,&settings)
+	json.Unmarshal([]byte(vessels),acc)
+	var clrs map[string]int
+	json.Unmarshal([]byte(vessels),&clrs)
+	acc.ColorPrimary=clrs["clr_primary"]
+	acc.ColorSecondary=clrs["clr_secondary"]
+	json.Unmarshal([]byte(settings),acc)
+	acc.Blacklist=QuickComma(acc.Blacklist)
+	acc.FriendshipIds=QuickComma(acc.FriendshipIds)
 }
 
 func (acc *CAccount) GetUIDByUname(uname string, autoSave bool) int {

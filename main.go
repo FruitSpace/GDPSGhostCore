@@ -24,7 +24,7 @@ func main() {
 	defer sentry.Flush(2*time.Second)
 
 	config:=GenGConfig()
-	core.MaintainTasks(config)
+	//core.MaintainTasks(config)
 	core.MaintainRoutines(config)
 
 	ghostServer:= api.GhostServer{

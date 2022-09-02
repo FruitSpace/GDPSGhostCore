@@ -174,9 +174,7 @@ func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string{
 // GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/o trailing hash)
 func GetAccLeaderboardItem(acc core.CAccount,lk int) string {
 	s:=strconv.Itoa
-	acc.LoadAuth(core.CAUTH_UID)
-	acc.LoadVessels()
-	acc.LoadStats()
+	acc.LoadAll()
 	return "1:"+acc.Uname+":2:"+s(acc.Uid)+":3:"+s(acc.Stars)+":4:"+s(acc.Demons)+":6:"+s(lk)+":7:"+s(acc.Uid)+
 		":8:"+s(acc.CPoints)+":9:"+s(acc.GetShownIcon())+":10:"+s(acc.ColorPrimary)+":11:"+s(acc.ColorSecondary)+":13:"+s(acc.Coins)+
 		":14:"+s(acc.IconType)+":15:"+s(acc.Special)+":16:"+s(acc.Uid)+":17:"+s(acc.UCoins)+":46:"+s(acc.Diamonds)+"|"

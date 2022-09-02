@@ -13,7 +13,6 @@ func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig)
 		log.LogWarn(rdb,err.Error())
 		return
 	}
-	fmt.Println(Srvid)
 	conf:=ConfigBlob{}
 	err=json.Unmarshal([]byte(t),&conf)
 	if err!=nil{
@@ -54,7 +53,8 @@ func MaintainTasks(config GlobalConfig) {
 		return
 	}
 
-	for _,Srvid := range strsl {
+	for i,Srvid := range strsl {
+		fmt.Println("[",i,"/",len(strsl),"]"+Srvid)
 		RunSingleTask(Srvid, rdb, log, config)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
+	"time"
 )
 
 type MySQLConn struct {
@@ -20,6 +21,9 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 	if err!=nil{
 		db.logger.LogWarn(err,err.Error())
 	}
+	db.DB.SetMaxIdleConns(2)
+	db.DB.SetConnMaxLifetime(2*time.Minute)
+	db.DB.SetConnMaxIdleTime(5*time.Minute)
 	return err
 }
 
@@ -30,6 +34,9 @@ func (db *MySQLConn) ConnectMultiBlob(config ConfigBlob) error {
 	if err!=nil{
 		db.logger.LogWarn(err,err.Error())
 	}
+	db.DB.SetMaxIdleConns(2)
+	db.DB.SetConnMaxLifetime(2*time.Minute)
+	db.DB.SetConnMaxIdleTime(5*time.Minute)
 	return err
 }
 
