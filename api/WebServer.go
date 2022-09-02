@@ -2,7 +2,6 @@ package api
 
 import (
 	"HalogenGhostCore/core"
-	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -142,6 +141,16 @@ func (ghost *GhostServer) StartServer(Host string) {
 				handler(resp,req,&ghost.Config)
 			})
 	}
+	for route, handler:= range RouteIntegraMap {
+		mux.HandleFunc(route,
+			func(resp http.ResponseWriter,req *http.Request) {
+				IPAddr:=req.Header.Get("CF-Connecting-IP")
+				if IPAddr=="" {IPAddr = req.Header.Get("X-Real-IP")}
+				if IPAddr=="" {IPAddr = strings.Split(req.RemoteAddr, ":")[0]}
+				log.Println("["+IPAddr+"] "+req.URL.Path, " Got ", GetFunctionName(handler))
+				handler(resp, req, &ghost.Config)
+			})
+	}
 	log.Println("Server is up and running on http://"+Host)
 	err:=http.ListenAndServe(Host,mux)
 	if err!=nil {
@@ -163,7 +172,7 @@ func ReadPost(req *http.Request) url.Values {
 	for _,val:= range pairs {
 		if !strings.Contains(val,"=") {continue}
 		m:=strings.SplitN(val,"=",2)
-		fmt.Println(m)
+		//fmt.Println(m)
 		rval,_:=url.QueryUnescape(m[1])
 		rkey,_:=url.QueryUnescape(m[0])
 		vals[rkey]=append(vals[rkey],rval)

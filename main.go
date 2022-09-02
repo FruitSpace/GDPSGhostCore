@@ -23,12 +23,15 @@ func main() {
 	}
 	defer sentry.Flush(2*time.Second)
 
+	config:=GenGConfig()
+	core.MaintainTasks(config)
+	core.MaintainRoutines(config)
 
 	ghostServer:= api.GhostServer{
 		Log: core.Logger{
 			Output: connectors.GetWriter("",""),
 		},
-		Config: GenGConfig(),
+		Config: config,
 	}
 	ghostServer.StartServer("0.0.0.0:1997")
 

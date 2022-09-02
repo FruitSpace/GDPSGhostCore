@@ -24,31 +24,32 @@ func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) {
 	db.ShouldQuery(gdpsDatabase)
 	//Create paths
 	os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata",0777)
+	os.Create(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"levelModel.json")
 }
 
 //Count stuff
 
 func CountUsers(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM users",&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) FROM users")
 	return cnt
 }
 
 func CountLevels(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM levels",&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) FROM levels").Scan(&cnt)
 	return cnt
 }
 
 func CountPosts(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM acccomments",&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) FROM acccomments").Scan(&cnt)
 	return cnt
 }
 
 func CountComments(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM comments",&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) FROM comments").Scan(&cnt)
 	return cnt
 }
 

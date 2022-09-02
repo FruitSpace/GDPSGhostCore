@@ -5,10 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/base64"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"golang.org/x/exp/slices"
 	"html"
 	"io"
-	"log"
 	"math/rand"
 	"net/url"
 	"strconv"
@@ -102,18 +102,18 @@ type Logger struct {
 }
 
 func (lg *Logger) LogErr(module interface{}, message string) {
-	log.SetOutput(lg.Output)
-
-	log.Panicf("[%T] %s\n",module,message)
+	sentry.CaptureMessage(message)
+	fmt.Println("ERR: ",message)
 }
 func (lg *Logger) LogWarn(module interface{}, message string) {
-	log.SetOutput(lg.Output)
 	fmt.Printf("[%T] %s\n",module,message)
 }
 
 func (lg *Logger) Must(err error) {
 	if err!=nil{
-		lg.LogErr(err,err.Error())
+		sentry.CaptureException(err)
+		fmt.Println("ERR:",err.Error())
+		panic("Must dereferenced")
 	}
 }
 

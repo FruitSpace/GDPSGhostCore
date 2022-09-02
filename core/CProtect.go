@@ -26,6 +26,7 @@ type ProtectModel struct {
 func (protect *CProtect) LoadModel() {
 	model, err:= os.ReadFile(protect.Savepath+"/levelModel.json")
 	if err!=nil{
+		os.Mkdir(protect.Savepath,0777)
 		os.WriteFile(protect.Savepath+"/levelModel.json",[]byte("{}"),0755)
 		return
 	}
@@ -42,7 +43,7 @@ func (protect *CProtect) FillLevelModel() {
 		current:=strings.Split(date.AddDate(0,0,-1*i).Format("2006-01-02 15:04:05")," ")[0]
 		currentIndex:=strings.Split(date.AddDate(0,0,-(i+1)*i).Format("2006-01-02 15:04:05")," ")[0]
 		var count int
-		protect.DB.ShouldQueryRow("SELECT count(*) as cnt FROM actions WHERE type=4 AND date<? AND date>? AND data LIKE %Upload%",
+		protect.DB.ShouldQueryRow("SELECT count(*) as cnt FROM actions WHERE type=4 AND date<? AND date>? AND data LIKE '%Upload%'",
 			current,currentIndex).Scan(&count)
 		stats[currentIndex]=count
 		if count>protect.LevelModel.PeakLevelUpload {
@@ -67,7 +68,7 @@ func (protect *CProtect) FillLevelModel() {
 	if err!=nil {
 		data=[]byte("{}")
 	}
-	os.WriteFile(protect.Savepath+"/levelModel.json",data,0755)
+	protect.DB.logger.Must(os.WriteFile(protect.Savepath+"/levelModel.json",data,0755))
 }
 
 func (protect *CProtect) ResetUserLimits() {

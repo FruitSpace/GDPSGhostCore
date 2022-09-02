@@ -86,7 +86,7 @@ func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
 	rdb:=RedisConn{}
 	log:=Logger{}
 	if err:=rdb.ConnectBlob(*glob); err!=nil {
-		log.LogWarn(rdb,err.Error())
+		log.LogWarn(rdb,"Conn: "+err.Error())
 		return ConfigBlob{},err
 	}
 	conf:=ConfigBlob{}
@@ -96,7 +96,7 @@ func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error){
 	}
 	err=json.Unmarshal([]byte(t),&conf)
 	if err!=nil{
-		log.LogWarn(rdb,err.Error())
+		log.LogWarn(rdb,"Marshal: "+err.Error())
 		return ConfigBlob{},err
 	}
 	rdb.DB.Close()
