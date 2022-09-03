@@ -1,15 +1,18 @@
 package core
 
 import (
+	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"github.com/getsentry/sentry-go"
 	"golang.org/x/exp/slices"
 	"html"
 	"io"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -243,4 +246,18 @@ func InArray(arr []string, ele string) bool {
 		if v==ele {return true}
 	}
 	return false
+}
+
+
+
+
+func SendMessageDiscord(text string) {
+	b,_:=json.Marshal(map[string]string{
+		"content":text,
+	})
+
+	content:=bytes.NewReader(b)
+
+	http.Post("https://discord.com/api/webhooks/1015662689181241405/5v9CTXhNM1LfDhvNDWswETdZPOq-tofRTh_dFmyOfDOijbKl8sUQenOghU8X9uvmrRfE",
+		"application/json", content)
 }

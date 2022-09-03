@@ -29,6 +29,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if Post.Get("songID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		mus:=core.CMusic{DB: &db, ConfBlob: config, Config: conf}
 		var id int
@@ -55,6 +56,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
+    defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	page:=0
 	core.TryInt(&page,Post.Get("page"))
@@ -78,6 +80,7 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("itemID")!="" && Post.Get("type")!=""{
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -136,6 +139,7 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){

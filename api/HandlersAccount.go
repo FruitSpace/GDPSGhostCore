@@ -29,6 +29,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		saveData:=core.ClearGDRequest(Post.Get("saveData"))
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
@@ -76,6 +77,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
@@ -128,6 +130,7 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		uid:=acc.LogIn(uname,pass, IPAddr, 0)
@@ -158,6 +161,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		pass := core.ClearGDRequest(Post.Get("password"))
 		email := core.ClearGDRequest(Post.Get("email"))
 		db := core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc := core.CAccount{DB: db}
 		if core.OnRegister(db, conf, config){

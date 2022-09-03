@@ -25,6 +25,7 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	Post:=ReadPost(req)
 	if Post.Get("chk")!="" && Post.Get("udid")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		cq:=core.CQuests{DB: db}
 		if cq.Exists(core.QUEST_TYPE_CHALLENGE) {
@@ -54,6 +55,7 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && len(Post.Get("chk"))>5 && Post.Get("udid")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){

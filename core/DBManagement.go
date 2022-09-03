@@ -22,8 +22,8 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 		db.logger.LogWarn(err,err.Error())
 	}
 	db.DB.SetMaxIdleConns(2)
-	db.DB.SetConnMaxLifetime(2*time.Minute)
-	db.DB.SetConnMaxIdleTime(5*time.Minute)
+	db.DB.SetConnMaxLifetime(30*time.Second)
+	db.DB.SetConnMaxIdleTime(2*time.Minute)
 	return err
 }
 

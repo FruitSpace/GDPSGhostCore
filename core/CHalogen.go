@@ -31,25 +31,25 @@ func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) {
 
 func CountUsers(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM users")
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM users").Scan(&cnt)
 	return cnt
 }
 
 func CountLevels(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM levels").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM levels").Scan(&cnt)
 	return cnt
 }
 
 func CountPosts(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM acccomments").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM acccomments").Scan(&cnt)
 	return cnt
 }
 
 func CountComments(db MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) FROM comments").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM comments").Scan(&cnt)
 	return cnt
 }
 

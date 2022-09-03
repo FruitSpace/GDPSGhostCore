@@ -25,6 +25,7 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if Post.Get("targetAccountID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		var uidSelf int
@@ -70,6 +71,7 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var cType int
 		core.TryInt(&cType,Post.Get("type"))
@@ -136,6 +138,7 @@ func GetUsers(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	Post:=ReadPost(req)
 	if Post.Get("str")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		acc.Uid=acc.SearchUsers(core.ClearGDRequest(Post.Get("str")))
@@ -165,6 +168,7 @@ func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request, conf *co
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post){
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){

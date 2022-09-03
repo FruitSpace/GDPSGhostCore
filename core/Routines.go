@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jasonlvhit/gocron"
 	"os"
+	"strconv"
 )
 
 func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig) {
@@ -31,13 +32,10 @@ func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig)
 	//Start real stuff
 	os.MkdirAll(config.SavePath+"/"+Srvid+"/savedata",0777)
 	mus:=CMusic{DB: &db}
-	fmt.Println("Before Count: ",db.DB.Stats().OpenConnections)
 	mus.CountDownloads()
-	fmt.Println("After Count: ",db.DB.Stats().OpenConnections)
 	protect:=CProtect{DB: &db, Savepath: config.SavePath+"/"+Srvid}
 	protect.FillLevelModel()
 	protect.ResetUserLimits()
-	fmt.Println("After Limits: ",db.DB.Stats().OpenConnections)
 }
 
 func MaintainTasks(config GlobalConfig) {
@@ -52,15 +50,15 @@ func MaintainTasks(config GlobalConfig) {
 		log.LogWarn(rdb,err.Error())
 		return
 	}
-
+	SendMessageDiscord("Starting maintenance routine")
 	for i,Srvid := range strsl {
-		fmt.Println("[",i,"/",len(strsl),"]"+Srvid)
+		fmt.Println("["+strconv.Itoa(i+1)+"/"+strconv.Itoa(len(strsl))+"]",Srvid)
 		RunSingleTask(Srvid, rdb, log, config)
 	}
 
 }
 
 func MaintainRoutines(config GlobalConfig) {
-	gocron.Every(1).Day().At("00:00").Do(MaintainTasks, config)
+	gocron.Every(1).Day().At("03:00").Do(MaintainTasks, config)
 }
 

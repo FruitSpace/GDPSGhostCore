@@ -59,6 +59,8 @@ type CLevel struct {
 	UploadDate string
 	UpdateDate string
 
+	UnlockLevelObject bool
+
 	DB MySQLConn
 	Logger Logger
 }
@@ -137,7 +139,7 @@ func (lvl *CLevel) IsOwnedBy(uid int) bool {
 
 func (lvl *CLevel) CheckParams() bool {
 	if len(lvl.Name)>32 || len(lvl.Description)>256 || len(lvl.Password)>8 || lvl.Version<1 || lvl.Version>127 || lvl.TrackId<0 || lvl.SongId<0 || lvl.VersionGame<0 {return false}
-	if  lvl.VersionBinary<0 || len(lvl.StringLevel)<16 ||lvl.OrigId<0 || lvl.Objects<100 || lvl.StarsRequested<0 || lvl.StarsRequested>10 || lvl.Ucoins<0 || lvl.Ucoins>3 {return false}
+	if  lvl.VersionBinary<0 || len(lvl.StringLevel)<16 ||lvl.OrigId<0 || (lvl.Objects<100 && !lvl.UnlockLevelObject) || lvl.StarsRequested<0 || lvl.StarsRequested>10 || lvl.Ucoins<0 || lvl.Ucoins>3 {return false}
 	return true
 }
 

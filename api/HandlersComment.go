@@ -25,6 +25,7 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -57,6 +58,7 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 		page:=0
 		core.TryInt(&page, Post.Get("page"))
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var uid int
 		core.TryInt(&uid,Post.Get("accountID"))
@@ -90,6 +92,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("comment")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -125,6 +128,7 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("commentID")!="" && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -165,6 +169,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		mode:=false
 		if Post.Get("mode")!="0" {mode=true}
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var lvlId int
 		core.TryInt(&lvlId,Post.Get("levelID"))
@@ -202,6 +207,7 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 		mode:=false
 		if Post.Get("mode")!="0" {mode=true}
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		core.TryInt(&acc.Uid,Post.Get("userID"))
@@ -243,6 +249,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("comment")!="" && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){

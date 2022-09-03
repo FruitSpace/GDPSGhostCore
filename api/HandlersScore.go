@@ -24,6 +24,7 @@ func GetCreators(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	//Get:=req.URL.Query()
 	//Post:=ReadPost(req)
 	db := core.MySQLConn{}
+    defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config)) != nil {return}
 	acc:=core.CAccount{DB: db}
 	users:=acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS,[]string{},0, config.ServerConfig.TopSize)
@@ -54,6 +55,7 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -116,6 +118,7 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	xType:=Post.Get("type")
 	if xType=="" {xType="top"}
 	db := core.MySQLConn{}
+    defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config)) != nil {return}
 	acc:=core.CAccount{DB: db}
 	var users []int
@@ -183,6 +186,7 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){

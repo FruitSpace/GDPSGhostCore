@@ -26,6 +26,7 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	//Get:=req.URL.Query()
 	//Post:=ReadPost(req)
 	db:=core.MySQLConn{}
+    defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	filter:=core.CLevelFilter{DB: db}
 	io.WriteString(resp,filter.GetGauntlets())
@@ -43,6 +44,7 @@ func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
+    defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	filter:=core.CLevelFilter{DB: db}
 	var page int
@@ -65,6 +67,7 @@ func LevelDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -101,6 +104,7 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	Post:=ReadPost(req)
 	if Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var lvl_id, quest_id int
 		core.TryInt(&lvl_id,Post.Get("levelID"))
@@ -192,6 +196,7 @@ func LevelGetDaily(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	//Get:=req.URL.Query()
 	Post:=ReadPost(req)
 	db:=core.MySQLConn{}
+    defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	var xtype int
 	if w:=Post.Get("weekly"); w=="1" {xtype=1}
@@ -320,6 +325,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 
 
 	db:=core.MySQLConn{}
+    defer db.CloseDB()
 	defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config))!=nil {return}
 	filter:=core.CLevelFilter{DB: db}
@@ -437,6 +443,7 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		var lvl_id int
 		core.TryInt(&lvl_id,Post.Get("levelID"))
@@ -461,6 +468,7 @@ func LevelUpdateDescription(resp http.ResponseWriter, req *http.Request, conf *c
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -498,6 +506,7 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelString")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -538,6 +547,7 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		cl.StringLevelInfo=core.ClearGDRequest(Post.Get("levelInfo"))
 		core.TryInt(&cl.VersionBinary,Post.Get("binaryVersion"))
 		core.TryInt(&cl.Id,Post.Get("levelID"))
+		cl.UnlockLevelObject=config.SecurityConfig.NoLevelLimits
 
 		if cl.IsOwnedBy(xacc.Uid){
 			res:=cl.UpdateLevel()
@@ -589,6 +599,7 @@ func RateDemon(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -630,6 +641,7 @@ func RateStar(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
@@ -666,6 +678,7 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID")!="" {
 		db:=core.MySQLConn{}
+    defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
