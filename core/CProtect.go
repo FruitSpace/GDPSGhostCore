@@ -103,11 +103,11 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 		return false
 	}
 	var starCnt int
-	protect.DB.ShouldQuery("SELECT protect_todayStars as cnt FROM users WHERE uid=?",uid).Scan(&starCnt)
-	if stars-starCnt>protect.LevelModel.MaxStars {
+	protect.DB.ShouldQueryRow("SELECT protect_todayStars FROM users WHERE uid=?",uid).Scan(&starCnt)
+	if (stars-starCnt)>protect.LevelModel.MaxStars {
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
 		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:StarsLimit"},*protect.DB)
-		SendMessageDiscord("User "+strconv.Itoa(uid)+" has been banned for having too many stars ("+strconv.Itoa(stars)+"/"+strconv.Itoa(protect.LevelModel.MaxStars)+").")
+		SendMessageDiscord("["+protect.Savepath[10:]+"]User "+strconv.Itoa(uid)+" has been banned for having too many stars ("+strconv.Itoa(stars)+"+"+strconv.Itoa(starCnt)+"/"+strconv.Itoa(protect.LevelModel.MaxStars)+").")
 		return false
 	}
 	return true

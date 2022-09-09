@@ -558,8 +558,6 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
 				}, db)
 				//!Here be plug
-			}else{
-				io.WriteString(resp,"-1")
 			}
 		}else{
 			if !core.OnLevel(db, conf, config) {
@@ -577,8 +575,6 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
 				}, db)
 				//!Here be plug
-			}else{
-				io.WriteString(resp,"-1")
 			}
 		}
 	}else{
