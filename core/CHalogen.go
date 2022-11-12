@@ -16,15 +16,21 @@ import (
 //go:embed resources/database.sql
 var gdpsDatabase string
 
-func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) {
+func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) bool {
 	db:=MySQLConn{}
 	logger:=Logger{}
 	//Create DB
-	if logger.Should(db.ConnectMultiBlob(configBlob))!=nil {return}
+	if logger.Should(db.ConnectMultiBlob(configBlob))!=nil {return false}
 	db.ShouldQuery(gdpsDatabase)
 	//Create paths
-	os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata",0777)
-	os.Create(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"levelModel.json")
+	if logger.Should(os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata",0777))!=nil {
+		os.RemoveAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata")
+		return false
+	}
+	os.Create(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/levelModel.json")
+	protect:=CProtect{DB: &db, Savepath: glob.SavePath+"/"+configBlob.ServerConfig.SrvID}
+	protect.FillLevelModel()
+	return true
 }
 
 //Count stuff

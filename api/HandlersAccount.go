@@ -161,7 +161,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		pass := core.ClearGDRequest(Post.Get("password"))
 		email := core.ClearGDRequest(Post.Get("email"))
 		db := core.MySQLConn{}
-    defer db.CloseDB()
+    	defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc := core.CAccount{DB: db}
 		if core.OnRegister(db, conf, config){

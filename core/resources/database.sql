@@ -3,6 +3,7 @@ CREATE TABLE users
     uid            int(11)      NOT NULL AUTO_INCREMENT PRIMARY KEY,
     uname          varchar(16)  NOT NULL,
     passhash       varchar(128) NOT NULL,
+    gjphash        varchar(64) NOT NULL,
     email          varchar(256) NOT NULL,
     role_id        int(4)       NOT NULL DEFAULT 0,
 

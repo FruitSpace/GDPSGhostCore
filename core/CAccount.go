@@ -405,8 +405,8 @@ func (acc *CAccount) Register(uname string, pass string, email string, ip string
 	passx:=MD5(MD5(pass+"HalogenCore1704")+"ae07")+MD5(pass)[:4]
 	rdate:=time.Now().Format("2006-01-02 15:04:05")
 	sreq:=acc.DB.MustPrepareExec(
-		"INSERT INTO users (uname,passhash,gjphash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,?,"+isBanned+")",
-		uname,passx,DoGjp2(pass),email,rdate,rdate)
+		"INSERT INTO users (uname,passhash,gjphash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,?,?)",
+		uname,passx,DoGjp2(pass),email,rdate,rdate,isBanned)
 	vuid,_:=sreq.LastInsertId()
 	acc.Uid=int(vuid)
 	acc.UpdateIP(ip)

@@ -107,6 +107,7 @@ type Logger struct {
 func (lg *Logger) LogErr(module interface{}, message string) {
 	sentry.CaptureMessage(message)
 	fmt.Println("ERR: ",message)
+	ReportFail(message)
 }
 func (lg *Logger) LogWarn(module interface{}, message string) {
 	fmt.Printf("[%T] %s\n",module,message)
@@ -116,7 +117,8 @@ func (lg *Logger) Must(err error) {
 	if err!=nil{
 		sentry.CaptureException(err)
 		fmt.Println("ERR:",err.Error())
-		panic("Must dereferenced")
+		ReportFail(err.Error())
+		panic("Must be dereferenced")
 	}
 }
 
@@ -258,6 +260,10 @@ func SendMessageDiscord(text string) {
 
 	content:=bytes.NewReader(b)
 
-	http.Post("https://discord.com/api/webhooks/1015662689181241405/5v9CTXhNM1LfDhvNDWswETdZPOq-tofRTh_dFmyOfDOijbKl8sUQenOghU8X9uvmrRfE",
+	http.Post("https://discord.com/api/webhooks/1040954033210413066/1uFkSmxjZ4gkG6A_QtSDjoNZRfMHnwgLOTW9iEtVbq40UI_Ez5ODFZVNuBjIP5xuoRIk",
 		"application/json", content)
+}
+
+func ReportFail(err string) {
+	http.PostForm("https://api.fruitspace.one/pandora/report", url.Values{"error":{url.QueryEscape(err)}})
 }

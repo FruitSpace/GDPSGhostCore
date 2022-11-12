@@ -74,7 +74,11 @@ func CreateGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger:=core.Logger{Output: os.Stderr}
 	config,err:=conf.LoadById(vars["gdps"])
 	if logger.Should(err)!=nil {return}
-	core.HalInitialize(config, conf)
+	if !core.HalInitialize(config, conf){
+		SendJson(resp, map[string]string{"status":"error","error":"Failed to initialize GDPS"})
+	}else{
+		SendJson(resp, map[string]string{"status":"ok"})
+	}
 }
 
 func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {

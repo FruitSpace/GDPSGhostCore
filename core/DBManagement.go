@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"time"
@@ -50,8 +51,10 @@ func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result,
 }
 
 func (db *MySQLConn) MustPrepareExec(query string, args ...interface{}) sql.Result {
+	defer sentry.Recover()
 	stmt, err:=db.DB.Prepare(query)
 	if err!=nil {db.logger.LogErr(db,err.Error())}
+	fmt.Println(args...)
 	res, err1:= stmt.Exec(args...)
 	if err1!=nil {db.logger.LogErr(db,err1.Error())}
 	return res

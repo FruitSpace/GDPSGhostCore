@@ -15,7 +15,7 @@ import (
 func main() {
 	// Start Sentry so I can sleep well
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn: "https://5ee98ff065064ac5a4d3e96a55f8cd08@o1368861.ingest.sentry.io/6671765",
+		Dsn: "https://c25abcf97ba74583b8cbeaccfa448669@o1404863.ingest.sentry.io/6737893",
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {

@@ -32,6 +32,7 @@ func (protect *CProtect) LoadModel() {
 		return
 	}
 	json.Unmarshal(model,&protect.LevelModel)
+	if protect.LevelModel.MaxLevelUpload==0 {protect.LevelModel.MaxLevelUpload=10}
 }
 
 func (protect *CProtect) FillLevelModel() {
@@ -85,7 +86,7 @@ func (protect *CProtect) DetectLevelModel(uid int) bool {
 	if lvlCnt>=protect.LevelModel.MaxLevelUpload {
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
 		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:LevelAuto"},*protect.DB)
-		SendMessageDiscord("User "+strconv.Itoa(uid)+" has been banned for uploading too many levels ("+strconv.Itoa(lvlCnt)+"/"+strconv.Itoa(protect.LevelModel.MaxLevelUpload)+") in a day.")
+		SendMessageDiscord("["+protect.Savepath[6:11]+"] User "+strconv.Itoa(uid)+" has been banned for uploading too many levels ("+strconv.Itoa(lvlCnt)+"/"+strconv.Itoa(protect.LevelModel.MaxLevelUpload)+") in a day.")
 		return false
 	}
 	protect.DB.ShouldQuery("UPDATE users SET protect_levelsToday=protect_levelsToday+1 WHERE uid=?",uid)
@@ -102,12 +103,13 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 		SendMessageDiscord("User "+strconv.Itoa(uid)+" has been banned for having negative stats.",)
 		return false
 	}
+	if protect.LevelModel.MaxStars==0 {protect.LevelModel.MaxStars=200}
 	var starCnt int
 	protect.DB.ShouldQueryRow("SELECT protect_todayStars FROM users WHERE uid=?",uid).Scan(&starCnt)
 	if (stars-starCnt)>protect.LevelModel.MaxStars {
 		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?",uid)
 		RegisterAction(ACTION_BAN_BAN,0,uid, map[string]string{"type":"Ban:StarsLimit"},*protect.DB)
-		SendMessageDiscord("["+protect.Savepath[10:]+"]User "+strconv.Itoa(uid)+" has been banned for having too many stars ("+strconv.Itoa(stars)+"+"+strconv.Itoa(starCnt)+"/"+strconv.Itoa(protect.LevelModel.MaxStars)+").")
+		SendMessageDiscord("User "+strconv.Itoa(uid)+" has been banned for having too many stars ("+strconv.Itoa(stars)+"+"+strconv.Itoa(starCnt)+"/"+strconv.Itoa(protect.LevelModel.MaxStars)+").")
 		return false
 	}
 	return true

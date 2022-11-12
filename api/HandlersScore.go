@@ -186,7 +186,7 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	Post:=ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db:=core.MySQLConn{}
-    defer db.CloseDB()
+    	defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		xacc:=core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr){
