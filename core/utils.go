@@ -7,6 +7,11 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/getsentry/sentry-go"
 	"golang.org/x/exp/slices"
 	"html"
@@ -14,6 +19,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -266,4 +272,93 @@ func SendMessageDiscord(text string) {
 
 func ReportFail(err string) {
 	http.PostForm("https://api.fruitspace.one/pandora/report", url.Values{"error":{url.QueryEscape(err)}})
+}
+
+
+
+type S3FS struct {
+	Endpoint string
+	AccessKey string
+	SecretKey string
+
+	Region string
+	Bucket string
+
+}
+
+
+func (s3fs *S3FS) GetFile(path string) ([]byte, error) {
+	creds := credentials.NewStaticCredentials(s3fs.AccessKey, s3fs.SecretKey, "")
+	cfg := aws.NewConfig().WithEndpoint(s3fs.Endpoint).WithRegion(s3fs.Region).WithCredentials(creds)
+	sess,err:=session.NewSession(cfg)
+	if err!=nil {return nil, err}
+	svc := s3manager.NewDownloader(sess)
+
+	buf := aws.NewWriteAtBuffer([]byte{})
+	_, err = svc.Download(buf, &s3.GetObjectInput{
+		Bucket: aws.String(s3fs.Bucket),
+		Key:    aws.String(path),
+	})
+	if err != nil {return nil, err}
+	return buf.Bytes(), nil
+}
+
+func (s3fs *S3FS) PutFile(path string, data []byte) error {
+	creds := credentials.NewStaticCredentials(s3fs.AccessKey, s3fs.SecretKey, "")
+	cfg := aws.NewConfig().WithEndpoint(s3fs.Endpoint).WithRegion(s3fs.Region).WithCredentials(creds)
+	sess,err:=session.NewSession(cfg)
+	if err!=nil {return err}
+	svc := s3manager.NewUploader(sess)
+
+	_, err = svc.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(s3fs.Bucket),
+		Key:    aws.String(path),
+		Body:   bytes.NewReader(data),
+	})
+	if err != nil {return err}
+	return nil
+}
+
+func (s3fs *S3FS) DeleteFile(path string) error {
+	creds := credentials.NewStaticCredentials(s3fs.AccessKey, s3fs.SecretKey, "")
+	cfg := aws.NewConfig().WithEndpoint(s3fs.Endpoint).WithRegion(s3fs.Region).WithCredentials(creds)
+	sess,err:=session.NewSession(cfg)
+	if err!=nil {return err}
+	svc := s3.New(sess)
+
+	_, err = svc.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(s3fs.Bucket),
+		Key:    aws.String(path),
+	})
+	if err != nil {return err}
+	return nil
+}
+
+func NewS3FS() *S3FS {
+	Props:=GetKVEnv("S3_CONFIG")
+	return &S3FS{
+		Endpoint: Props["endpoint"],
+		AccessKey: Props["access_key"],
+		SecretKey: Props["secret"],
+		Region: Props["region"],
+		Bucket: Props["bucket"],
+	}
+}
+
+
+
+func GetEnv(key string, defaultVal string) string {
+	val:=os.Getenv(key)
+	if val=="" {return defaultVal}
+	return val
+}
+
+func GetKVEnv(key string) map[string]string {
+	val:=os.Getenv(key)
+	if val=="" {return map[string]string{}}
+	kv:=map[string]string{}
+	for _,v:=range strings.Split(val, ",") {
+		kv[strings.SplitN(v, "=",2)[0]]=strings.SplitN(v, "=",2)[1]
+	}
+	return kv
 }

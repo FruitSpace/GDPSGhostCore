@@ -72,6 +72,7 @@ type GlobalConfig struct {
 	RedisDB int
 	SavePath string
 	ModuleSettings map[string]string
+
 }
 
 type ConfigBlob struct {

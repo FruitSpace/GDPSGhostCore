@@ -81,7 +81,7 @@ func GenConfig() core.ConfigBlob {
 func GenGConfig() core.GlobalConfig {
 	return core.GlobalConfig{
 		EnvOrDefault("MASTER_KEY", "3XTR4OrD1nArY_K3Y_1907"),
-		EnvOrDefault("API_ENDPOINT", "https://halhost.cc/app/api/gdps_api.php"),
+		EnvOrDefault("API_ENDPOINT", "https://api.fruitspace.one/gd/gdpsapi"),
 		"stdout",
 		"null",
 		false,
