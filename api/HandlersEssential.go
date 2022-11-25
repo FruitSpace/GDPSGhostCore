@@ -12,8 +12,8 @@ import (
 )
 
 func GetAccountUrl(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
-	vars:= gorilla.Vars(req)
-    io.WriteString(resp,"http://s.halhost.cc/"+vars["gdps"]+"/database")
+	vars:=gorilla.Vars(req)
+    io.WriteString(resp,"https://rugd.gofruit.space/"+vars["gdps"]+"/db")
 }
 
 func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){

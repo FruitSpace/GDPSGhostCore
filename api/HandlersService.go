@@ -4,6 +4,7 @@ import (
 	"HalogenGhostCore/core"
 	"encoding/json"
 	gorilla "github.com/gorilla/mux"
+	"html"
 	"io"
 	"net/http"
 	"os"
@@ -30,13 +31,13 @@ func Shield(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig
 }
 
 func Redirector(resp http.ResponseWriter, req *http.Request){
-	http.Redirect(resp,req,"https://halhost.cc",http.StatusMovedPermanently)
+	http.Redirect(resp,req,"https://fruitspace.ru/",http.StatusMovedPermanently)
 }
 
 type NotFoundHandler int
 
 func (n NotFoundHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	io.WriteString(resp,strings.ReplaceAll(NotFoundTemplate,"[PATH]",req.URL.Path))
+	io.WriteString(resp,strings.ReplaceAll(NotFoundTemplate,"[PATH]",html.EscapeString(req.URL.Path)))
 }
 
 // Private API

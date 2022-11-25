@@ -79,13 +79,13 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		uname:=core.ClearGDRequest(Post.Get("userName"))
 		pass:=core.ClearGDRequest(Post.Get("password"))
 		db:=core.MySQLConn{}
-    defer db.CloseDB()
+    	defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		acc:=core.CAccount{DB: db}
 		if acc.LogIn(uname,pass, IPAddr, 0)>0 {
-			savepath:="gdps_savedata/"+vars["gdps"]+"/"+strconv.Itoa(acc.Uid)+".hsv"
+			savepath:="/gdps_savedata/"+vars["gdps"]+"/"+strconv.Itoa(acc.Uid)+".hsv"
 			s3:=core.NewS3FS()
-			if d, err:= s3.GetFile(savepath); err==nil {
+			if d, err:= s3.GetFile(savepath); logger.Should(err)==nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(config.ServerConfig.SrvKey))!=nil {return}
 				if logger.Should(taes.Init())!=nil {return}
@@ -93,7 +93,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				if logger.Should(err)!=nil {return}
 				io.WriteString(resp,data+";21;30;a;a")
 				//! Temp transitional
-			}else if  d, err:= s3.GetFile("/savedata_old/"+vars["gdps"]+"/files/savedata/"+strconv.Itoa(acc.Uid)+".hal"); err==nil{
+			}else if  d, err:= s3.GetFile("/savedata_old/"+vars["gdps"]+"/files/savedata/"+strconv.Itoa(acc.Uid)+".hal"); logger.Should(err)==nil{
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(pass))!=nil {return}
 				if logger.Should(taes.Init())!=nil {return}
@@ -113,7 +113,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 
 func AccountManagement(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
 	vars:= gorilla.Vars(req)
-	http.Redirect(resp,req,"https://get.halhost.cc/"+vars["gdps"],http.StatusMovedPermanently)
+	http.Redirect(resp,req,"https://gofruit.space/gdps/"+vars["gdps"],http.StatusMovedPermanently)
 }
 
 func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
