@@ -62,6 +62,7 @@ func CountComments(db MySQLConn) int {
 //Trigger stuff
 
 func OnRegister(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
+	if blob.ServerConfig.MaxUsers==-1 {return true}
 	cnt:=CountUsers(db)
 	if cnt>blob.ServerConfig.MaxUsers {return false}
 	http.Get(config.ApiEndpoint+"?id="+blob.ServerConfig.SrvID+"&key="+blob.ServerConfig.SrvKey+"&action=stats.users&value="+strconv.Itoa(cnt))
@@ -69,6 +70,7 @@ func OnRegister(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
 }
 
 func OnLevel(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
+	if blob.ServerConfig.MaxLevels==-1 {return true}
 	cnt:=CountLevels(db)
 	if cnt>blob.ServerConfig.MaxLevels {return false}
 	http.Get(config.ApiEndpoint+"?id="+blob.ServerConfig.SrvID+"&key="+blob.ServerConfig.SrvKey+"&action=stats.levels&value="+strconv.Itoa(cnt))
@@ -76,6 +78,7 @@ func OnLevel(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
 }
 
 func OnPost(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
+	if blob.ServerConfig.MaxPosts==-1 {return true}
 	cnt:=CountPosts(db)
 	if cnt>blob.ServerConfig.MaxPosts {return false}
 	http.Get(config.ApiEndpoint+"?id="+blob.ServerConfig.SrvID+"&key="+blob.ServerConfig.SrvKey+"&action=stats.posts&value="+strconv.Itoa(cnt))
@@ -83,6 +86,7 @@ func OnPost(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
 }
 
 func OnComment(db MySQLConn, config *GlobalConfig, blob ConfigBlob) bool {
+	if blob.ServerConfig.MaxComments==-1 {return true}
 	cnt:=CountComments(db)
 	if cnt>blob.ServerConfig.MaxComments {return false}
 	http.Get(config.ApiEndpoint+"?id="+blob.ServerConfig.SrvID+"&key="+blob.ServerConfig.SrvKey+"&action=stats.comments&value="+strconv.Itoa(cnt))

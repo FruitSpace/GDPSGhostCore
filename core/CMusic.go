@@ -32,7 +32,7 @@ func (mus *CMusic) Exists(id int) bool {
 }
 
 func (mus *CMusic) RequestNGOuter(id int) bool {
-	resp,err:=http.Get(mus.Config.ApiEndpoint+"?id="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
+	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
 	if err!=nil {return false}
 	rsp,_:=io.ReadAll(resp.Body)
 	json.Unmarshal(rsp,mus)
@@ -55,7 +55,7 @@ func (mus *CMusic) TransformHalResource() bool {
 	default:
 		return false
 	}
-	resp,err:=http.Get(mus.Config.ApiEndpoint+"?id="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSongARN&type="+arn[1]+"&id="+arn[2])
+	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSongARN&type="+arn[1]+"&id="+arn[2])
 	if err!=nil {return false}
 	rsp,_:=io.ReadAll(resp.Body)
 	json.Unmarshal(rsp,mus)
@@ -102,7 +102,7 @@ func (mus *CMusic) CountDownloads() {
 
 //! Implement normal API
 func (mus *CMusic) GetTopArtists() map[string]string {
-//	resp,err:=http.Get(mus.Config.ApiEndpoint+"?id="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
+//	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
 //	if err!=nil {return []map[string]string}
 //	rsp,_:=io.ReadAll(resp.Body)
 //	json.Unmarshal(rsp,mus)

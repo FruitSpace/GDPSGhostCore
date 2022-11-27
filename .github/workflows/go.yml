@@ -39,10 +39,10 @@ jobs:
 #          discord-webhook: https://discord.com/api/webhooks/998519688680177666/GQbhxOvtw2B06N5JCdnsOb30Rx2LFdh1bE-dHJUHQIQVbbSe0URZIWVnczesMJlGtKEp
 #          username: 'Github Pipelines'
 #          avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
-      - name: Notify HalHost
+      - name: Notify Fruitspace
         uses: nobrayner/discord-webhook@v1
         with:
            github-token: ${{ secrets.GITHUB_TOKEN }}
-           discord-webhook: https://discord.com/api/webhooks/1005819284301291572/qnyDf9_ZCiMVS7kPd6ovusqNB0T0P1McdrEs4oRv7VbPAygkK4LZodN7_5xV9nG3u2GC
+           discord-webhook: https://discord.com/api/webhooks/1036916324875653180/0OUAkSz-BTm61CfHKFJMntD5NmRWIR-Ao8YUOOF-jhi8M3kDlQMOjy53R5Vb6oIUhigE
            username: 'Github Pipelines'
            avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'

@@ -29,7 +29,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	Post:=ReadPost(req)
 	if Post.Get("songID")!="" {
 		db:=core.MySQLConn{}
-    defer db.CloseDB()
+    	defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config))!=nil {return}
 		mus:=core.CMusic{DB: &db, ConfBlob: config, Config: conf}
 		var id int
