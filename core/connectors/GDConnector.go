@@ -116,7 +116,8 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 
 // GetMusic used to get simple music string (w/o traling hash)
 func GetMusic(mus core.CMusic) string {
-	return "1~|~"+strconv.Itoa(mus.Id)+"~|~2~|~"+mus.Name+"~|~3~|~1~|~4~|~"+mus.Artist+"~|~5~|~"+mus.Size+"~|~6~|~~|~10~|~"+mus.Url
+	size:=strconv.FormatFloat(mus.Size, 'f', 2, 64)
+	return "1~|~"+strconv.Itoa(mus.Id)+"~|~2~|~"+mus.Name+"~|~3~|~1~|~4~|~"+mus.Artist+"~|~5~|~"+size+"~|~6~|~~|~10~|~"+mus.Url
 }
 
 //used to get simple top artists string (w/o trailing hash)

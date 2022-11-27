@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"regexp"
@@ -14,7 +15,7 @@ type CMusic struct {
 	Id int
 	Name string
 	Artist string
-	Size string
+	Size float64
 	Url string
 	IsBanned bool
 	Downloads int
@@ -35,7 +36,9 @@ func (mus *CMusic) RequestNGOuter(id int) bool {
 	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
 	if err!=nil {return false}
 	rsp,_:=io.ReadAll(resp.Body)
-	json.Unmarshal(rsp,mus)
+	if err=json.Unmarshal(rsp,mus); err!=nil {
+		fmt.Println(err)
+	}
 
 	return mus.Status=="ok"
 }
@@ -58,7 +61,9 @@ func (mus *CMusic) TransformHalResource() bool {
 	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSongARN&type="+arn[1]+"&id="+arn[2])
 	if err!=nil {return false}
 	rsp,_:=io.ReadAll(resp.Body)
-	json.Unmarshal(rsp,mus)
+	if err=json.Unmarshal(rsp,mus); err!=nil {
+		fmt.Println(err)
+	}
 	return mus.Status=="ok"
 }
 
