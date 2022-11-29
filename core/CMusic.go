@@ -33,6 +33,7 @@ func (mus *CMusic) Exists(id int) bool {
 }
 
 func (mus *CMusic) RequestNGOuter(id int) bool {
+	mus.Id=id
 	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
 	if err!=nil {return false}
 	rsp,_:=io.ReadAll(resp.Body)
