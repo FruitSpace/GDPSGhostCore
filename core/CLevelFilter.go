@@ -8,19 +8,19 @@ import (
 )
 
 const (
-	CLEVELFILTER_MOSTLIKED int = 700
+	CLEVELFILTER_MOSTLIKED      int = 700
 	CLEVELFILTER_MOSTDOWNLOADED int = 701
-	CLEVELFILTER_TRENDING int = 702
-	CLEVELFILTER_LATEST int = 703
-	CLEVELFILTER_MAGIC int = 704
-	CLEVELFILTER_HALL int = 705
-	CLEVELFILTER_SAFE_DAILY int = 706
-	CLEVELFILTER_SAFE_WEEKLY int = 707
-	CLEVELFILTER_SAFE_EVENT int = 708
+	CLEVELFILTER_TRENDING       int = 702
+	CLEVELFILTER_LATEST         int = 703
+	CLEVELFILTER_MAGIC          int = 704
+	CLEVELFILTER_HALL           int = 705
+	CLEVELFILTER_SAFE_DAILY     int = 706
+	CLEVELFILTER_SAFE_WEEKLY    int = 707
+	CLEVELFILTER_SAFE_EVENT     int = 708
 )
 
 type CLevelFilter struct {
-	DB MySQLConn
+	DB    *MySQLConn
 	Count int
 }
 
@@ -46,56 +46,78 @@ type CLevelFilter struct {
 
 // GenerateQueryString generates SQL string out of params
 func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string {
-	whereq:=""
+	whereq := ""
 	// Demon difficulty filter, else normal
 	if demonDiff, ok := params["demonDiff"]; ok {
 		var demonDiffI int
 		TryInt(&demonDiffI, demonDiff)
-		if demonDiff=="0" {
-			whereq+=" AND demonDifficulty>=0"
-		}else{
-			whereq+=" AND demonDifficulty="+strconv.Itoa(demonDiffI)
+		if demonDiff == "0" {
+			whereq += " AND demonDifficulty>=0"
+		} else {
+			whereq += " AND demonDifficulty=" + strconv.Itoa(demonDiffI)
 		}
-	}else{
+	} else {
 		if diff, ok := params["diff"]; ok {
-			diff=QuickComma(diff)
-			whereq+=" AND difficulty IN ("+diff+") AND demonDifficulty=-1"
+			diff = QuickComma(diff)
+			whereq += " AND difficulty IN (" + diff + ") AND demonDifficulty=-1"
 		}
 	}
 
 	// Length filter
 	if clen, ok := params["length"]; ok {
-		clen=QuickComma(clen)
-		whereq+=" AND length IN ("+clen+")"
+		clen = QuickComma(clen)
+		whereq += " AND length IN (" + clen + ")"
 	}
 
 	//Completed/uncompleted stuff
 	if completed, ok := params["completed"]; ok {
-		whereq+=" AND id"
-		if completed=="0" {whereq+=" NOT"}
-		whereq+=" IN ("+QuickComma(params["completedLevels"])+")"
+		whereq += " AND id"
+		if completed == "0" {
+			whereq += " NOT"
+		}
+		whereq += " IN (" + QuickComma(params["completedLevels"]) + ")"
 	}
 
-	if _,ok:=params["isFeatured"]; ok {whereq+=" AND isFeatured=1"}
-	if _,ok:=params["is2p"]; ok {whereq+=" AND is2p=1"}
-	if _,ok:=params["isOrig"]; ok {whereq+=" AND original_id=0"}
-	if _,ok:=params["isFeatured"]; ok {whereq+=" AND isFeatured=1"}
-	if _,ok:=params["isEpic"]; ok {whereq+=" AND isEpic=1"}
-	if _,ok:=params["coins"]; ok {whereq+=" AND coins>0"}
+	if _, ok := params["isFeatured"]; ok {
+		whereq += " AND isFeatured=1"
+	}
+	if _, ok := params["is2p"]; ok {
+		whereq += " AND is2p=1"
+	}
+	if _, ok := params["isOrig"]; ok {
+		whereq += " AND original_id=0"
+	}
+	if _, ok := params["isFeatured"]; ok {
+		whereq += " AND isFeatured=1"
+	}
+	if _, ok := params["isEpic"]; ok {
+		whereq += " AND isEpic=1"
+	}
+	if _, ok := params["coins"]; ok {
+		whereq += " AND coins>0"
+	}
 
 	//Is starred
 	if star, ok := params["star"]; ok {
-		whereq+=" AND starsGot"
-		if star=="0" {whereq+="="}else{whereq+=">"}
-		whereq+="0"
+		whereq += " AND starsGot"
+		if star == "0" {
+			whereq += "="
+		} else {
+			whereq += ">"
+		}
+		whereq += "0"
 	}
 
 	//Song Custom/Classic stuff
 	if songid, ok := params["songid"]; ok {
-		whereq+=" AND song_id="
+		whereq += " AND song_id="
 		var sid int
 		TryInt(&sid, songid)
-		if sid<0 {whereq+="0 AND track_id="+strconv.Itoa(-1*sid+1)}else{whereq+=strconv.Itoa(sid)}
+		if sid < 0 {
+			whereq += "0 AND track_id=" + strconv.Itoa(-1*sid+1)
+		} else {
+			whereq += strconv.Itoa(sid)
+		}
 	}
 
 	return whereq
@@ -103,87 +125,87 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 
 // SearchLevels searches Levels with filters given
 func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xtype int) []int {
-	page=int(math.Abs(float64(page)))*10
-	suffix:=filter.GenerateQueryString(params)
-	query:=" FROM levels WHERE versionGame<=?"
-	orderBy:=""
+	page = int(math.Abs(float64(page))) * 10
+	suffix := filter.GenerateQueryString(params)
+	query := " FROM levels WHERE versionGame<=?"
+	orderBy := ""
 
 	switch xtype {
 	case CLEVELFILTER_MOSTLIKED:
-		orderBy="likes DESC, downloads DESC"
+		orderBy = "likes DESC, downloads DESC"
 	case CLEVELFILTER_MOSTDOWNLOADED:
-		orderBy="downloads DESC, likes DESC"
+		orderBy = "downloads DESC, likes DESC"
 	case CLEVELFILTER_TRENDING:
-		date:=time.Now().AddDate(0,0,-7).Format("2006-01-02 15:04:05")
-		query+=" AND uploadDate>'"+date+"'"
-		orderBy="likes DESC, downloads DESC"
+		date := time.Now().AddDate(0, 0, -7).Format("2006-01-02 15:04:05")
+		query += " AND uploadDate>'" + date + "'"
+		orderBy = "likes DESC, downloads DESC"
 	case CLEVELFILTER_LATEST:
-		orderBy="uploadDate DESC, downloads DESC"
+		orderBy = "uploadDate DESC, downloads DESC"
 	case CLEVELFILTER_MAGIC:
-		orderBy="uploadDate DESC, downloads DESC"
-		if strings.Contains(suffix,"starsGot>0") {
+		orderBy = "uploadDate DESC, downloads DESC"
+		if strings.Contains(suffix, "starsGot>0") {
 			// Old magic
-			query+=" AND objects>9999 AND length>=3 AND original_id=0"
-		}else{
+			query += " AND objects>9999 AND length>=3 AND original_id=0"
+		} else {
 			// New magic
-			query+=" AND EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
+			query += " AND EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
 		}
 	case CLEVELFILTER_HALL:
-		query+=" AND isEpic=1"
-		orderBy="likes DESC, downloads DESC"
+		query += " AND isEpic=1"
+		orderBy = "likes DESC, downloads DESC"
 	// Here be The Safe
 	case CLEVELFILTER_SAFE_DAILY:
-		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
-		orderBy="uploadDate DESC, downloads DESC"
+		query += " AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
+		orderBy = "uploadDate DESC, downloads DESC"
 	case CLEVELFILTER_SAFE_WEEKLY:
-		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
-		orderBy="uploadDate DESC, downloads DESC"
+		query += " AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
+		orderBy = "uploadDate DESC, downloads DESC"
 	case CLEVELFILTER_SAFE_EVENT:
-		query+=" AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
-		orderBy="uploadDate DESC, downloads DESC"
+		query += " AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
+		orderBy = "uploadDate DESC, downloads DESC"
 	default:
-		query+=" AND 1=0" //Because I can
+		query += " AND 1=0" //Because I can
 	}
-	sortstr:=" ORDER BY "+orderBy+" LIMIT 10 OFFSET "+strconv.Itoa(page)
+	sortstr := " ORDER BY " + orderBy + " LIMIT 10 OFFSET " + strconv.Itoa(page)
 
 	var levels []int
 
 	//If we actually search for something
 	if sterm, ok := params["sterm"]; ok {
 		// If it's an ID
-		if _,err := strconv.Atoi(sterm); err==nil {
-			compq:=query+" AND id=?"+suffix
-			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+		if _, err := strconv.Atoi(sterm); err == nil {
+			compq := query + " AND id=?" + suffix
+			rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"], sterm)
 			defer rows.Close()
-			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"], sterm).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
 				rows.Scan(&lvlid)
-				levels=append(levels,lvlid)
+				levels = append(levels, lvlid)
 			}
-		}else{
+		} else {
 			// But if it's just text we search title
 			//! To support unlisted2 aka friendList maybe we should use isUnlisted<>1 or "isUnlisted=ANY(0"+",2"+")
-			compq:=query+" AND name LIKE ? AND isUnlisted=0"+suffix
-			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],"%"+sterm+"%")
+			compq := query + " AND name LIKE ? AND isUnlisted=0" + suffix
+			rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"], "%"+sterm+"%")
 			defer rows.Close()
-			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],"%"+sterm+"%").Scan(&filter.Count)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"], "%"+sterm+"%").Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
 				rows.Scan(&lvlid)
-				levels=append(levels,lvlid)
+				levels = append(levels, lvlid)
 			}
 		}
-	}else{
+	} else {
 		// Or if we're just wandering and clicking buttons
-		compq:=query+" AND isUnlisted=0"+suffix
-		rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		compq := query + " AND isUnlisted=0" + suffix
+		rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"])
 		defer rows.Close()
-		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"]).Scan(&filter.Count)
 		for rows.Next() {
 			var lvlid int
 			rows.Scan(&lvlid)
-			levels=append(levels,lvlid)
+			levels = append(levels, lvlid)
 		}
 	}
 
@@ -192,63 +214,63 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 
 // SearchUserLevels searches levels of Followed users or by UID
 func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string, followMode bool) []int {
-	page=int(math.Abs(float64(page)))*10
-	suffix:=filter.GenerateQueryString(params)
-	query:=" FROM levels WHERE versionGame<=?"
-	sortstr:=" ORDER BY downloads DESC LIMIT 10 OFFSET "+strconv.Itoa(page)
+	page = int(math.Abs(float64(page))) * 10
+	suffix := filter.GenerateQueryString(params)
+	query := " FROM levels WHERE versionGame<=?"
+	sortstr := " ORDER BY downloads DESC LIMIT 10 OFFSET " + strconv.Itoa(page)
 
 	var levels []int
 
 	if sterm, ok := params["sterm"]; ok {
 		if followMode {
-			if _,err := strconv.Atoi(sterm); err!=nil {
-				query+=" AND isUnlisted=0 AND name LIKE ?"
-				sterm="%"+sterm+"%"
-			}else{
-				query+=" AND id=?"
+			if _, err := strconv.Atoi(sterm); err != nil {
+				query += " AND isUnlisted=0 AND name LIKE ?"
+				sterm = "%" + sterm + "%"
+			} else {
+				query += " AND id=?"
 			}
-			compq:=query+" AND uid IN ("+QuickComma(params["followList"])+")"+suffix
-			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],sterm)
+			compq := query + " AND uid IN (" + QuickComma(params["followList"]) + ")" + suffix
+			rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"], sterm)
 			defer rows.Close()
-			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],sterm).Scan(&filter.Count)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"], sterm).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
 				rows.Scan(&lvlid)
-				levels=append(levels,lvlid)
+				levels = append(levels, lvlid)
 			}
-		}else{
-			if stermi,err := strconv.Atoi(sterm); err==nil {
-				compq:=query+" AND uid=?"+suffix
-				rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"],stermi)
+		} else {
+			if stermi, err := strconv.Atoi(sterm); err == nil {
+				compq := query + " AND uid=?" + suffix
+				rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"], stermi)
 				defer rows.Close()
-				filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"],stermi).Scan(&filter.Count)
+				filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"], stermi).Scan(&filter.Count)
 				for rows.Next() {
 					var lvlid int
 					rows.Scan(&lvlid)
-					levels=append(levels,lvlid)
+					levels = append(levels, lvlid)
 				}
 			}
 		}
-	}else{
+	} else {
 		if followMode {
-			compq:=query+" AND isUnlisted=0 AND uid IN ("+QuickComma(params["followList"])+")"+suffix
-			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+			compq := query + " AND isUnlisted=0 AND uid IN (" + QuickComma(params["followList"]) + ")" + suffix
+			rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"])
 			defer rows.Close()
-			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"]).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
 				rows.Scan(&lvlid)
-				levels=append(levels,lvlid)
+				levels = append(levels, lvlid)
 			}
-		}else{
-			compq:=query+suffix
-			rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		} else {
+			compq := query + suffix
+			rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"])
 			defer rows.Close()
-			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+			filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"]).Scan(&filter.Count)
 			for rows.Next() {
 				var lvlid int
 				rows.Scan(&lvlid)
-				levels=append(levels,lvlid)
+				levels = append(levels, lvlid)
 			}
 		}
 	}
@@ -258,22 +280,22 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 
 // SearchListLevels searches levels for Gauntlets/Mappacks via sterm list
 func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string) []int {
-	page=int(math.Abs(float64(page)))*10
-	suffix:=filter.GenerateQueryString(params)
-	query:=" FROM levels WHERE versionGame<=?"
-	sortstr:=" LIMIT 10 OFFSET "+strconv.Itoa(page)
+	page = int(math.Abs(float64(page))) * 10
+	suffix := filter.GenerateQueryString(params)
+	query := " FROM levels WHERE versionGame<=?"
+	sortstr := " LIMIT 10 OFFSET " + strconv.Itoa(page)
 
 	var levels []int
 
 	if sterm, ok := params["sterm"]; ok {
-		compq:=query+" AND id IN ("+QuickComma(sterm)+")"+suffix
-		rows:=filter.DB.ShouldQuery("SELECT id"+compq+sortstr,params["versionGame"])
+		compq := query + " AND id IN (" + QuickComma(sterm) + ")" + suffix
+		rows := filter.DB.ShouldQuery("SELECT id"+compq+sortstr, params["versionGame"])
 		defer rows.Close()
-		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq,params["versionGame"]).Scan(&filter.Count)
+		filter.DB.ShouldQueryRow("SELECT count(*) as cnt"+compq, params["versionGame"]).Scan(&filter.Count)
 		for rows.Next() {
 			var lvlid int
 			rows.Scan(&lvlid)
-			levels=append(levels,lvlid)
+			levels = append(levels, lvlid)
 		}
 	}
 
@@ -282,28 +304,36 @@ func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string)
 
 // GetGauntlets retrieves gauntlet list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetGauntlets() string {
-	rows:=filter.DB.ShouldQuery("SELECT packName, levels FROM levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
+	rows := filter.DB.ShouldQuery("SELECT packName, levels FROM levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
 	defer rows.Close()
 	var gau, hashstr string
 	for rows.Next() {
 		var packName, levels string
-		rows.Scan(&packName,&levels)
-		if len(Decompose(CleanDoubles(levels,","),","))!=5 {continue}
-		if _,err:=strconv.Atoi(packName); err!=nil {continue}
-		gau+="1:"+packName+":3:"+levels+"|"
-		hashstr+=packName+levels
+		rows.Scan(&packName, &levels)
+		if len(Decompose(CleanDoubles(levels, ","), ",")) != 5 {
+			continue
+		}
+		if _, err := strconv.Atoi(packName); err != nil {
+			continue
+		}
+		gau += "1:" + packName + ":3:" + levels + "|"
+		hashstr += packName + levels
 	}
-	if len(gau)==0 {return "-2"}
-	return gau[:len(gau)-1]+"#"+HashSolo2(hashstr)
+	if len(gau) == 0 {
+		return "-2"
+	}
+	return gau[:len(gau)-1] + "#" + HashSolo2(hashstr)
 }
 
 // GetGauntletLevels returns gauntlet level IDs
 func (filter *CLevelFilter) GetGauntletLevels(gau int) []int {
 	var levels string
-	filter.DB.ShouldQueryRow("SELECT levels FROM levelpacks WHERE packType=1 AND packName=? LIMIT 1",gau).Scan(&levels)
-	malevels:=Decompose(CleanDoubles(levels,","),",")
-	if len(malevels)<5 {return []int{}}
-	return []int{malevels[0],malevels[1],malevels[2],malevels[3],malevels[4]}
+	filter.DB.ShouldQueryRow("SELECT levels FROM levelpacks WHERE packType=1 AND packName=? LIMIT 1", gau).Scan(&levels)
+	malevels := Decompose(CleanDoubles(levels, ","), ",")
+	if len(malevels) < 5 {
+		return []int{}
+	}
+	return []int{malevels[0], malevels[1], malevels[2], malevels[3], malevels[4]}
 }
 
 func (filter *CLevelFilter) CountMapPacks() int {
@@ -314,8 +344,8 @@ func (filter *CLevelFilter) CountMapPacks() int {
 
 // GetMapPacks retrieves MapPacks list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetMapPacks(page int) string {
-	page=int(math.Abs(float64(page)))*10
-	rows:=filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET "+strconv.Itoa(page))
+	page = int(math.Abs(float64(page))) * 10
+	rows := filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET " + strconv.Itoa(page))
 	defer rows.Close()
 
 	var pack, hashstr string
@@ -323,9 +353,11 @@ func (filter *CLevelFilter) GetMapPacks(page int) string {
 		var id, packName, levels, packStars, packCoins, packDiff, packColor string
 		rows.Scan(&id, &packName, &levels, &packStars, &packCoins, &packDiff, &packColor)
 
-		pack+="1:"+id+":2:"+packName+":3:"+levels+":4:"+packStars+":5:"+packCoins+":6:"+packDiff+":7:"+packColor+":8:"+packColor+"|"
-		hashstr+=string(id[0])+string(id[len(id)-1])+packStars+packCoins
+		pack += "1:" + id + ":2:" + packName + ":3:" + levels + ":4:" + packStars + ":5:" + packCoins + ":6:" + packDiff + ":7:" + packColor + ":8:" + packColor + "|"
+		hashstr += string(id[0]) + string(id[len(id)-1]) + packStars + packCoins
 	}
-	if len(pack)==0 {return "-2"}
-	return pack[:len(pack)-1]+"#"+strconv.Itoa(filter.CountMapPacks())+":"+strconv.Itoa(page)+":10#"+HashSolo2(hashstr)
+	if len(pack) == 0 {
+		return "-2"
+	}
+	return pack[:len(pack)-1] + "#" + strconv.Itoa(filter.CountMapPacks()) + ":" + strconv.Itoa(page) + ":10#" + HashSolo2(hashstr)
 }
