@@ -7,7 +7,6 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"time"
 )
 
@@ -26,8 +25,6 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 	db.DB.SetMaxIdleConns(2)
 	db.DB.SetConnMaxLifetime(30 * time.Second)
 	db.DB.SetConnMaxIdleTime(2 * time.Minute)
-	stats := db.DB.Stats()
-	log.Printf("[DB] Conns: %d/%d (Active: %d, Idle: %d)\n", stats.OpenConnections, stats.MaxOpenConnections, stats.InUse, stats.Idle)
 	return err
 }
 

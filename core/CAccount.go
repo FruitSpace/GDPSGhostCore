@@ -407,7 +407,7 @@ func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
 }
 
 func (acc *CAccount) Register(uname string, pass string, email string, ip string, autoVerify bool) int {
-	isBanned := "0" //! 1
+	isBanned := "1"
 	if autoVerify {
 		isBanned = "0"
 	}
