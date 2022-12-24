@@ -52,7 +52,7 @@ func (protect *CProtect) FillLevelModel() {
 	total := 0
 	for i := 0; i < 7; i++ {
 		current := strings.Split(date.AddDate(0, 0, -1*i).Format("2006-01-02 15:04:05"), " ")[0]
-		currentIndex := strings.Split(date.AddDate(0, 0, -(i+1)*i).Format("2006-01-02 15:04:05"), " ")[0]
+		currentIndex := strings.Split(date.AddDate(0, 0, -1*(i+1)).Format("2006-01-02 15:04:05"), " ")[0]
 		var count int
 		protect.DB.ShouldQueryRow("SELECT count(*) as cnt FROM actions WHERE type=4 AND date<? AND date>? AND data LIKE '%Upload%'",
 			current, currentIndex).Scan(&count)

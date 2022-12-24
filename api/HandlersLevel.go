@@ -522,10 +522,10 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		out += lvlS
 		lvlHash += lvlH
 		usrstring += usrH
-		//mus:=core.CMusic{DB: db, ConfBlob: config, Config: conf}
-		//if cl.SongId!=0 &&mus.GetSong(cl.SongId){
-		//	musStr+=connectors.GetMusic(mus)+"~:~"
-		//}
+		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
+		if cl.SongId != 0 && mus.GetSong(cl.SongId) {
+			musStr += connectors.GetMusic(mus) + "~:~"
+		}
 
 	}
 	if len(musStr) == 0 {

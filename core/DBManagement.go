@@ -23,8 +23,8 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 		db.logger.LogWarn(err, err.Error())
 	}
 	db.DB.SetMaxIdleConns(2)
-	db.DB.SetConnMaxLifetime(30 * time.Second)
-	db.DB.SetConnMaxIdleTime(2 * time.Minute)
+	db.DB.SetConnMaxLifetime(10 * time.Second)
+	db.DB.SetConnMaxIdleTime(1 * time.Minute)
 	return err
 }
 
@@ -35,13 +35,16 @@ func (db *MySQLConn) ConnectMultiBlob(config ConfigBlob) error {
 	if err != nil {
 		db.logger.LogWarn(err, err.Error())
 	}
-	db.DB.SetMaxIdleConns(2)
-	db.DB.SetConnMaxLifetime(2 * time.Minute)
-	db.DB.SetConnMaxIdleTime(5 * time.Minute)
+	//db.DB.SetMaxOpenConns()
+	db.DB.SetMaxIdleConns(0)
+	db.DB.SetConnMaxLifetime(30 * time.Second)
+	//db.DB.SetConnMaxIdleTime(5 * time.Minute)
 	return err
 }
 
-func (db *MySQLConn) CloseDB() { db.logger.Should(db.DB.Close()) }
+func (db *MySQLConn) CloseDB() {
+	db.logger.Should(db.DB.Close())
+}
 
 func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result, error) {
 	stmt, err := db.DB.Prepare(query)

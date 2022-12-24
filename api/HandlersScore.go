@@ -246,7 +246,7 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			io.WriteString(resp, "1") //! Weird thing
 			return
 		}
 		xacc.LoadStats()
@@ -283,6 +283,6 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		xacc.PushStats()
 		io.WriteString(resp, strconv.Itoa(xacc.Uid))
 	} else {
-		io.WriteString(resp, "-1")
+		io.WriteString(resp, "1") //! Temporary
 	}
 }

@@ -1,4 +1,5 @@
-//+build linux,amd64 windows,amd64
+//go:build (linux && amd64) || (windows && amd64)
+// +build linux,amd64 windows,amd64
 
 package main
 
@@ -15,21 +16,21 @@ import (
 func main() {
 	// Start Sentry so I can sleep well
 	err := sentry.Init(sentry.ClientOptions{
-		Dsn: "https://c25abcf97ba74583b8cbeaccfa448669@o1404863.ingest.sentry.io/6737893",
+		Dsn:              "https://ef8c6a708a684aa78fdfc0be5a85115b@o1404863.ingest.sentry.io/4504374313222144",
 		TracesSampleRate: 1.0,
 	})
 	if err != nil {
 		log.Fatalf("sentry.Init: %s", err)
 	}
-	defer sentry.Flush(2*time.Second)
+	defer sentry.Flush(2 * time.Second)
 
-	config:=GenGConfig()
+	config := GenGConfig()
 	//core.MaintainTasks(config)
 	core.MaintainRoutines(config)
 
-	ghostServer:= api.GhostServer{
+	ghostServer := api.GhostServer{
 		Log: core.Logger{
-			Output: connectors.GetWriter("",""),
+			Output: connectors.GetWriter("", ""),
 		},
 		Config: config,
 	}
@@ -53,10 +54,10 @@ func GenConfig() core.ConfigBlob {
 			false,
 		},
 		ChestConfig: core.ChestConfig{
-			200,400,2,10,
-			[]int{1,2,3,4,5,6},1,6, 3600,
-			2000,4000,20,100,
-			[]int{1,2,3,4,5,6},1,6, 14400,
+			200, 400, 2, 10,
+			[]int{1, 2, 3, 4, 5, 6}, 1, 6, 3600,
+			2000, 4000, 20, 100,
+			[]int{1, 2, 3, 4, 5, 6}, 1, 6, 14400,
 		},
 		ServerConfig: core.ServerConfig{
 			"0002",
@@ -68,12 +69,12 @@ func GenConfig() core.ConfigBlob {
 			true,
 			false,
 			100,
-			map[string]bool{"discord":true},
+			map[string]bool{"discord": true},
 		},
 		SecurityConfig: core.SecurityConfig{
 			DisableProtection: false,
-			AutoActivate: false,
-			BannedIPs: []string{},
+			AutoActivate:      false,
+			BannedIPs:         []string{},
 		},
 	}
 }
@@ -92,9 +93,9 @@ func GenGConfig() core.GlobalConfig {
 		EnvOrDefault("SAVE_PATH", "./"),
 
 		map[string]string{
-			"rabbitmq_host":"auto",
-			"rabbitmq_user":"m41dss",
-			"rabbitmq_password":EnvOrDefault("RABBITMQ_PASSWORD", "None"),
+			"rabbitmq_host":     "auto",
+			"rabbitmq_user":     "m41dss",
+			"rabbitmq_password": EnvOrDefault("RABBITMQ_PASSWORD", "None"),
 		},
 	}
 }

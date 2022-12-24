@@ -3,7 +3,6 @@ package core
 import (
 	_ "embed"
 	"net/http"
-	"os"
 	"strconv"
 )
 
@@ -25,13 +24,13 @@ func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) bool {
 	}
 	db.ShouldQuery(gdpsDatabase)
 	//Create paths
-	if logger.Should(os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata", 0777)) != nil {
-		os.RemoveAll(glob.SavePath + "/" + configBlob.ServerConfig.SrvID + "/savedata")
-		return false
-	}
-	os.Create(glob.SavePath + "/" + configBlob.ServerConfig.SrvID + "/levelModel.json")
-	protect := CProtect{DB: &db, Savepath: glob.SavePath + "/" + configBlob.ServerConfig.SrvID}
-	protect.FillLevelModel()
+	//if logger.Should(os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata", 0777)) != nil {
+	//	os.RemoveAll(glob.SavePath + "/" + configBlob.ServerConfig.SrvID + "/savedata")
+	//	return false
+	//}
+	//os.Create(glob.SavePath + "/" + configBlob.ServerConfig.SrvID + "/levelModel.json")
+	//protect := CProtect{DB: &db, Savepath: glob.SavePath + "/" + configBlob.ServerConfig.SrvID}
+	//protect.FillLevelModel()
 	return true
 }
 
