@@ -112,11 +112,12 @@ func (mus *CMusic) BanMusic(id int, ban bool) {
 
 func (mus *CMusic) CountDownloads() {
 	req := mus.DB.MustQuery("SELECT id FROM songs")
-	defer mus.Logger.Should(req.Close())
+	defer req.Close()
 	for req.Next() {
 		var id int
 		req.Scan(&id)
 		creq := mus.DB.ShouldQuery("SELECT downloads FROM levels WHERE song_id=?", id)
+		defer creq.Close()
 		var cnt int
 		for creq.Next() {
 			var downs int

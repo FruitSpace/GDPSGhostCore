@@ -121,7 +121,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if acc.LogIn(uname, pass, IPAddr, 0) > 0 {
 			savepath := "/gdps_savedata/" + vars["gdps"] + "/" + strconv.Itoa(acc.Uid) + ".hsv"
 			s3 := core.NewS3FS()
-			if d, err := s3.GetFile(savepath); logger.Should(err) == nil {
+			if d, err := s3.GetFile(savepath); err == nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(config.ServerConfig.SrvKey)) != nil {
 					return
@@ -135,7 +135,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				}
 				io.WriteString(resp, data+";21;30;a;a")
 				//! Temp transitional
-			} else if d, err := s3.GetFile("/savedata_old/" + vars["gdps"] + "/files/savedata/" + strconv.Itoa(acc.Uid) + ".hal"); logger.Should(err) == nil {
+			} else if d, err := s3.GetFile("/savedata_old/" + vars["gdps"] + "/files/savedata/" + strconv.Itoa(acc.Uid) + ".hal"); err == nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(pass)) != nil {
 					return

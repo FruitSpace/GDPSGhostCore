@@ -7,6 +7,7 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
+	"log"
 	"time"
 )
 
@@ -31,18 +32,21 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 func (db *MySQLConn) ConnectMultiBlob(config ConfigBlob) error {
 	db.DB, _ = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?multiStatements=true",
 		config.DBConfig.User, config.DBConfig.Password, config.DBConfig.Host, config.DBConfig.Port, config.DBConfig.DBName))
+
+	db.DB.SetMaxOpenConns(2)
+	db.DB.SetMaxIdleConns(0)
+	db.DB.SetConnMaxLifetime(30 * time.Second)
+	//db.DB.SetConnMaxIdleTime(5 * time.Minute)
+
 	err := db.DB.Ping()
 	if err != nil {
 		db.logger.LogWarn(err, err.Error())
 	}
-	//db.DB.SetMaxOpenConns()
-	db.DB.SetMaxIdleConns(0)
-	db.DB.SetConnMaxLifetime(30 * time.Second)
-	//db.DB.SetConnMaxIdleTime(5 * time.Minute)
 	return err
 }
 
 func (db *MySQLConn) CloseDB() {
+	log.Printf("%+v", db.DB.Stats())
 	db.logger.Should(db.DB.Close())
 }
 

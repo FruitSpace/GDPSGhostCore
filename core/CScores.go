@@ -52,6 +52,7 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 	}
 	req := cs.DB.ShouldQuery("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM scores WHERE lvl_id=? "+suffix+" ORDER BY percent DESC", lvlId)
 	var scores []CScores
+	defer req.Close()
 	for req.Next() {
 		xcs := CScores{DB: cs.DB}
 		req.Scan(&xcs.Uid, &xcs.LvlId, &xcs.PostedTime, &xcs.Percent, &xcs.Attempts, &xcs.Coins)
