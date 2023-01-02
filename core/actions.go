@@ -105,14 +105,14 @@ func RegisterAction(action int, uid int, target_id int, data map[string]string, 
 	isMod := 0
 	if uid > 0 {
 		ret := 0
-		db.ShouldQueryRow("SELECT role_id FROM users WHERE uid=?", uid).Scan(&ret)
+		db.ShouldQueryRow("SELECT role_id FROM #DB#.users WHERE uid=?", uid).Scan(&ret)
 		if ret > 0 {
 			isMod = 1
 		}
 	}
 	datac, _ := json.Marshal(data)
 	date := time.Now().Format("2006-01-02 15:04:05")
-	db.ShouldQuery("INSERT INTO actions (date, uid, type, target_id, isMod, data) VALUES (?,?,?,?,?,?)",
+	db.ShouldExec("INSERT INTO #DB#.actions (date, uid, type, target_id, isMod, data) VALUES (?,?,?,?,?,?)",
 		date,
 		uid,
 		types,
@@ -135,6 +135,6 @@ func IsLiked(itemType int, uid int, dest_id int, db *MySQLConn) bool {
 		return true
 	}
 	var q int
-	db.DB.QueryRow("SELECT count(*) as cnt FROM actions WHERE type=? AND uid=? AND target_id=?", event_id, uid, dest_id).Scan(&q)
+	db.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.actions WHERE type=? AND uid=? AND target_id=?", event_id, uid, dest_id).Scan(&q)
 	return q > 0
 }

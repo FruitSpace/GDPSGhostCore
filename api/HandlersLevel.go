@@ -419,7 +419,6 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 
 	db := &core.MySQLConn{}
 	defer db.CloseDB()
-	defer db.CloseDB()
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}

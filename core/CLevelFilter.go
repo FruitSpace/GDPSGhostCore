@@ -127,7 +127,7 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xtype int) []int {
 	page = int(math.Abs(float64(page))) * 10
 	suffix := filter.GenerateQueryString(params)
-	query := " FROM levels WHERE versionGame<=?"
+	query := " FROM #DB#.levels WHERE versionGame<=?"
 	orderBy := ""
 
 	switch xtype {
@@ -148,20 +148,20 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 			query += " AND objects>9999 AND length>=3 AND original_id=0"
 		} else {
 			// New magic
-			query += " AND EXISTS (SELECT id FROM rateQueue WHERE levels.id = rateQueue.lvl_id)"
+			query += " AND EXISTS (SELECT id FROM #DB#.rateQueue WHERE #DB#.levels.id = #DB#.rateQueue.lvl_id)"
 		}
 	case CLEVELFILTER_HALL:
 		query += " AND isEpic=1"
 		orderBy = "likes DESC, downloads DESC"
 	// Here be The Safe
 	case CLEVELFILTER_SAFE_DAILY:
-		query += " AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=0)"
+		query += " AND EXISTS (SELECT id FROM #DB#.quests WHERE #DB#.levels.id = #DB#.quests.lvl_id AND #DB#.quests.type=0)"
 		orderBy = "uploadDate DESC, downloads DESC"
 	case CLEVELFILTER_SAFE_WEEKLY:
-		query += " AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=1)"
+		query += " AND EXISTS (SELECT id FROM #DB#.quests WHERE #DB#.levels.id = #DB#.quests.lvl_id AND #DB#.quests.type=1)"
 		orderBy = "uploadDate DESC, downloads DESC"
 	case CLEVELFILTER_SAFE_EVENT:
-		query += " AND EXISTS (SELECT id FROM quests WHERE levels.id = quests.lvl_id AND quests.type=-1)"
+		query += " AND EXISTS (SELECT id FROM #DB#.quests WHERE #DB#.levels.id = #DB#.quests.lvl_id AND #DB#.quests.type=-1)"
 		orderBy = "uploadDate DESC, downloads DESC"
 	default:
 		query += " AND 1=0" //Because I can
@@ -216,7 +216,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string, followMode bool) []int {
 	page = int(math.Abs(float64(page))) * 10
 	suffix := filter.GenerateQueryString(params)
-	query := " FROM levels WHERE versionGame<=?"
+	query := " FROM #DB#.levels WHERE versionGame<=?"
 	sortstr := " ORDER BY downloads DESC LIMIT 10 OFFSET " + strconv.Itoa(page)
 
 	var levels []int
@@ -282,7 +282,7 @@ func (filter *CLevelFilter) SearchUserLevels(page int, params map[string]string,
 func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string) []int {
 	page = int(math.Abs(float64(page))) * 10
 	suffix := filter.GenerateQueryString(params)
-	query := " FROM levels WHERE versionGame<=?"
+	query := " FROM #DB#.levels WHERE versionGame<=?"
 	sortstr := " LIMIT 10 OFFSET " + strconv.Itoa(page)
 
 	var levels []int
@@ -304,7 +304,7 @@ func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string)
 
 // GetGauntlets retrieves gauntlet list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetGauntlets() string {
-	rows := filter.DB.ShouldQuery("SELECT packName, levels FROM levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
+	rows := filter.DB.ShouldQuery("SELECT packName, levels FROM #DB#.levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
 	defer rows.Close()
 	var gau, hashstr string
 	for rows.Next() {
@@ -328,7 +328,7 @@ func (filter *CLevelFilter) GetGauntlets() string {
 // GetGauntletLevels returns gauntlet level IDs
 func (filter *CLevelFilter) GetGauntletLevels(gau int) []int {
 	var levels string
-	filter.DB.ShouldQueryRow("SELECT levels FROM levelpacks WHERE packType=1 AND packName=? LIMIT 1", gau).Scan(&levels)
+	filter.DB.ShouldQueryRow("SELECT levels FROM #DB#.levelpacks WHERE packType=1 AND packName=? LIMIT 1", gau).Scan(&levels)
 	malevels := Decompose(CleanDoubles(levels, ","), ",")
 	if len(malevels) < 5 {
 		return []int{}
@@ -338,14 +338,14 @@ func (filter *CLevelFilter) GetGauntletLevels(gau int) []int {
 
 func (filter *CLevelFilter) CountMapPacks() int {
 	var cnt int
-	filter.DB.ShouldQueryRow("SELECT count(*) FROM levelpacks WHERE packType=0").Scan(&cnt)
+	filter.DB.ShouldQueryRow("SELECT count(*) FROM #DB#.levelpacks WHERE packType=0").Scan(&cnt)
 	return cnt
 }
 
 // GetMapPacks retrieves MapPacks list and levels (w/ trailing hash)
 func (filter *CLevelFilter) GetMapPacks(page int) string {
 	page = int(math.Abs(float64(page))) * 10
-	rows := filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM levelpacks WHERE packType=0 LIMIT 10 OFFSET " + strconv.Itoa(page))
+	rows := filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM #DB#.levelpacks WHERE packType=0 LIMIT 10 OFFSET " + strconv.Itoa(page))
 	defer rows.Close()
 
 	var pack, hashstr string

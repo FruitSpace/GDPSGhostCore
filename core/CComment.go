@@ -21,13 +21,13 @@ type CComment struct {
 
 func (cc *CComment) ExistsLevelComment(id int) bool {
 	var cnt int
-	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM comments WHERE id=?", id).Scan(&cnt)
+	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.comments WHERE id=?", id).Scan(&cnt)
 	return cnt > 0
 }
 
 func (cc *CComment) ExistsAccComment(id int) bool {
 	var cnt int
-	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM acccomments WHERE id=?", id).Scan(&cnt)
+	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.acccomments WHERE id=?", id).Scan(&cnt)
 	return cnt > 0
 }
 
@@ -37,7 +37,7 @@ func (cc *CComment) CountAccComments(uid int) int {
 	if uid > 0 {
 		pf = " WHERE uid=" + strconv.Itoa(uid)
 	}
-	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM acccomments" + pf).Scan(&cnt)
+	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.acccomments" + pf).Scan(&cnt)
 	return cnt
 }
 
@@ -47,29 +47,29 @@ func (cc *CComment) CountLevelComments(lvlId int) int {
 	if lvlId > 0 {
 		pf = " WHERE lvl_id=" + strconv.Itoa(lvlId)
 	}
-	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM comments" + pf).Scan(&cnt)
+	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.comments" + pf).Scan(&cnt)
 	return cnt
 }
 
 func (cc *CComment) CountCommentHistory(uid int) int {
 	var cnt int
-	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM comments WHERE uid=?", uid).Scan(&cnt)
+	cc.DB.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.comments WHERE uid=?", uid).Scan(&cnt)
 	return cnt
 }
 
 func (cc *CComment) LoadAccComment() {
-	cc.DB.ShouldQueryRow("SELECT uid,comment,postedTime,likes,isSpam FROM acccomments WHERE id=?", cc.Id).Scan(
+	cc.DB.ShouldQueryRow("SELECT uid,comment,postedTime,likes,isSpam FROM #DB#.acccomments WHERE id=?", cc.Id).Scan(
 		&cc.Uid, &cc.Comment, &cc.PostedTime, &cc.Likes, &cc.IsSpam)
 }
 
 func (cc *CComment) LoadLevelComment() {
-	cc.DB.ShouldQueryRow("SELECT uid,lvl_id,comment,postedTime,likes,isSpam,percent FROM comments WHERE id=?", cc.Id).Scan(
+	cc.DB.ShouldQueryRow("SELECT uid,lvl_id,comment,postedTime,likes,isSpam,percent FROM #DB#.comments WHERE id=?", cc.Id).Scan(
 		&cc.Uid, &cc.LvlId, &cc.Comment, &cc.PostedTime, &cc.Likes, &cc.IsSpam, &cc.Percent)
 }
 
 func (cc *CComment) GetAllAccComments(uid int, page int) []CComment {
 	page *= 10
-	rows := cc.DB.ShouldQuery("SELECT id,comment,postedTime,likes,isSpam FROM acccomments WHERE uid=? ORDER BY postedTime DESC LIMIT 10 OFFSET "+strconv.Itoa(page), uid)
+	rows := cc.DB.ShouldQuery("SELECT id,comment,postedTime,likes,isSpam FROM #DB#.acccomments WHERE uid=? ORDER BY postedTime DESC LIMIT 10 OFFSET "+strconv.Itoa(page), uid)
 	defer rows.Close()
 	var out []CComment
 	for rows.Next() {
@@ -86,7 +86,7 @@ func (cc *CComment) GetAllLevelComments(lvlId int, page int, sortMode bool) []CC
 	if sortMode {
 		filter = "likes"
 	}
-	rows := cc.DB.ShouldQuery("SELECT id,uid,comment,postedTime,likes,isSpam,percent FROM comments WHERE lvl_id=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page), lvlId)
+	rows := cc.DB.ShouldQuery("SELECT id,uid,comment,postedTime,likes,isSpam,percent FROM #DB#.comments WHERE lvl_id=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page), lvlId)
 	defer rows.Close()
 	var out []CComment
 	for rows.Next() {
@@ -103,7 +103,7 @@ func (cc *CComment) GetAllCommentsHistory(uid int, page int, sortMode bool) []CC
 	if sortMode {
 		filter = "likes"
 	}
-	rows := cc.DB.ShouldQuery("SELECT id,lvl_id,comment,postedTime,likes,isSpam,percent FROM comments WHERE uid=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page), uid)
+	rows := cc.DB.ShouldQuery("SELECT id,lvl_id,comment,postedTime,likes,isSpam,percent FROM #DB#.comments WHERE uid=? ORDER BY "+filter+" DESC LIMIT 10 OFFSET "+strconv.Itoa(page), uid)
 	defer rows.Close()
 	var out []CComment
 	for rows.Next() {
@@ -118,7 +118,7 @@ func (cc *CComment) PostAccComment() bool {
 	if len(cc.Comment) > 128 {
 		return false
 	}
-	cc.DB.ShouldQuery("INSERT INTO acccomments (uid,comment,postedTime) VALUES (?,?,?)", cc.Uid, cc.Comment,
+	cc.DB.ShouldExec("INSERT INTO #DB#.acccomments (uid,comment,postedTime) VALUES (?,?,?)", cc.Uid, cc.Comment,
 		time.Now().Format("2006-01-02 15:04:05"))
 	return true
 }
@@ -127,21 +127,21 @@ func (cc *CComment) PostLevelComment() bool {
 	if len(cc.Comment) > 128 {
 		return false
 	}
-	cc.DB.ShouldQuery("INSERT INTO comments (uid,lvl_id,comment,postedTime,percent) VALUES (?,?,?,?,?)", cc.Uid,
+	cc.DB.ShouldExec("INSERT INTO #DB#.comments (uid,lvl_id,comment,postedTime,percent) VALUES (?,?,?,?,?)", cc.Uid,
 		cc.LvlId, cc.Comment, time.Now().Format("2006-01-02 15:04:05"), cc.Percent)
 	return true
 }
 
 func (cc *CComment) DeleteAccComment(id int, uid int) {
-	cc.DB.ShouldQuery("DELETE FROM acccomments WHERE id=? AND uid=?", id, uid)
+	cc.DB.ShouldExec("DELETE FROM #DB#.acccomments WHERE id=? AND uid=?", id, uid)
 }
 
 func (cc *CComment) DeleteLevelComment(id int, uid int) {
-	cc.DB.ShouldQuery("DELETE FROM comments WHERE id=? AND uid=?", id, uid)
+	cc.DB.ShouldExec("DELETE FROM #DB#.comments WHERE id=? AND uid=?", id, uid)
 }
 
 func (cc *CComment) DeleteOwnerLevelComment(id int, lvlId int) {
-	cc.DB.ShouldQuery("DELETE FROM comments WHERE id=? AND lvl_id=?", id, lvlId)
+	cc.DB.ShouldExec("DELETE FROM #DB#.comments WHERE id=? AND lvl_id=?", id, lvlId)
 }
 
 func (cc *CComment) LikeAccComment(id int, uid int, actionLike bool) bool {
@@ -154,7 +154,7 @@ func (cc *CComment) LikeAccComment(id int, uid int, actionLike bool) bool {
 		operator = "+"
 		actionc = "Like"
 	}
-	cc.DB.ShouldQuery("UPDATE acccomments SET likes=likes"+operator+"1 WHERE id=?", id)
+	cc.DB.ShouldExec("UPDATE #DB#.acccomments SET likes=likes"+operator+"1 WHERE id=?", id)
 	RegisterAction(ACTION_ACCCOMMENT_LIKE, uid, id, map[string]string{"type": actionc}, cc.DB)
 	return true
 }
@@ -169,7 +169,7 @@ func (cc *CComment) LikeLevelComment(id int, uid int, actionLike bool) bool {
 		operator = "+"
 		actionc = "Like"
 	}
-	cc.DB.ShouldQuery("UPDATE comments SET likes=likes"+operator+"1 WHERE id=?", id)
+	cc.DB.ShouldExec("UPDATE #DB#.comments SET likes=likes"+operator+"1 WHERE id=?", id)
 	RegisterAction(ACTION_COMMENT_LIKE, uid, id, map[string]string{"type": actionc}, cc.DB)
 	return true
 }

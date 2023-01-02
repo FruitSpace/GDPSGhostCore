@@ -15,7 +15,7 @@ type CMusic struct {
 	Id        int
 	Name      string
 	Artist    string
-	Size      json.Number
+	Size      float64
 	Url       string
 	IsBanned  bool
 	Downloads int
@@ -28,7 +28,7 @@ type CMusic struct {
 
 func (mus *CMusic) Exists(id int) bool {
 	var cnt int
-	mus.DB.MustQueryRow("SELECT count(*) as cnt FROM songs WHERE id=?", id).Scan(&cnt)
+	mus.DB.MustQueryRow("SELECT count(*) as cnt FROM #DB#.songs WHERE id=?", id).Scan(&cnt)
 	return cnt > 0
 }
 
@@ -53,6 +53,10 @@ func (mus *CMusic) TransformHalResource() bool {
 	}
 	switch arn[1] {
 	case "ng":
+		if f, _ := regexp.MatchString(`[0-9]`, arn[2]); !f {
+			return false
+		}
+	case "dz":
 		if f, _ := regexp.MatchString(`[0-9]`, arn[2]); !f {
 			return false
 		}
@@ -89,7 +93,7 @@ func (mus *CMusic) GetSong(id int) bool {
 	if !mus.Exists(id) {
 		return false
 	}
-	mus.DB.MustQueryRow("SELECT id,name,artist,size,url,isBanned,downloads FROM songs WHERE id=?", id).Scan(
+	mus.DB.MustQueryRow("SELECT id,name,artist,size,url,isBanned,downloads FROM #DB#.songs WHERE id=?", id).Scan(
 		&mus.Id, &mus.Name, &mus.Artist, &mus.Size, &mus.Url, &mus.IsBanned, &mus.Downloads)
 	if mus.IsBanned {
 		return false
@@ -101,22 +105,22 @@ func (mus *CMusic) GetSong(id int) bool {
 }
 
 func (mus *CMusic) UploadSong() int {
-	c := mus.DB.ShouldPrepareExec("INSERT INTO songs (name,artist,size,url) VALUES (?,?,?,?)", mus.Name, mus.Artist, mus.Size, mus.Url)
+	c := mus.DB.ShouldPrepareExec("INSERT INTO #DB#.songs (name,artist,size,url) VALUES (?,?,?,?)", mus.Name, mus.Artist, mus.Size, mus.Url)
 	id, _ := c.LastInsertId()
 	return int(id)
 }
 
 func (mus *CMusic) BanMusic(id int, ban bool) {
-	mus.DB.ShouldQuery("UPDATE songs SET isBanned=? WHERE id=?", ban, id)
+	mus.DB.ShouldExec("UPDATE #DB#.songs SET isBanned=? WHERE id=?", ban, id)
 }
 
 func (mus *CMusic) CountDownloads() {
-	req := mus.DB.MustQuery("SELECT id FROM songs")
+	req := mus.DB.MustQuery("SELECT id FROM #DB#.songs")
 	defer req.Close()
 	for req.Next() {
 		var id int
 		req.Scan(&id)
-		creq := mus.DB.ShouldQuery("SELECT downloads FROM levels WHERE song_id=?", id)
+		creq := mus.DB.ShouldQuery("SELECT downloads FROM #DB#.levels WHERE song_id=?", id)
 		defer creq.Close()
 		var cnt int
 		for creq.Next() {
@@ -125,7 +129,7 @@ func (mus *CMusic) CountDownloads() {
 			cnt += downs
 		}
 		mus.Logger.Should(creq.Close())
-		mus.DB.ShouldQuery("UPDATE songs SET downloads=? WHERE id=?", cnt, id)
+		mus.DB.ShouldExec("UPDATE #DB#.songs SET downloads=? WHERE id=?", cnt, id)
 	}
 }
 

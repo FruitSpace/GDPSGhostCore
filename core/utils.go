@@ -25,6 +25,8 @@ import (
 	"time"
 )
 
+var loc, _ = time.LoadLocation("Europe/Moscow")
+
 func ClearGDRequest(str string) string {
 	return strings.TrimSpace(
 		strings.Split(
@@ -45,7 +47,7 @@ func DoXOR(text string, key string) (output string) {
 }
 
 func GetDateAgo(date int64) string {
-	diff := time.Now().Unix() + 10800 - date
+	diff := time.Now().Unix() - date
 	if diff < 60 {
 		return strconv.FormatInt(diff, 10) + " seconds"
 	}
@@ -128,6 +130,9 @@ type Logger struct {
 
 func (lg *Logger) LogErr(module interface{}, message string) {
 	sentry.CaptureMessage(message)
+	if fmt.Sprintf("%T", module) == "*core.MySQLConn" {
+		message = "[MySQL " + module.(*MySQLConn).DBName + "]" + message
+	}
 	fmt.Println("ERR: ", message)
 	ReportFail(message)
 }

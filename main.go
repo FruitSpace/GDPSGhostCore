@@ -8,6 +8,7 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"github.com/getsentry/sentry-go"
+	"github.com/jmoiron/sqlx"
 	"log"
 	"os"
 	"time"
@@ -28,6 +29,21 @@ func main() {
 	//core.MaintainTasks(config)
 	core.MaintainRoutines(config)
 
+	time.Local,err=time.LoadLocation("Europe/Moscow")
+	if err!=nil{
+		log.Println(err)
+	}
+
+	DB_USER := EnvOrDefault("DB_USER", "")
+	DB_PASS := EnvOrDefault("DB_PASS", "")
+
+	core.DBTunnel, err = sqlx.Connect("mysql", DB_USER+":"+DB_PASS+"@tcp(localhost:3306)/")
+	if err != nil {
+		log.Println("Error while connecting to " + DB_USER + "@localhost: " + err.Error())
+		time.Sleep(10 * time.Second)
+		main()
+	}
+	core.DBTunnel.SetMaxOpenConns(100)
 	ghostServer := api.GhostServer{
 		Log: core.Logger{
 			Output: connectors.GetWriter("", ""),

@@ -54,7 +54,7 @@ func (protect *CProtect) FillLevelModel() {
 		current := strings.Split(date.AddDate(0, 0, -1*i).Format("2006-01-02 15:04:05"), " ")[0]
 		currentIndex := strings.Split(date.AddDate(0, 0, -1*(i+1)).Format("2006-01-02 15:04:05"), " ")[0]
 		var count int
-		protect.DB.ShouldQueryRow("SELECT count(*) as cnt FROM actions WHERE type=4 AND date<? AND date>? AND data LIKE '%Upload%'",
+		protect.DB.ShouldQueryRow("SELECT count(*) as cnt FROM #DB#.actions WHERE type=4 AND date<? AND date>? AND data LIKE '%Upload%'",
 			current, currentIndex).Scan(&count)
 		stats[currentIndex] = count
 		if count > protect.LevelModel.PeakLevelUpload {
@@ -70,8 +70,8 @@ func (protect *CProtect) FillLevelModel() {
 
 	//Calculate total stars allowed
 	var count2, count1 int
-	protect.DB.ShouldQueryRow("SELECT SUM(starsGot) as stars FROM levels").Scan(&count1)
-	protect.DB.ShouldQueryRow("SELECT SUM(packStars) as stars FROM levelpacks").Scan(&count2)
+	protect.DB.ShouldQueryRow("SELECT SUM(starsGot) as stars FROM #DB#.levels").Scan(&count1)
+	protect.DB.ShouldQueryRow("SELECT SUM(packStars) as stars FROM #DB#.levelpacks").Scan(&count2)
 	protect.LevelModel.MaxStars = 200 + count1 + count2
 
 	protect.LevelModel.Stats = stats
@@ -84,8 +84,8 @@ func (protect *CProtect) FillLevelModel() {
 }
 
 func (protect *CProtect) ResetUserLimits() {
-	protect.DB.ShouldQuery("UPDATE users SET protect_levelsToday=0")
-	protect.DB.ShouldQuery("UPDATE users SET protect_todayStars=stars")
+	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_levelsToday=0")
+	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_todayStars=stars")
 }
 
 func (protect *CProtect) DetectLevelModel(uid int) bool {
@@ -93,14 +93,14 @@ func (protect *CProtect) DetectLevelModel(uid int) bool {
 		return true
 	}
 	var lvlCnt int
-	protect.DB.ShouldQueryRow("SELECT protect_levelsToday as cnt FROM users WHERE uid=?", uid).Scan(&lvlCnt)
+	protect.DB.ShouldQueryRow("SELECT protect_levelsToday as cnt FROM #DB#.users WHERE uid=?", uid).Scan(&lvlCnt)
 	if lvlCnt >= protect.LevelModel.MaxLevelUpload {
-		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?", uid)
+		protect.DB.ShouldExec("UPDATE #DB#.users SET isBanned=2 WHERE uid=?", uid)
 		RegisterAction(ACTION_BAN_BAN, 0, uid, map[string]string{"type": "Ban:LevelAuto"}, protect.DB)
 		SendMessageDiscord("[" + protect.Savepath[6:11] + "] User " + strconv.Itoa(uid) + " has been banned for uploading too many levels (" + strconv.Itoa(lvlCnt) + "/" + strconv.Itoa(protect.LevelModel.MaxLevelUpload) + ") in a day.")
 		return false
 	}
-	protect.DB.ShouldQuery("UPDATE users SET protect_levelsToday=protect_levelsToday+1 WHERE uid=?", uid)
+	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_levelsToday=protect_levelsToday+1 WHERE uid=?", uid)
 	return true
 }
 
@@ -109,9 +109,9 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 		return true
 	}
 	if stars < 0 || diamonds < 0 || demons < 0 || coins < 0 || ucoins < 0 {
-		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?", uid)
-		protect.DB.ShouldQuery("DELETE FROM levels WHERE uid=?", uid)
-		protect.DB.ShouldQuery("DELETE FROM actions WHERE type=4 AND uid=?", uid)
+		protect.DB.ShouldExec("UPDATE #DB#.users SET isBanned=2 WHERE uid=?", uid)
+		protect.DB.ShouldExec("DELETE FROM #DB#.levels WHERE uid=?", uid)
+		protect.DB.ShouldExec("DELETE FROM #DB#.actions WHERE type=4 AND uid=?", uid)
 		RegisterAction(ACTION_BAN_BAN, 0, uid, map[string]string{"type": "Ban:StatsNegative"}, protect.DB)
 		SendMessageDiscord("User " + strconv.Itoa(uid) + " has been banned for having negative stats.")
 		return false
@@ -120,9 +120,9 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 		protect.LevelModel.MaxStars = 200
 	}
 	var starCnt int
-	protect.DB.ShouldQueryRow("SELECT protect_todayStars FROM users WHERE uid=?", uid).Scan(&starCnt)
+	protect.DB.ShouldQueryRow("SELECT protect_todayStars FROM #DB#.users WHERE uid=?", uid).Scan(&starCnt)
 	if (stars - starCnt) > protect.LevelModel.MaxStars {
-		protect.DB.ShouldQuery("UPDATE users SET isBanned=2 WHERE uid=?", uid)
+		protect.DB.ShouldExec("UPDATE #DB#.users SET isBanned=2 WHERE uid=?", uid)
 		RegisterAction(ACTION_BAN_BAN, 0, uid, map[string]string{"type": "Ban:StarsLimit"}, protect.DB)
 		SendMessageDiscord("User " + strconv.Itoa(uid) + " has been banned for having too many stars (" + strconv.Itoa(stars) + "+" + strconv.Itoa(starCnt) + "/" + strconv.Itoa(protect.LevelModel.MaxStars) + ").")
 		return false
@@ -133,7 +133,7 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 func (protect *CProtect) GetMeta(uid int) map[string]int {
 	meta := make(map[string]int)
 	var sMeta string
-	protect.DB.ShouldQueryRow("SELECT protect_meta FROM users WHERE uid=?", uid).Scan(&sMeta)
+	protect.DB.ShouldQueryRow("SELECT protect_meta FROM #DB#.users WHERE uid=?", uid).Scan(&sMeta)
 	json.Unmarshal([]byte(sMeta), &meta)
 	return meta
 }
@@ -149,7 +149,7 @@ func (protect *CProtect) DetectMessages(uid int) bool {
 	}
 	meta["msg_time"] = t
 	data, _ := json.Marshal(meta)
-	protect.DB.ShouldQuery("UPDATE users SET protect_meta=? WHERE uid=?", string(data), uid)
+	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_meta=? WHERE uid=?", string(data), uid)
 	return true
 }
 
@@ -164,7 +164,7 @@ func (protect *CProtect) DetectPosts(uid int) bool {
 	}
 	meta["post_time"] = t
 	data, _ := json.Marshal(meta)
-	protect.DB.ShouldQuery("UPDATE users SET protect_meta=? WHERE uid=?", string(data), uid)
+	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_meta=? WHERE uid=?", string(data), uid)
 	return true
 }
 
@@ -179,7 +179,7 @@ func (protect *CProtect) DetectComments(uid int) bool {
 	}
 	meta["comm_time"] = t
 	data, _ := json.Marshal(meta)
-	protect.DB.ShouldQuery("UPDATE users SET protect_meta=? WHERE uid=?", string(data), uid)
+	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_meta=? WHERE uid=?", string(data), uid)
 	return true
 }
 

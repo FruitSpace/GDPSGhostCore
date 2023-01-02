@@ -7,51 +7,36 @@ import (
 	"github.com/getsentry/sentry-go"
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"log"
-	"time"
+	"strings"
 )
 
+var DBTunnel *sqlx.DB
+
 type MySQLConn struct {
-	DB     *sql.DB
 	logger Logger
+	DBName string
 }
 
 func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
-	db.DB, _ = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-		config.DBConfig.User, config.DBConfig.Password, "localhost", config.DBConfig.Port, config.DBConfig.DBName))
-	err := db.DB.Ping()
-	if err != nil {
-		db.logger.LogWarn(err, err.Error())
-	}
-	db.DB.SetMaxIdleConns(2)
-	db.DB.SetConnMaxLifetime(10 * time.Second)
-	db.DB.SetConnMaxIdleTime(1 * time.Minute)
-	return err
+	db.DBName = config.DBConfig.DBName
+
+	return nil
 }
 
-func (db *MySQLConn) ConnectMultiBlob(config ConfigBlob) error {
-	db.DB, _ = sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?multiStatements=true",
-		config.DBConfig.User, config.DBConfig.Password, config.DBConfig.Host, config.DBConfig.Port, config.DBConfig.DBName))
-
-	db.DB.SetMaxOpenConns(2)
-	db.DB.SetMaxIdleConns(0)
-	db.DB.SetConnMaxLifetime(30 * time.Second)
-	//db.DB.SetConnMaxIdleTime(5 * time.Minute)
-
-	err := db.DB.Ping()
-	if err != nil {
-		db.logger.LogWarn(err, err.Error())
-	}
-	return err
+func (db *MySQLConn) CloseDB() error {
+	log.Printf("%+v", DBTunnel.Stats())
+	return nil
 }
 
-func (db *MySQLConn) CloseDB() {
-	log.Printf("%+v", db.DB.Stats())
-	db.logger.Should(db.DB.Close())
+// PatchQuery replaces #DB# with the database name
+func (db *MySQLConn) PatchQuery(query string) string {
+	return strings.ReplaceAll(query, "#DB#", db.DBName)
 }
 
 func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result, error) {
-	stmt, err := db.DB.Prepare(query)
+	stmt, err := DBTunnel.Prepare(db.PatchQuery(query))
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +46,7 @@ func (db *MySQLConn) PrepareExec(query string, args ...interface{}) (sql.Result,
 
 func (db *MySQLConn) MustPrepareExec(query string, args ...interface{}) sql.Result {
 	defer sentry.Recover()
-	stmt, err := db.DB.Prepare(query)
+	stmt, err := DBTunnel.Prepare(db.PatchQuery(query))
 	if err != nil {
 		db.logger.LogErr(db, err.Error())
 	}
@@ -74,7 +59,7 @@ func (db *MySQLConn) MustPrepareExec(query string, args ...interface{}) sql.Resu
 }
 
 func (db *MySQLConn) MustQuery(query string, args ...interface{}) *sql.Rows {
-	rows, err := db.DB.Query(query, args...)
+	rows, err := DBTunnel.Query(db.PatchQuery(query), args...)
 	if err != nil {
 		db.logger.LogErr(db, err.Error())
 	}
@@ -82,7 +67,7 @@ func (db *MySQLConn) MustQuery(query string, args ...interface{}) *sql.Rows {
 }
 
 func (db *MySQLConn) MustQueryRow(query string, args ...interface{}) *sql.Row {
-	row := db.DB.QueryRow(query, args...)
+	row := DBTunnel.QueryRow(db.PatchQuery(query), args...)
 	if row.Err() != nil {
 		db.logger.LogErr(db, row.Err().Error())
 	}
@@ -90,7 +75,7 @@ func (db *MySQLConn) MustQueryRow(query string, args ...interface{}) *sql.Row {
 }
 
 func (db *MySQLConn) ShouldPrepareExec(query string, args ...interface{}) sql.Result {
-	stmt, err := db.DB.Prepare(query)
+	stmt, err := DBTunnel.Prepare(db.PatchQuery(query))
 	if err != nil {
 		db.logger.LogWarn(db, err.Error())
 	}
@@ -102,7 +87,7 @@ func (db *MySQLConn) ShouldPrepareExec(query string, args ...interface{}) sql.Re
 }
 
 func (db *MySQLConn) ShouldQuery(query string, args ...interface{}) *sql.Rows {
-	rows, err := db.DB.Query(query, args...)
+	rows, err := DBTunnel.Query(db.PatchQuery(query), args...)
 	if err != nil {
 		db.logger.LogWarn(db, err.Error())
 	}
@@ -110,11 +95,18 @@ func (db *MySQLConn) ShouldQuery(query string, args ...interface{}) *sql.Rows {
 }
 
 func (db *MySQLConn) ShouldQueryRow(query string, args ...interface{}) *sql.Row {
-	row := db.DB.QueryRow(query, args...)
+	row := DBTunnel.QueryRow(db.PatchQuery(query), args...)
 	if row.Err() != nil {
 		db.logger.LogWarn(db, row.Err().Error())
 	}
 	return row
+}
+
+func (db *MySQLConn) ShouldExec(query string, args ...interface{}) {
+	_, err := DBTunnel.Exec(db.PatchQuery(query), args...)
+	if err != nil {
+		db.logger.LogErr(db, err.Error())
+	}
 }
 
 type RedisConn struct {

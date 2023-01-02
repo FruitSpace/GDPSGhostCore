@@ -5,13 +5,14 @@ package connectors
 import (
 	"HalogenGhostCore/core"
 	"encoding/base64"
-	"math"
 	"math/rand"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
+
+var loc, _ = time.LoadLocation("Europe/Moscow")
 
 // GetUserProfile used at getUserInfo (w/o trailing hash)
 func GetUserProfile(acc core.CAccount, isFriend bool) string {
@@ -48,7 +49,7 @@ func UserSearchItem(acc core.CAccount) string {
 // GetAccountComment used to retrieve account comments (iterative, w/o hash)
 func GetAccountComment(comment core.CComment) string {
 	s := strconv.Itoa
-	t, err := time.Parse("2006-01-02 15:04:05", comment.PostedTime)
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -59,7 +60,7 @@ func GetAccountComment(comment core.CComment) string {
 // GetLevelComment used to retrieve level comment (iterative, w/o hash)
 func GetLevelComment(comment core.CComment) string {
 	s := strconv.Itoa
-	t, err := time.Parse("2006-01-02 15:04:05", comment.PostedTime)
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -83,7 +84,7 @@ func GetLevelComment(comment core.CComment) string {
 // GetCommentHistory used to retrieve level comment history of a user (iterative, w/o hash)
 func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role) string {
 	s := strconv.Itoa
-	t, err := time.Parse("2006-01-02 15:04:05", comment.PostedTime)
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -98,7 +99,7 @@ func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role)
 
 // GetFriendRequest used to get friend request item (iterative, w/o hash)
 func GetFriendRequest(frq map[string]string) string {
-	t, err := time.Parse("2006-01-02 15:04:05", frq["date"])
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", frq["date"], loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -110,7 +111,7 @@ func GetFriendRequest(frq map[string]string) string {
 // GetMessage used to retrieve single message (w/o trailing hash)
 func GetMessage(msg core.CMessage, uid int) string {
 	s := strconv.Itoa
-	t, err := time.Parse("2006-01-02 15:04:05", msg.PostedTime)
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", msg.PostedTime, loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -127,7 +128,7 @@ func GetMessage(msg core.CMessage, uid int) string {
 
 // GetMessageStr used to get message item (iterative, w/o hash)
 func GetMessageStr(msg map[string]string, getSent bool) string {
-	t, err := time.Parse("2006-01-02 15:04:05", msg["date"])
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", msg["date"], loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -138,12 +139,11 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 
 // GetMusic used to get simple music string (w/o traling hash)
 func GetMusic(mus core.CMusic) string {
-	//parse mus.Size as float64
-	size, _ := strconv.ParseFloat(string(mus.Size), 64)
-	//set float size to 2
-	size = math.Round(size*100) / 100
+	//size, _ := strconv.ParseFloat(mus.Size, 64)
+	//size = math.Round(size*100) / 100
+
 	//convert size to string
-	sizeStr := strconv.FormatFloat(size, 'f', 2, 64)
+	sizeStr := strconv.FormatFloat(mus.Size, 'f', 2, 64)
 	return "1~|~" + strconv.Itoa(mus.Id) + "~|~2~|~" + mus.Name + "~|~3~|~1~|~4~|~" + mus.Artist + "~|~5~|~" + sizeStr + "~|~6~|~~|~10~|~" +
 		url.QueryEscape(mus.Url)
 }
@@ -192,9 +192,9 @@ func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk str
 func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string {
 	s := strconv.Itoa
 	virt := core.RandStringBytes(5)
-	tme, _ := time.Parse("2006-01-02 15:04:05", strings.Split(time.Now().Format("2006-01-02 15:04:05"), " ")[0]+" 00:00:00")
+	tme, _ := time.ParseInLocation("2006-01-02 15:04:05", strings.Split(time.Now().Format("2006-01-02 15:04:05"), " ")[0]+" 00:00:00", loc)
 	//!Additional 10800 Review is needed
-	timeLeft := int(tme.AddDate(0, 0, 1).Unix() - (time.Now().Unix() + 10800))
+	timeLeft := int(tme.AddDate(0, 0, 1).Unix() - (time.Now().Unix()))
 	out := virt + ":" + s(uid) + ":" + chk + ":" + udid + ":" + s(uid) + ":" + s(timeLeft) + ":" + cq.GetQuests(uid)
 	out = strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out, "19847"))), "/", "_"), "+", "-")
 	return virt + out + "|" + core.HashSolo3(out)
@@ -216,7 +216,7 @@ func GetLeaderboardScore(score core.CScores) string {
 	acc.LoadAuth(core.CAUTH_UID)
 	acc.LoadVessels()
 	acc.LoadStats()
-	t, err := time.Parse("2006-01-02 15:04:05", score.PostedTime)
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", score.PostedTime, loc)
 	if err != nil {
 		t = time.Now()
 	}
@@ -229,12 +229,12 @@ func GetLeaderboardScore(score core.CScores) string {
 // GetLevelFull used to retrieve full Level data (w/ trailing hash)
 func GetLevelFull(cl core.CLevel, password string, phash string, quest_id int) string {
 	s := strconv.Itoa
-	t, err := time.Parse("2006-01-02 15:04:05", cl.UploadDate)
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UploadDate, loc)
 	if err != nil {
 		t = time.Now()
 	}
 	uplAge := core.GetDateAgo(t.Unix())
-	t2, err := time.Parse("2006-01-02 15:04:05", cl.UpdateDate)
+	t2, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UpdateDate, loc)
 	if err != nil {
 		t2 = time.Now()
 	}

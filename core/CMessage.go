@@ -21,7 +21,7 @@ type CMessage struct {
 
 func (cm *CMessage) Exists(id int) bool {
 	var cnt int
-	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM messages WHERE id=?", id).Scan(&cnt)
+	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM #DB#.messages WHERE id=?", id).Scan(&cnt)
 	return cnt > 0
 }
 
@@ -31,7 +31,7 @@ func (cm *CMessage) CountMessages(uid int, isNew bool) int {
 	if isNew {
 		postfix = " AND isNew=1"
 	}
-	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM messages WHERE uid_dest=?"+postfix, uid).Scan(&cnt)
+	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM #DB#.messages WHERE uid_dest=?"+postfix, uid).Scan(&cnt)
 	return cnt
 }
 
@@ -39,14 +39,14 @@ func (cm *CMessage) LoadMessageById(id int) {
 	if id > 0 {
 		cm.Id = id
 	}
-	if cm.DB.ShouldQueryRow("SELECT uid_src,uid_dest,subject,body,postedTime,isNew FROM messages WHERE id=?", cm.Id).Scan(
+	if cm.DB.ShouldQueryRow("SELECT uid_src,uid_dest,subject,body,postedTime,isNew FROM #DB#.messages WHERE id=?", cm.Id).Scan(
 		&cm.UidSrc, &cm.UidDest, &cm.Subject, &cm.Message, &cm.PostedTime, &cm.IsNew) == nil {
-		cm.DB.ShouldQuery("UPDATE messages SET isNew WHERE id=?", cm.Id)
+		cm.DB.ShouldExec("UPDATE #DB#.messages SET isNew=0 WHERE id=?", cm.Id)
 	}
 }
 
 func (cm *CMessage) DeleteMessage(uid int) {
-	cm.DB.ShouldQuery("DELETE FROM messages WHERE id=? AND (uid_src=? OR uid_dest=?)", cm.Id, uid, uid)
+	cm.DB.ShouldExec("DELETE FROM #DB#.messages WHERE id=? AND (uid_src=? OR uid_dest=?)", cm.Id, uid, uid)
 }
 
 func (cm *CMessage) SendMessageObj() bool {
@@ -70,7 +70,7 @@ func (cm *CMessage) SendMessageObj() bool {
 			return false
 		}
 	}
-	cm.DB.ShouldQuery("INSERT INTO messages (uid_src,uid_dest,subject,body,postedTime) VALUES(?,?,?,?,?)",
+	cm.DB.ShouldExec("INSERT INTO #DB#.messages (uid_src,uid_dest,subject,body,postedTime) VALUES(?,?,?,?,?)",
 		cm.UidSrc, cm.UidDest, cm.Subject, cm.Message, time.Now().Format("2006-01-02 15:04:05"))
 	return true
 }
@@ -82,11 +82,11 @@ func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) (int, []map[s
 	if sent {
 		pf = "uid_src"
 	}
-	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM messages WHERE "+pf+"=?", uid).Scan(&cnt)
+	cm.DB.MustQueryRow("SELECT count(*) as cnt FROM #DB#.messages WHERE "+pf+"=?", uid).Scan(&cnt)
 	if cnt == 0 {
 		return 0, []map[string]string{}
 	}
-	rows := cm.DB.ShouldQuery("SELECT id,uid_src,uid_dest,subject,body,postedTime,isNew FROM messages WHERE "+pf+"=? ORDER BY id limit 10 OFFSET "+strconv.Itoa(page), uid)
+	rows := cm.DB.ShouldQuery("SELECT id,uid_src,uid_dest,subject,body,postedTime,isNew FROM #DB#.messages WHERE "+pf+"=? ORDER BY id limit 10 OFFSET "+strconv.Itoa(page), uid)
 	defer rows.Close()
 	var out []map[string]string
 	for rows.Next() {
@@ -113,7 +113,7 @@ func (cm *CMessage) GetMessageForUid(uid int, page int, sent bool) (int, []map[s
 		}
 		blk["uid"] = strconv.Itoa(uid)
 		if msg.IsNew {
-			cm.DB.ShouldQuery("UPDATE messages SET isNew=0 WHERE id=?", msg.Id)
+			cm.DB.ShouldExec("UPDATE #DB#.messages SET isNew=0 WHERE id=?", msg.Id)
 		}
 		out = append(out, blk)
 	}

@@ -12,51 +12,29 @@ import (
 //
 //}
 
-//go:embed resources/database.sql
-var gdpsDatabase string
-
-func HalInitialize(configBlob ConfigBlob, glob *GlobalConfig) bool {
-	db := MySQLConn{}
-	logger := Logger{}
-	//Create DB
-	if logger.Should(db.ConnectMultiBlob(configBlob)) != nil {
-		return false
-	}
-	db.ShouldQuery(gdpsDatabase)
-	//Create paths
-	//if logger.Should(os.MkdirAll(glob.SavePath+"/"+configBlob.ServerConfig.SrvID+"/savedata", 0777)) != nil {
-	//	os.RemoveAll(glob.SavePath + "/" + configBlob.ServerConfig.SrvID + "/savedata")
-	//	return false
-	//}
-	//os.Create(glob.SavePath + "/" + configBlob.ServerConfig.SrvID + "/levelModel.json")
-	//protect := CProtect{DB: &db, Savepath: glob.SavePath + "/" + configBlob.ServerConfig.SrvID}
-	//protect.FillLevelModel()
-	return true
-}
-
 //Count stuff
 
 func CountUsers(db *MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM users").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM #DB#.users").Scan(&cnt)
 	return cnt
 }
 
 func CountLevels(db *MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM levels").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM #DB#.levels").Scan(&cnt)
 	return cnt
 }
 
 func CountPosts(db *MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM acccomments").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM #DB#.acccomments").Scan(&cnt)
 	return cnt
 }
 
 func CountComments(db *MySQLConn) int {
 	var cnt int
-	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM comments").Scan(&cnt)
+	db.ShouldQueryRow("SELECT COUNT(*) as cnt FROM #DB#.comments").Scan(&cnt)
 	return cnt
 }
 

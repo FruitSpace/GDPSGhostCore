@@ -27,12 +27,12 @@ type CScores struct {
 
 func (cs *CScores) ScoreExistsByUid(uid int, lvlId int) bool {
 	var cnt int
-	cs.DB.MustQueryRow("SELECT count(*) as cnt FROM scores WHERE uid=? AND lvl_id=?", uid, lvlId).Scan(&cnt)
+	cs.DB.MustQueryRow("SELECT count(*) as cnt FROM #DB#.scores WHERE uid=? AND lvl_id=?", uid, lvlId).Scan(&cnt)
 	return cnt > 0
 }
 
 func (cs *CScores) LoadScoreById() {
-	cs.DB.ShouldQueryRow("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM scores WHERE id=?", cs.Id).Scan(
+	cs.DB.ShouldQueryRow("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM #DB#.scores WHERE id=?", cs.Id).Scan(
 		&cs.Uid, &cs.LvlId, &cs.PostedTime, &cs.Percent, &cs.Attempts, &cs.Coins)
 }
 
@@ -50,7 +50,7 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 		xfrs := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(frs)), ","), "[]")
 		suffix = "AND uid IN(" + strings.ReplaceAll(xfrs, ",,", ",") + ")"
 	}
-	req := cs.DB.ShouldQuery("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM scores WHERE lvl_id=? "+suffix+" ORDER BY percent DESC", lvlId)
+	req := cs.DB.ShouldQuery("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM #DB#.scores WHERE lvl_id=? "+suffix+" ORDER BY percent DESC", lvlId)
 	var scores []CScores
 	defer req.Close()
 	for req.Next() {
@@ -69,11 +69,11 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 }
 
 func (cs *CScores) UpdateLevelScore() {
-	cs.DB.ShouldQuery("UPDATE scores SET postedTime=?,percent=?,attempts=?,coins=? WHERE lvl_id=? AND uid=?",
+	cs.DB.ShouldExec("UPDATE #DB#.scores SET postedTime=?,percent=?,attempts=?,coins=? WHERE lvl_id=? AND uid=?",
 		time.Now().Format("2006-01-02 15:04:05"), cs.Percent, cs.Attempts, cs.Coins, cs.LvlId, cs.Uid)
 }
 
 func (cs *CScores) UploadLevelScore() {
-	cs.DB.ShouldQuery("INSERT INTO scores (uid,lvl_id,postedTime,percent,attempts,coins) VALUES(?,?,?,?,?,?)",
+	cs.DB.ShouldExec("INSERT INTO #DB#.scores (uid,lvl_id,postedTime,percent,attempts,coins) VALUES(?,?,?,?,?,?)",
 		cs.Uid, cs.LvlId, time.Now().Format("2006-01-02 15:04:05"), cs.Percent, cs.Attempts, cs.Coins)
 }
