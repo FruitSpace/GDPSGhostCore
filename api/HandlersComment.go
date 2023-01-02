@@ -351,7 +351,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			if err == nil && modComment[0] == '!' {
 				cl.LoadMain()
 				if core.InvokeCommands(db, cl, acc, modComment, isOwned, role) {
-					io.WriteString(resp, "1")
+					io.WriteString(resp, "temp_1_Command executed!")
 				} else {
 					io.WriteString(resp, "-1")
 				}
