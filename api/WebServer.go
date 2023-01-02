@@ -115,7 +115,6 @@ var RouteIntegraMap = map[string]func(http.ResponseWriter, *http.Request, *core.
 	// PRIVATE API
 	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}":       ModifyGDPS,
 	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}/event": EventAction,
-	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}/new":   CreateGDPS,
 }
 
 func GetFunctionName(i interface{}) string {

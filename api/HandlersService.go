@@ -7,7 +7,6 @@ import (
 	"html"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 )
 
@@ -25,19 +24,19 @@ var NotFoundTemplate = `
 	</body>
 </html>`
 
-func Shield(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig){
-	vars:= gorilla.Vars(req)
-	io.WriteString(resp,"[GhostCore] Serving //"+vars["gdps"]+"//")
+func Shield(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	vars := gorilla.Vars(req)
+	io.WriteString(resp, "[GhostCore] Serving //"+vars["gdps"]+"//")
 }
 
-func Redirector(resp http.ResponseWriter, req *http.Request){
-	http.Redirect(resp,req,"https://fruitspace.ru/",http.StatusMovedPermanently)
+func Redirector(resp http.ResponseWriter, req *http.Request) {
+	http.Redirect(resp, req, "https://fruitspace.ru/", http.StatusMovedPermanently)
 }
 
 type NotFoundHandler int
 
 func (n NotFoundHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	io.WriteString(resp,strings.ReplaceAll(NotFoundTemplate,"[PATH]",html.EscapeString(req.URL.Path)))
+	io.WriteString(resp, strings.ReplaceAll(NotFoundTemplate, "[PATH]", html.EscapeString(req.URL.Path)))
 }
 
 // Private API
@@ -62,33 +61,13 @@ func ModifyGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	//}
 }
 
-func CreateGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	vars:= gorilla.Vars(req)
-	Post:=ReadPost(req)
-	response:=map[string]string{"status":"ok"}
-	if Post.Get("key")!=conf.MasterKey {
-		response["status"]="error"
-		response["error"]="Unauthenticated"
-		SendJson(resp, response)
-		return
-	}
-	logger:=core.Logger{Output: os.Stderr}
-	config,err:=conf.LoadById(vars["gdps"])
-	if logger.Should(err)!=nil {return}
-	if !core.HalInitialize(config, conf){
-		SendJson(resp, map[string]string{"status":"error","error":"Failed to initialize GDPS"})
-	}else{
-		SendJson(resp, map[string]string{"status":"ok"})
-	}
-}
-
 func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
 	//vars:= gorilla.Vars(req)
-	Post:=ReadPost(req)
-	response:=map[string]string{"status":"ok"}
-	if Post.Get("key")!=conf.MasterKey {
-		response["status"]="error"
-		response["error"]="Unauthenticated"
+	Post := ReadPost(req)
+	response := map[string]string{"status": "ok"}
+	if Post.Get("key") != conf.MasterKey {
+		response["status"] = "error"
+		response["error"] = "Unauthenticated"
 		SendJson(resp, response)
 		return
 	}
@@ -97,7 +76,7 @@ func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	}
 }
 
-func SendJson(resp http.ResponseWriter, jsonData map[string]string){
-	data,_:=json.Marshal(jsonData)
-	io.WriteString(resp,string(data))
+func SendJson(resp http.ResponseWriter, jsonData map[string]string) {
+	data, _ := json.Marshal(jsonData)
+	io.WriteString(resp, string(data))
 }
