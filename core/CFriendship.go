@@ -146,12 +146,12 @@ func (cf *CFriendship) ReadFriendRequest(id int) {
 	cf.DB.ShouldExec("UPDATE #DB#.friendreqs SET isNew=0 WHERE id=?", id)
 }
 
-func (cf *CFriendship) RequestFriend(uid int, uid_dest int, comment string) int {
-	if uid == uid_dest || cf.IsAlreadyFriend(uid, uid_dest) || cf.IsAlreadySentFriend(uid, uid_dest) || len(comment) > 512 {
+func (cf *CFriendship) RequestFriend(uid int, uidDest int, comment string) int {
+	if uid == uidDest || cf.IsAlreadyFriend(uid, uidDest) || cf.IsAlreadySentFriend(uid, uidDest) || len(comment) > 512 {
 		return -1
 	}
 	acc := CAccount{DB: cf.DB}
-	acc.Uid = uid_dest
+	acc.Uid = uidDest
 	acc.LoadSettings()
 	if acc.FrS > 0 {
 		return -1
@@ -162,7 +162,7 @@ func (cf *CFriendship) RequestFriend(uid int, uid_dest int, comment string) int 
 		return -1
 	}
 	acc.DB.ShouldExec("INSERT INTO #DB#.friendreqs (uid_src, uid_dest, uploadDate, comment) VALUES (?,?,?,?)",
-		uid, uid_dest, time.Now().Format("2006-01-02 15:04:05"), comment)
+		uid, uidDest, time.Now().Format("2006-01-02 15:04:05"), comment)
 	return 1
 }
 
@@ -175,12 +175,12 @@ func (cf *CFriendship) AcceptFriendRequest(id int, uid int) int {
 	if src == dest || uid != dest {
 		return -1
 	}
-	req, _ := cf.DB.PrepareExec("INSERT INTO #DB#.friendships (uid1, uid2) VALUES (?,?)", uid, dest)
+	req, _ := cf.DB.PrepareExec("INSERT INTO #DB#.friendships (uid1, uid2) VALUES (?,?)", src, dest)
 	iid, _ := req.LastInsertId()
 	cf.DB.ShouldExec("DELETE FROM #DB#.friendreqs WHERE id=?", id)
 	u1 := CAccount{DB: cf.DB}
 	u2 := CAccount{DB: cf.DB}
-	u1.Uid = uid
+	u1.Uid = src
 	u2.Uid = dest
 	res := u1.UpdateFriendships(CFRIENDSHIP_ADD, int(iid))
 	res += u2.UpdateFriendships(CFRIENDSHIP_ADD, int(iid))

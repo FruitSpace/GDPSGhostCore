@@ -49,7 +49,7 @@ type CLevel struct {
 	//Params
 	Is2p       bool
 	IsVerified bool
-	IsFeatured bool
+	IsFeatured int
 	ISHall     bool
 	IsEpic     int
 	IsUnlisted int
@@ -238,11 +238,7 @@ func (lvl *CLevel) RateDemon(diff int) {
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET demonDifficulty=? WHERE id=?", xdiff, lvl.Id)
 }
 
-func (lvl *CLevel) FeatureLevel(feature bool) {
-	var featured int
-	if feature {
-		featured = 1
-	}
+func (lvl *CLevel) FeatureLevel(featured int) {
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET isFeatured=? WHERE id=?", featured, lvl.Id)
 	lvl.RecalculateCPoints(lvl.Uid)
 }
@@ -251,6 +247,22 @@ func (lvl *CLevel) EpicLevel(epic bool) {
 	var epicd int
 	if epic {
 		epicd = 1
+	}
+	lvl.DB.ShouldExec("UPDATE #DB#.levels SET isEpic=? WHERE id=?", epicd, lvl.Id)
+	lvl.RecalculateCPoints(lvl.Uid)
+}
+func (lvl *CLevel) LegendaryLevel(legend bool) {
+	var epicd int
+	if legend {
+		epicd = 2
+	}
+	lvl.DB.ShouldExec("UPDATE #DB#.levels SET isEpic=? WHERE id=?", epicd, lvl.Id)
+	lvl.RecalculateCPoints(lvl.Uid)
+}
+func (lvl *CLevel) GodlikeLevel(legend bool) {
+	var epicd int
+	if legend {
+		epicd = 3
 	}
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET isEpic=? WHERE id=?", epicd, lvl.Id)
 	lvl.RecalculateCPoints(lvl.Uid)

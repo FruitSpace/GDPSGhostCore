@@ -154,11 +154,11 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			}
 			switch lvl_id {
 			case -1:
-				lvl_id, quest_id = cq.GetDaily()
+				quest_id, lvl_id = cq.GetDaily()
 			case -2:
-				lvl_id, quest_id = cq.GetWeekly()
+				quest_id, lvl_id = cq.GetWeekly()
 			case -3:
-				lvl_id, quest_id = cq.GetEvent()
+				quest_id, lvl_id = cq.GetEvent()
 			default:
 				io.WriteString(resp, "-2")
 				return
@@ -878,7 +878,7 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		if len(role.Privs) > 0 {
 			if role.Privs["aRateStars"] > 0 {
 				cl.RateLevel(diff % 11)
-				cl.FeatureLevel(isFeature != 0)
+				cl.FeatureLevel(isFeature % 5)
 				core.RegisterAction(core.ACTION_LEVEL_RATE, xacc.Uid, cl.Id, map[string]string{
 					"uname": xacc.Uname, "type": "StarRate:" + strconv.Itoa(diff%11),
 				}, db)
