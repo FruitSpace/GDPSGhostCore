@@ -151,7 +151,7 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 			query += " AND EXISTS (SELECT id FROM #DB#.rateQueue WHERE #DB#.levels.id = #DB#.rateQueue.lvl_id)"
 		}
 	case CLEVELFILTER_HALL:
-		query += " AND isEpic=1"
+		query += " AND isEpic>=1"
 		orderBy = "likes DESC, downloads DESC"
 	// Here be The Safe
 	case CLEVELFILTER_SAFE_DAILY:

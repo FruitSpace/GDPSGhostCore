@@ -5,6 +5,7 @@ package connectors
 import (
 	"HalogenGhostCore/core"
 	"encoding/base64"
+	"math"
 	"math/rand"
 	"net/url"
 	"strconv"
@@ -139,11 +140,11 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 
 // GetMusic used to get simple music string (w/o traling hash)
 func GetMusic(mus core.CMusic) string {
-	//size, _ := strconv.ParseFloat(mus.Size, 64)
-	//size = math.Round(size*100) / 100
+	size, _ := strconv.ParseFloat(mus.Size, 64)
+	size = math.Round(size*100) / 100
 
 	//convert size to string
-	sizeStr := strconv.FormatFloat(mus.Size, 'f', 2, 64)
+	sizeStr := strconv.FormatFloat(size, 'f', 2, 64)
 	return "1~|~" + strconv.Itoa(mus.Id) + "~|~2~|~" + mus.Name + "~|~3~|~1~|~4~|~" + mus.Artist + "~|~5~|~" + sizeStr + "~|~6~|~~|~10~|~" +
 		url.QueryEscape(mus.Url)
 }
@@ -266,11 +267,11 @@ func GetLevelFull(cl core.CLevel, password string, phash string, quest_id int) s
 		acc.LoadAuth(core.CAUTH_UID)
 		questHash = "#" + s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid)
 	}
-	hash := s(cl.Uid) + "," + s(cl.StarsGot) + "," + s(isDemon) + "," + s(cl.Id) + "," + s(coinsVer) + "," + s(core.ToInt(cl.IsFeatured)) + "," + phash +
+	hash := s(cl.Uid) + "," + s(cl.StarsGot) + "," + s(isDemon) + "," + s(cl.Id) + "," + s(coinsVer) + "," + s(cl.IsFeatured) + "," + phash +
 		"," + s(quest_id)
 	return "1:" + s(cl.Id) + ":2:" + cl.Name + ":3:" + cl.Description + ":4:" + cl.StringLevel + ":5:" + s(cl.Version) + ":6:" + s(cl.Uid) + ":8:" + s(diffNom) +
 		":9:" + s(cl.Difficulty) + ":10:" + s(cl.Downloads) + ":12:" + s(cl.TrackId) + ":13:" + s(cl.VersionGame) + ":14:" + s(cl.Likes) +
-		":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(core.ToInt(cl.IsFeatured)) + ":25:" + s(auto) +
+		":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(cl.IsFeatured) + ":25:" + s(auto) +
 		":27:" + password + ":28:" + uplAge + ":29:" + updAge + ":30:" + s(cl.OrigId) + ":31:" + s(core.ToInt(cl.Is2p)) + ":35:" + s(cl.SongId) +
 		":36:" + cl.StringExtra + ":37:" + s(cl.Ucoins) + ":38:" + s(coinsVer) + ":39:" + s(cl.StarsRequested) + ":40:" + s(core.ToInt(cl.IsLDM)) +
 		":42:" + s(cl.IsEpic) + ":43:" + s(demonDiff) + ":45:" + s(cl.Objects) + ":46:1:47:2:48:" + cl.StringSettings + quest +
@@ -318,7 +319,7 @@ func GetLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
 	//if sliceL==0 {sliceL=1}
 	return "1:" + s(cl.Id) + ":2:" + cl.Name + ":3:" + cl.Description + ":5:" + s(cl.Version) + ":6:" + s(cl.Uid) + ":8:" + s(diffNom) +
 			":9:" + s(cl.Difficulty) + ":10:" + s(cl.Downloads) + ":12:" + s(cl.TrackId) + ":13:" + s(cl.VersionGame) + ":14:" + s(cl.Likes) +
-			":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(core.ToInt(cl.IsFeatured)) + ":25:" + s(auto) +
+			":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(cl.IsFeatured) + ":25:" + s(auto) +
 			":30:" + s(cl.OrigId) + ":31:" + s(core.ToInt(cl.Is2p)) + ":35:" + s(cl.SongId) + ":37:" + s(cl.Ucoins) + ":38:" + s(coinsVer) +
 			":39:" + s(cl.StarsRequested) + ":42:" + s(cl.IsEpic) + ":43:" + s(demonDiff) + gaustr + ":45:" + s(cl.Objects) + ":46:1:47:2|",
 		//lvlHash

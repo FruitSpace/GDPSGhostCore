@@ -16,20 +16,36 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 		if role.RoleName == "" || role.Privs["cFeature"] != 1 {
 			return false
 		}
-		cl.FeatureLevel(true)
+		cl.FeatureLevel(1)
+		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Feature"}, db)
+		return true
+	case "!legendary":
+		if role.RoleName == "" || role.Privs["cFeature"] != 1 {
+			return false
+		}
+		cl.FeatureLevel(3)
+		cl.LegendaryLevel(true)
+		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Legendary"}, db)
+		return true
+	case "!godlike":
+		if role.RoleName == "" || role.Privs["cFeature"] != 1 {
+			return false
+		}
+		cl.FeatureLevel(4)
 		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Feature"}, db)
 		return true
 	case "!unfeature":
 		if role.RoleName == "" || role.Privs["cFeature"] != 1 {
 			return false
 		}
-		cl.FeatureLevel(false)
+		cl.FeatureLevel(0)
 		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Uneature"}, db)
 		return true
 	case "!epic":
 		if role.RoleName == "" || role.Privs["cEpic"] != 1 {
 			return false
 		}
+		cl.FeatureLevel(2)
 		cl.EpicLevel(true)
 		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Epic"}, db)
 		return true
@@ -37,6 +53,7 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 		if role.RoleName == "" || role.Privs["cEpic"] != 1 {
 			return false
 		}
+		cl.FeatureLevel(0)
 		cl.EpicLevel(false)
 		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Unepic"}, db)
 		return true

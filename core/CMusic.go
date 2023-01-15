@@ -15,7 +15,7 @@ type CMusic struct {
 	Id        int
 	Name      string
 	Artist    string
-	Size      float64
+	Size      string
 	Url       string
 	IsBanned  bool
 	Downloads int

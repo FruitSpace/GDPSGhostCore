@@ -20,6 +20,14 @@ type CQuests struct {
 }
 
 func (cq *CQuests) Exists(cType int) bool {
+	switch cType {
+	case -1:
+		cType = 0
+	case -2:
+		cType = 1
+	case -3:
+		cType = -1
+	}
 	xType := "=" + strconv.Itoa(cType)
 	if cType == 2 {
 		xType = ">1"
