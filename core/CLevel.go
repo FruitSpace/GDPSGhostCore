@@ -1,7 +1,6 @@
 package core
 
 import (
-	"strings"
 	"time"
 )
 
@@ -151,6 +150,7 @@ func (lvl *CLevel) CheckParams() bool {
 
 func (lvl *CLevel) DeleteLevel() {
 	lvl.DB.ShouldExec("DELETE FROM #DB#.levels WHERE id=?", lvl.Id)
+	lvl.RecalculateCPoints(lvl.Uid)
 }
 
 func (lvl *CLevel) UploadLevel() int {
@@ -238,9 +238,13 @@ func (lvl *CLevel) RateDemon(diff int) {
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET demonDifficulty=? WHERE id=?", xdiff, lvl.Id)
 }
 
-func (lvl *CLevel) FeatureLevel(featured int) {
+func (lvl *CLevel) FeatureLevel(featured int) bool {
+	if featured == 0 && lvl.IsEpic > 0 {
+		return false
+	}
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET isFeatured=? WHERE id=?", featured, lvl.Id)
 	lvl.RecalculateCPoints(lvl.Uid)
+	return true
 }
 
 func (lvl *CLevel) EpicLevel(epic bool) {
@@ -305,7 +309,7 @@ func (lvl *CLevel) RecalculateCPoints(uid int) {
 			isFeatured int
 			isEpic     int
 			collab     string
-			cpoints    int
+			cpoints    int = 0
 		)
 		req.Scan(&starsGot, &isFeatured, &isEpic, &collab)
 		if starsGot > 0 {
@@ -317,13 +321,14 @@ func (lvl *CLevel) RecalculateCPoints(uid int) {
 		if isEpic > 0 {
 			cpoints++
 		}
-		collablist := strings.Split(collab, ",")
-		for _, colid := range collablist {
-			if colid == "" {
-				continue
-			}
-			lvl.DB.ShouldExec("UPDATE #DB#.users SET cpoints=cpoints+? WHERE uid=?", cpoints, colid)
-		}
+		//! COLLABS DISABLED
+		//collablist := strings.Split(collab, ",")
+		//for _, colid := range collablist {
+		//	if colid == "" {
+		//		continue
+		//	}
+		//	lvl.DB.ShouldExec("UPDATE #DB#.users SET cpoints=cpoints+? WHERE uid=?", cpoints, colid)
+		//}
 		totalCP += cpoints
 	}
 	lvl.DB.ShouldExec("UPDATE #DB#.users SET cpoints=? WHERE uid=?", totalCP, uid)

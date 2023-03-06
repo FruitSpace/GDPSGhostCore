@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	gorilla "github.com/gorilla/mux"
 	"io"
+	"log"
 	"math"
 	"net/http"
 	"os"
@@ -284,6 +285,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	}
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
+	log.Printf("%s: %s\n", vars["gdps"], Post)
 
 	var mode, page int
 	core.TryInt(&mode, Post.Get("type"))
@@ -439,6 +441,10 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		case "4":
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_LATEST)
 		case "5":
+			if Post.Has("uuid") {
+				// If user is unauthorized, we don't want to show his levels
+				Params["sterm"] = "0"
+			}
 			levels = filter.SearchUserLevels(page, Params, false) //User levels (uid in sterm)
 		case "6":
 			fallthrough
