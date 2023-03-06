@@ -145,8 +145,9 @@ func GetMusic(mus core.CMusic) string {
 
 	//convert size to string
 	sizeStr := strconv.FormatFloat(size, 'f', 2, 64)
-	return "1~|~" + strconv.Itoa(mus.Id) + "~|~2~|~" + mus.Name + "~|~3~|~1~|~4~|~" + mus.Artist + "~|~5~|~" + sizeStr + "~|~6~|~~|~10~|~" +
+	mstr := "1~|~" + strconv.Itoa(mus.Id) + "~|~2~|~" + mus.Name + "~|~3~|~1~|~4~|~" + mus.Artist + "~|~5~|~" + sizeStr + "~|~6~|~~|~10~|~" +
 		url.QueryEscape(mus.Url)
+	return strings.ReplaceAll(mstr, "#", "")
 }
 
 //used to get simple top artists string (w/o trailing hash)

@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/getsentry/sentry-go"
+	"github.com/go-redis/redis/v8"
 	"golang.org/x/exp/slices"
 	"html"
 	"io"
@@ -150,7 +151,7 @@ func (lg *Logger) Must(err error) {
 }
 
 func (lg *Logger) Should(err error) error {
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		sentry.CaptureException(err)
 		ReportFail(err.Error())
 		lg.LogWarn(err, err.Error())

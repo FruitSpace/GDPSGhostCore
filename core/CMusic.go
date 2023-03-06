@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -39,6 +40,7 @@ func (mus *CMusic) RequestNGOuter(id int) bool {
 		return false
 	}
 	rsp, _ := io.ReadAll(resp.Body)
+	rsp = bytes.ReplaceAll(rsp, []byte("#"), []byte(""))
 	if err = json.Unmarshal(rsp, mus); err != nil {
 		fmt.Println(err)
 	}
@@ -80,6 +82,7 @@ func (mus *CMusic) TransformHalResource() bool {
 		return false
 	}
 	rsp, _ := io.ReadAll(resp.Body)
+	rsp = bytes.ReplaceAll(rsp, []byte("#"), []byte(""))
 	if err = json.Unmarshal(rsp, mus); err != nil {
 		fmt.Println(err)
 	}
