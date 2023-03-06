@@ -8,7 +8,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"log"
 	"strings"
 )
 
@@ -26,7 +25,6 @@ func (db *MySQLConn) ConnectBlob(config ConfigBlob) error {
 }
 
 func (db *MySQLConn) CloseDB() error {
-	log.Printf("%+v", DBTunnel.Stats())
 	return nil
 }
 

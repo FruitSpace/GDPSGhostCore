@@ -26,11 +26,9 @@ func main() {
 	defer sentry.Flush(2 * time.Second)
 
 	config := GenGConfig()
-	//core.MaintainTasks(config)
-	core.MaintainRoutines(config)
 
-	time.Local,err=time.LoadLocation("Europe/Moscow")
-	if err!=nil{
+	time.Local, err = time.LoadLocation("Europe/Moscow")
+	if err != nil {
 		log.Println(err)
 	}
 
@@ -50,6 +48,10 @@ func main() {
 		},
 		Config: config,
 	}
+
+	core.PrepareElection(config)
+	defer core.StepDown()
+
 	ghostServer.StartServer("0.0.0.0:1997")
 
 }
