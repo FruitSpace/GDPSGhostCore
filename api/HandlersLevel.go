@@ -174,7 +174,7 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		cl.OnDownloadLevel()
 		passwd := "0"
 		phash := cl.Password
-		if cl.Password != "0" {
+		if phash != "0" {
 			passwd = base64.StdEncoding.EncodeToString([]byte(core.DoXOR(cl.Password, "26364")))
 		}
 		if core.CheckGDAuth(Post) {
@@ -183,7 +183,7 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			xacc := core.CAccount{DB: db}
 			if xacc.PerformGJPAuth(Post, IPAddr) {
 				role := xacc.GetRoleObj(true)
-				if len(role.Privs) > 0 && role.Privs["aReqMod"] > 0 {
+				if len(role.Privs) > 0 && role.Privs["cLvlAccess"] > 0 {
 					passwd = base64.StdEncoding.EncodeToString([]byte(core.DoXOR("1", "26364")))
 					phash = "1"
 				}

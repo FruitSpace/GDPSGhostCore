@@ -9,7 +9,7 @@ import (
 )
 
 func privErr(s string) string {
-	return "You need '" + s + "' privilege to execute this command"
+	return "You need '" + s + "' permission to execute this command"
 }
 
 func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOwner bool, role Role) string {
@@ -180,6 +180,18 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 			db.ShouldExec("UPDATE #DB#.levels SET name=? WHERE id=?", text, cl.Id)
 			RegisterAction(ACTION_LEVEL_UPDATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Rename:" + m}, db)
 			return "ok"
+		case "getpass":
+			if !isOwner && (role.RoleName == "" || role.Privs["cLvlAccess"] != 1) {
+				return privErr("cLvlAccess (or owner)")
+			}
+			switch cl.Password {
+			case "0":
+				return "Copy disabled (If you don't see copy button, then GD didn't sent us account data)"
+			case "1":
+				return "Free copy is enabled"
+			default:
+				return "Password: " + cl.Password[1:]
+			}
 		case "copy":
 			if !isOwner {
 				return "You are not level owner"
