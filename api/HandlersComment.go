@@ -350,10 +350,15 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			modComment := string(modCommentByte)
 			if err == nil && modComment[0] == '!' {
 				cl.LoadMain()
-				if core.InvokeCommands(db, cl, acc, modComment, isOwned, role) {
-					io.WriteString(resp, "temp_1_Command executed!")
-				} else {
+				cl.LoadParams()
+				cmdRes := core.InvokeCommands(db, cl, acc, modComment, isOwned, role)
+				switch cmdRes {
+				case "err":
 					io.WriteString(resp, "-1")
+				case "ok":
+					io.WriteString(resp, "1")
+				default:
+					io.WriteString(resp, "temp_1_"+cmdRes)
 				}
 			} else {
 				cc := core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}

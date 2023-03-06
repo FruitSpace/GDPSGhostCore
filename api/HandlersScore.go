@@ -206,7 +206,7 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		users = acc.GetLeaderboard(core.CLEADERBOARD_BY_STARS, []string{}, 0, config.ServerConfig.TopSize)
 	}
 	if len(users) == 0 {
-		io.WriteString(resp, "-2")
+		io.WriteString(resp, "-1")
 	} else {
 		var lk int
 		out := ""

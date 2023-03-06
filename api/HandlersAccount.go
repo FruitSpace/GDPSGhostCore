@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -130,7 +131,8 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					return
 				}
 				data, err := taes.DecryptRaw(d)
-				if logger.Should(err) != nil {
+				if err != nil {
+					core.ReportFail(fmt.Sprintf("[%s] NG savedata decrypt error for `%s`", vars["gdps"], uname))
 					return
 				}
 				io.WriteString(resp, data+";21;30;a;a")
@@ -143,8 +145,9 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				if logger.Should(taes.Init()) != nil {
 					return
 				}
-				data, err := taes.DecryptRaw(d)
-				if logger.Should(err) != nil {
+				data, err := taes.DecryptLegacy(string(d))
+				if err != nil {
+					core.ReportFail(fmt.Sprintf("[%s] HAL savedata decrypt error for `%s`", vars["gdps"], uname))
 					return
 				}
 				io.WriteString(resp, data+";21;30;a;a")
