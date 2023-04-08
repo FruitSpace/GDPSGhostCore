@@ -233,6 +233,11 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if logger.Should(err) != nil {
 		return
 	}
+
+	if conf.MaintenanceMode {
+		config.SecurityConfig.DisableProtection = false
+	}
+
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}

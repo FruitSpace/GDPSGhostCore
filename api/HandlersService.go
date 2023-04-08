@@ -62,18 +62,24 @@ func ModifyGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 }
 
 func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	//vars:= gorilla.Vars(req)
-	Post := ReadPost(req)
-	response := map[string]string{"status": "ok"}
-	if Post.Get("key") != conf.MasterKey {
-		response["status"] = "error"
-		response["error"] = "Unauthenticated"
-		SendJson(resp, response)
+	q := req.URL.Query()
+	if q.Get("key") != conf.MasterKey {
+		io.WriteString(resp, "KEY")
 		return
 	}
-	switch req.Method {
-
+	mk := "off"
+	if conf.MaintenanceMode {
+		mk = "on"
 	}
+	switch q.Get("a") {
+	case "on":
+		conf.MaintenanceMode = true
+	case "off":
+		conf.MaintenanceMode = false
+	default:
+		io.WriteString(resp, mk)
+	}
+	core.SendMessageDiscord("Touched killswitch: status: " + mk)
 }
 
 func SendJson(resp http.ResponseWriter, jsonData map[string]string) {

@@ -3,14 +3,17 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-co-op/gocron"
 	consul "github.com/hashicorp/consul/api"
-	"github.com/jasonlvhit/gocron"
 	"log"
 	"os"
 	"strconv"
 )
 
+var ucron = gocron.NewScheduler(loc)
+
 var LEADER = false
+var LEAD_CONFIG GlobalConfig
 var SessionID string
 var KvEngine *consul.KV
 
@@ -30,6 +33,7 @@ func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig)
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Failed. Dequeuing...")
+			SendMessageDiscord("[" + Srvid + "] Failed. Dequeuing...")
 		}
 
 	}()
@@ -41,11 +45,16 @@ func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig)
 	mus := CMusic{DB: &db}
 	mus.CountDownloads()
 	protect := CProtect{DB: &db, Savepath: config.SavePath + "/" + Srvid}
-	protect.FillLevelModel()
 	protect.ResetUserLimits()
+	protect.FillLevelModel()
+
 }
 
-func MaintainTasks(config GlobalConfig) {
+func MaintainTasks() {
+	if !LEADER {
+		return
+	}
+	config := LEAD_CONFIG
 	rdb := RedisConn{}
 	log := Logger{}
 	if err := rdb.ConnectBlob(config); err != nil {
@@ -57,15 +66,16 @@ func MaintainTasks(config GlobalConfig) {
 		log.LogWarn(rdb, err.Error())
 		return
 	}
-	SendMessageDiscord("Starting maintenance routine")
-	for i, Srvid := range strsl {
-		fmt.Println("["+strconv.Itoa(i+1)+"/"+strconv.Itoa(len(strsl))+"]", Srvid)
-		RunSingleTask(Srvid, rdb, log, config)
+	SendMessageDiscord("Starting Maintenance Routine by `" + EnvOrDefault("NOMAD_SHORT_ALLOC_ID", "default") + "`")
+	for i, SrvId := range strsl {
+		fmt.Println("["+strconv.Itoa(i+1)+"/"+strconv.Itoa(len(strsl))+"]", SrvId)
+		RunSingleTask(SrvId, rdb, log, config)
 	}
 
 }
 
 func PrepareElection(config GlobalConfig) {
+	LEAD_CONFIG = config
 	consulConf := consul.DefaultConfig()
 	consulConf.Address = EnvOrDefault("CONSUL_ADDR", "127.0.0.1")
 	consulConf.Token = EnvOrDefault("CONSUL_TOKEN", "")
@@ -75,9 +85,11 @@ func PrepareElection(config GlobalConfig) {
 		log.Println("Unable to connect to Consul cluster. Assuming self-leadership: " + err.Error())
 		LEADER = true
 	} else {
-		sessEngine := consulCli.Session()
 		KvEngine = consulCli.KV()
-		SessID, _, err := sessEngine.Create(&consul.SessionEntry{Name: "GhostCore"}, nil)
+		SessID, _, err := consulCli.Session().Create(&consul.SessionEntry{Name: "GhostCore", TTL: "5m"}, nil)
+		ucron.Every(30).Seconds().Do(func() {
+			consulCli.Session().Renew(SessID, nil)
+		})
 		if err != nil {
 			log.Println("Unable to connect to create Session. Assuming self-leadership: " + err.Error())
 			LEADER = true
@@ -85,19 +97,18 @@ func PrepareElection(config GlobalConfig) {
 			SessionID = SessID
 			AquireLeadership()
 			if !LEADER {
-				log.Println("Couldn't acquire leadership. Dispatching 10min watchdog")
-				if err = gocron.Every(10).Seconds().Do(AquireLeadership); err != nil {
+				log.Println("Couldn't acquire leadership. Dispatching 10sec watchdog")
+				if _, err = ucron.Every(10).Seconds().Do(AquireLeadership); err != nil {
 					log.Println(err)
 				}
 			}
 		}
 	}
-
-	if LEADER {
-		gocron.Every(1).Day().At("03:00").Do(MaintainTasks, config)
+	_, err = ucron.Every(1).Day().At("03:00").Do(MaintainTasks)
+	if err != nil {
+		log.Println("CANNOT LAUNCH TASKS")
 	}
-
-	go gocron.Start()
+	ucron.StartAsync()
 
 }
 
@@ -109,11 +120,21 @@ func AquireLeadership() {
 	}
 	isAcq, _, err := KvEngine.Acquire(kvData, nil)
 	if err == nil && isAcq {
-		log.Println("Lock was successfully acquired. NOW LEADER")
-		LEADER = true
+		if LEADER {
+			log.Println("Still leader (ensuring tasks)")
+		} else {
+			log.Println("Lock was successfully acquired. NOW LEADER")
+			LEADER = true
+		}
 	} else {
-		log.Println("Couldn't acquire leadership. Still a follower.")
+		if LEADER {
+			log.Println("Couldn't acquire leadership. Stepped down by force.")
+			LEADER = false
+		} else {
+			log.Println("Couldn't aquire leadership. Still follower")
+		}
 	}
+
 }
 
 func StepDown() {

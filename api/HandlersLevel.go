@@ -643,6 +643,11 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if logger.Should(err) != nil {
 		return
 	}
+
+	if conf.MaintenanceMode {
+		config.SecurityConfig.DisableProtection = false
+	}
+
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}

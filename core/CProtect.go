@@ -2,9 +2,7 @@ package core
 
 import (
 	"encoding/json"
-	"io"
 	"math"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -29,14 +27,15 @@ func (protect *CProtect) LoadModel(config *GlobalConfig, blob ConfigBlob) {
 	model, err := os.ReadFile(protect.Savepath + "/levelModel.json")
 	if err != nil {
 		os.Mkdir(protect.Savepath, 0777)
-		req, err := http.Get(config.ApiEndpoint + "?id=" + blob.ServerConfig.SrvID + "&key=" + blob.ServerConfig.SrvKey + "&action=getModel")
-		data, err := io.ReadAll(req.Body)
-		if err != nil || req.StatusCode != 200 {
-			protect.DisableProtection = true
-			return
-		}
-		os.WriteFile(protect.Savepath+"/levelModel.json", data, 0755)
-		protect.LoadModel(config, blob)
+		protect.FillLevelModel()
+		//req, err := http.Get(config.ApiEndpoint + "?id=" + blob.ServerConfig.SrvID + "&key=" + blob.ServerConfig.SrvKey + "&action=getModel")
+		//data, err := io.ReadAll(req.Body)
+		//if err != nil || req.StatusCode != 200 {
+		//	protect.DisableProtection = true
+		//	return
+		//}
+		//os.WriteFile(protect.Savepath+"/levelModel.json", data, 0755)
+		//protect.LoadModel(config, blob)
 	}
 	json.Unmarshal(model, &protect.LevelModel)
 	if protect.LevelModel.MaxLevelUpload == 0 {

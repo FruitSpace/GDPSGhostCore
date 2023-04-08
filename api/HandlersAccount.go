@@ -216,6 +216,11 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
 	}
 	vars := gorilla.Vars(req)
+	if conf.MaintenanceMode {
+		resp.WriteHeader(403)
+		core.SendMessageDiscord(fmt.Sprintf("[%s] %s reached registration killswitch", vars["gdps"], IPAddr))
+		return
+	}
 	logger := core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {

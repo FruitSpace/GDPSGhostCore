@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -123,6 +125,18 @@ func MD5(str string) string {
 	md := md5.New()
 	md.Write([]byte(str))
 	return fmt.Sprintf("%x", md.Sum(nil))
+}
+
+func SHA256(str string) string {
+	sha := sha256.New()
+	sha.Write([]byte(str))
+	return fmt.Sprintf("%x", sha.Sum(nil))
+}
+
+func SHA512(str string) string {
+	sha := sha512.New()
+	sha.Write([]byte(str))
+	return fmt.Sprintf("%x", sha.Sum(nil))
 }
 
 type Logger struct {

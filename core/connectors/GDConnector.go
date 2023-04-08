@@ -140,7 +140,9 @@ func GetMessageStr(msg map[string]string, getSent bool) string {
 
 // GetMusic used to get simple music string (w/o traling hash)
 func GetMusic(mus core.CMusic) string {
-	size, _ := strconv.ParseFloat(mus.Size, 64)
+
+	//convert size to string
+	size := mus.Size
 	size = math.Round(size*100) / 100
 
 	//convert size to string
@@ -150,7 +152,7 @@ func GetMusic(mus core.CMusic) string {
 	return strings.ReplaceAll(mstr, "#", "")
 }
 
-//used to get simple top artists string (w/o trailing hash)
+// used to get simple top artists string (w/o trailing hash)
 func GetTopArtists(artists map[string]string) string {
 	out := ""
 	for artist, youtube := range artists {
@@ -163,7 +165,7 @@ func GetTopArtists(artists map[string]string) string {
 func GenerateChestSmall(config core.ConfigBlob) string {
 	s := strconv.Itoa
 	rand.Seed(time.Now().UnixNano())
-	intR := func(min, max int) int { return rand.Intn(max-min+1) + min }
+	intR := func(min, max int) int { return rand.Intn(core.MaxInt(max-min+1, 0)) + min }
 	return s(intR(config.ChestConfig.ChestSmallOrbsMin, config.ChestConfig.ChestSmallOrbsMax)) + "," +
 		s(intR(config.ChestConfig.ChestSmallDiamondsMin, config.ChestConfig.ChestSmallDiamondsMax)) + "," +
 		s(config.ChestConfig.ChestSmallShards[rand.Intn(len(config.ChestConfig.ChestSmallShards))]) + "," +
@@ -184,6 +186,14 @@ func GenerateChestBig(config core.ConfigBlob) string {
 // ChestOutput used to retrieve all chest data (w/ trailing hash)
 func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) string {
 	s := strconv.Itoa
+	config.ChestConfig.ChestSmallOrbsMax = core.MaxInt(config.ChestConfig.ChestSmallOrbsMax, config.ChestConfig.ChestSmallOrbsMin)
+	config.ChestConfig.ChestSmallDiamondsMax = core.MaxInt(config.ChestConfig.ChestSmallDiamondsMax, config.ChestConfig.ChestSmallDiamondsMin)
+	config.ChestConfig.ChestSmallKeysMax = core.MaxInt(config.ChestConfig.ChestSmallKeysMax, config.ChestConfig.ChestSmallKeysMin)
+
+	config.ChestConfig.ChestBigOrbsMax = core.MaxInt(config.ChestConfig.ChestBigOrbsMax, config.ChestConfig.ChestBigOrbsMin)
+	config.ChestConfig.ChestBigDiamondsMax = core.MaxInt(config.ChestConfig.ChestBigDiamondsMax, config.ChestConfig.ChestBigDiamondsMin)
+	config.ChestConfig.ChestBigKeysMax = core.MaxInt(config.ChestConfig.ChestBigKeysMax, config.ChestConfig.ChestBigKeysMin)
+
 	out := core.RandStringBytes(5) + ":" + s(acc.Uid) + ":" + chk + ":" + udid + ":" + s(acc.Uid) + ":" + s(smallLeft) + ":" + GenerateChestSmall(config) + ":" + s(acc.ChestSmallCount) + ":" +
 		s(bigLeft) + ":" + GenerateChestBig(config) + ":" + s(acc.ChestBigCount) + ":" + s(chestType)
 	out = strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out, "59182"))), "/", "_"), "+", "-")

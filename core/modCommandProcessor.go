@@ -176,7 +176,7 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 			if len(command) < 3 {
 				return "Usage: !lvl rename <New name>"
 			}
-			text := strings.Replace(comment, "!lvl rename ", "", 1)
+			text := ClearGDRequest(strings.Replace(comment, "!lvl rename ", "", 1))
 			db.ShouldExec("UPDATE #DB#.levels SET name=? WHERE id=?", text, cl.Id)
 			RegisterAction(ACTION_LEVEL_UPDATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Rename:" + m}, db)
 			return "ok"

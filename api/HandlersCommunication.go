@@ -512,6 +512,11 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if logger.Should(err) != nil {
 		return
 	}
+
+	if conf.MaintenanceMode {
+		config.SecurityConfig.DisableProtection = false
+	}
+
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}

@@ -16,7 +16,7 @@ type CMusic struct {
 	Id        int
 	Name      string
 	Artist    string
-	Size      string
+	Size      float64
 	Url       string
 	IsBanned  bool
 	Downloads int
@@ -83,9 +83,13 @@ func (mus *CMusic) TransformHalResource() bool {
 	}
 	rsp, _ := io.ReadAll(resp.Body)
 	rsp = bytes.ReplaceAll(rsp, []byte("#"), []byte(""))
+	bufArtist := mus.Artist
+	bufTitle := mus.Name
 	if err = json.Unmarshal(rsp, mus); err != nil {
 		fmt.Println(err)
 	}
+	mus.Artist = bufArtist
+	mus.Name = bufTitle
 	return mus.Status == "ok"
 }
 
@@ -123,20 +127,13 @@ func (mus *CMusic) CountDownloads() {
 	for req.Next() {
 		var id int
 		req.Scan(&id)
-		creq := mus.DB.ShouldQuery("SELECT downloads FROM #DB#.levels WHERE song_id=?", id)
-		defer creq.Close()
 		var cnt int
-		for creq.Next() {
-			var downs int
-			creq.Scan(&downs)
-			cnt += downs
-		}
-		mus.Logger.Should(creq.Close())
-		mus.DB.ShouldExec("UPDATE #DB#.songs SET downloads=? WHERE id=?", cnt, id)
+		mus.DB.ShouldQueryRow("SELECT SUM(downloads) FROM #DB#.levels WHERE song_id=?", id).Scan(&cnt)
+		mus.DB.ShouldExec("UPDATE #DB#.songs SET downloads=? WHERE id=?", cnt, strconv.Itoa(id))
 	}
 }
 
-//! Implement normal API
+// ! Implement normal API
 func (mus *CMusic) GetTopArtists() map[string]string {
 	//	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
 	//	if err!=nil {return []map[string]string}
@@ -153,6 +150,6 @@ func (mus *CMusic) GetTopArtists() map[string]string {
 		"Xtrullor":          "xtrullor",
 		"Creo":              "CreoMusic",
 		"Dirty Paws":        "DirtyPaws",
-		"Have better candidates? Join HalogenHost Discord": "",
+		"Have better candidates? Join FruitSpace Discord": "",
 	}
 }

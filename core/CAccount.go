@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"golang.org/x/exp/slices"
 	"net/url"
 	"strconv"
@@ -387,6 +388,11 @@ func (acc *CAccount) BanUser(action int) {
 	acc.DB.ShouldExec("UPDATE #DB#.users SET isBanned=? WHERE uid=?", ban, acc.Uid)
 }
 
+func (acc *CAccount) ChangePassword(passhash string) {
+	acc.DB.ShouldExec("UPDATE #DB#.users SET passhash=? WHERE uid=?", passhash, acc.Uid)
+	SendMessageDiscord(fmt.Sprintf("[%d] %s Switched algorithms. Size 36->%d", acc.Uid, acc.Uname, len(passhash)))
+}
+
 func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
 	if uid == 0 {
 		uid = acc.GetUIDByUname(uname, false)
@@ -397,7 +403,12 @@ func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
 		if acc.IsBanned > 0 {
 			return -12
 		}
-		passx := MD5(MD5(pass+"HalogenCore1704")+"ae07") + MD5(pass)[:4]
+		passx := SHA256(SHA512(pass) + "SaltyTruth:sob:")
+		if len(acc.Passhash) == 36 {
+			acc.ChangePassword(passx)
+			passx = MD5(MD5(pass+"HalogenCore1704")+"ae07") + MD5(pass)[:4]
+		}
+
 		if acc.Passhash == passx {
 			acc.UpdateIP(ip)
 			return uid
@@ -422,7 +433,9 @@ func (acc *CAccount) Register(uname string, pass string, email string, ip string
 	if uid != 0 {
 		return -3
 	}
-	passx := MD5(MD5(pass+"HalogenCore1704")+"ae07") + MD5(pass)[:4]
+	//passx := MD5(MD5(pass+"HalogenCore1704")+"ae07") + MD5(pass)[:4]
+	passx := SHA256(SHA512(pass) + "SaltyTruth:sob:")
+
 	rdate := time.Now().Format("2006-01-02 15:04:05")
 	sreq := acc.DB.MustPrepareExec(
 		"INSERT INTO #DB#.users (uname,passhash,gjphash,email,regDate,accessDate,isBanned) VALUES (?,?,?,?,?,?,?)",
@@ -488,7 +501,7 @@ func (acc *CAccount) PerformGJPAuth(Post url.Values, IPAddr string) bool {
 	return true
 }
 
-//Role
+// Role
 type Role struct {
 	RoleName     string
 	CommentColor string
