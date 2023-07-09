@@ -235,6 +235,7 @@ func (lvl *CLevel) RateDemon(diff int) {
 	default:
 		xdiff = 3
 	}
+	lvl.DemonDifficulty = xdiff
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET demonDifficulty=? WHERE id=?", xdiff, lvl.Id)
 }
 

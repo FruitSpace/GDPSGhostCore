@@ -44,7 +44,7 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 		if !cl.FeatureLevel(0) {
 			return "You need to unepic level first"
 		}
-		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Uneature"}, db)
+		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Unfeature"}, db)
 		return "ok"
 	case "!epic":
 		if role.RoleName == "" || role.Privs["cEpic"] != 1 {
@@ -231,7 +231,7 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 			if len(command) < 4 {
 				return "Usage: !lvl chown <Level ID> <NewOwner username>"
 			}
-			if c, err := strconv.Atoi(command[2]); err != nil {
+			if c, err := strconv.Atoi(command[2]); err == nil {
 				if c != cl.Id {
 					return "Level ID doesn't match"
 				}

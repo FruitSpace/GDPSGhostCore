@@ -681,7 +681,7 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		}
 		core.TryInt(&cl.Length, Post.Get("levelLength"))
 		core.TryInt(&cl.TrackId, Post.Get("audioTrack"))
-		core.TryInt(&pwd, Post.Get("audioTrack"))
+		core.TryInt(&pwd, Post.Get("password"))
 		cl.Password = strconv.Itoa(pwd)
 		core.TryInt(&cl.OrigId, Post.Get("original"))
 		core.TryInt(&cl.SongId, Post.Get("songID"))
@@ -714,6 +714,16 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			res := cl.UpdateLevel()
 			io.WriteString(resp, strconv.Itoa(res))
 			if res > 0 {
+				if config.ServerConfig.EnableModules["discord"] {
+					desc, _ := base64.StdEncoding.DecodeString(cl.Description)
+					data := map[string]string{
+						"id":      strconv.Itoa(res),
+						"name":    cl.Name + " (v" + strconv.Itoa(cl.Version) + ")",
+						"builder": xacc.Uname,
+						"desc":    string(desc),
+					}
+					core.SendAPIWebhook(vars["gdps"], "newlevel", data)
+				}
 				core.RegisterAction(core.ACTION_LEVEL_UPDATE, xacc.Uid, res, map[string]string{
 					"name": cl.Name, "version": strconv.Itoa(cl.Version),
 					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
@@ -721,6 +731,10 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				//!Here be plug
 			}
 		} else {
+			if !cl.CheckParams() {
+				io.WriteString(resp, "-1")
+				return
+			}
 			if !core.OnLevel(db, conf, config) {
 				io.WriteString(resp, "-1")
 				return
@@ -733,6 +747,16 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			}
 			io.WriteString(resp, strconv.Itoa(res))
 			if res > 0 {
+				if config.ServerConfig.EnableModules["discord"] {
+					desc, _ := base64.StdEncoding.DecodeString(cl.Description)
+					data := map[string]string{
+						"id":      strconv.Itoa(res),
+						"name":    cl.Name,
+						"builder": xacc.Uname,
+						"desc":    string(desc),
+					}
+					core.SendAPIWebhook(vars["gdps"], "newlevel", data)
+				}
 				core.RegisterAction(core.ACTION_LEVEL_UPLOAD, xacc.Uid, res, map[string]string{
 					"name": cl.Name, "version": strconv.Itoa(cl.Version),
 					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
@@ -788,6 +812,31 @@ func RateDemon(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		core.TryInt(&diff, Post.Get("rating"))
 		if len(role.Privs) > 0 && role.Privs["aRateDemon"] > 0 && mode != 0 {
 			cl.RateDemon(diff % 6)
+			if config.ServerConfig.EnableModules["discord"] {
+				cl.LoadMain()
+				cl.LoadParams()
+				cl.LoadStats()
+				builder := "[deleted]"
+				acc := core.CAccount{DB: db, Uid: cl.Uid}
+				if acc.Exists(acc.Uid) {
+					acc.LoadAuth(core.CAUTH_UID)
+				}
+				if len(acc.Uname) > 0 {
+					builder = acc.Uname
+				}
+				data := map[string]string{
+					"id":        strconv.Itoa(cl.Id),
+					"name":      cl.Name,
+					"builder":   builder,
+					"diff":      core.DiffToText(cl.StarsGot, cl.DemonDifficulty, cl.IsFeatured, cl.IsEpic),
+					"stars":     strconv.Itoa(cl.StarsGot),
+					"likes":     strconv.Itoa(cl.Likes),
+					"downloads": strconv.Itoa(cl.Downloads),
+					"len":       strconv.Itoa(cl.Length),
+					"rateuser":  xacc.Uname,
+				}
+				core.SendAPIWebhook(vars["gdps"], "rate", data)
+			}
 			io.WriteString(resp, strconv.Itoa(cl.Id))
 		} else {
 			io.WriteString(resp, "-1")
@@ -888,8 +937,38 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		core.TryInt(&diff, Post.Get("stars"))
 		if len(role.Privs) > 0 {
 			if role.Privs["aRateStars"] > 0 {
-				cl.RateLevel(diff % 11)
+				diff = diff % 11
+				if v, _ := role.Privs["aRateNoDemon"]; v > 0 && diff == 10 {
+					io.WriteString(resp, "-1")
+					return
+				}
+				cl.RateLevel(diff)
 				cl.FeatureLevel(isFeature % 5)
+				if config.ServerConfig.EnableModules["discord"] {
+					cl.LoadMain()
+					cl.LoadParams()
+					cl.LoadStats()
+					builder := "[deleted]"
+					acc := core.CAccount{DB: db, Uid: cl.Uid}
+					if acc.Exists(acc.Uid) {
+						acc.LoadAuth(core.CAUTH_UID)
+					}
+					if len(acc.Uname) > 0 {
+						builder = acc.Uname
+					}
+					data := map[string]string{
+						"id":        strconv.Itoa(cl.Id),
+						"name":      cl.Name,
+						"builder":   builder,
+						"diff":      core.DiffToText(cl.StarsGot, 3, isFeature, cl.IsEpic),
+						"stars":     strconv.Itoa(diff),
+						"likes":     strconv.Itoa(cl.Likes),
+						"downloads": strconv.Itoa(cl.Downloads),
+						"len":       strconv.Itoa(cl.Length),
+						"rateuser":  xacc.Uname,
+					}
+					core.SendAPIWebhook(vars["gdps"], "rate", data)
+				}
 				core.RegisterAction(core.ACTION_LEVEL_RATE, xacc.Uid, cl.Id, map[string]string{
 					"uname": xacc.Uname, "type": "StarRate:" + strconv.Itoa(diff%11),
 				}, db)

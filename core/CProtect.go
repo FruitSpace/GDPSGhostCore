@@ -96,7 +96,7 @@ func (protect *CProtect) DetectLevelModel(uid int) bool {
 	if lvlCnt >= protect.LevelModel.MaxLevelUpload {
 		protect.DB.ShouldExec("UPDATE #DB#.users SET isBanned=2 WHERE uid=?", uid)
 		RegisterAction(ACTION_BAN_BAN, 0, uid, map[string]string{"type": "Ban:LevelAuto"}, protect.DB)
-		SendMessageDiscord("[" + protect.Savepath[6:11] + "] User " + strconv.Itoa(uid) + " has been banned for uploading too many levels (" + strconv.Itoa(lvlCnt) + "/" + strconv.Itoa(protect.LevelModel.MaxLevelUpload) + ") in a day.")
+		SendMessageDiscord("[" + protect.Savepath + "] User " + strconv.Itoa(uid) + " has been banned for uploading too many levels (" + strconv.Itoa(lvlCnt) + "/" + strconv.Itoa(protect.LevelModel.MaxLevelUpload) + ") in a day.")
 		return false
 	}
 	protect.DB.ShouldExec("UPDATE #DB#.users SET protect_levelsToday=protect_levelsToday+1 WHERE uid=?", uid)

@@ -3,16 +3,16 @@ module HalogenGhostCore
 go 1.19
 
 require (
-	github.com/aws/aws-sdk-go v1.44.239
-	github.com/getsentry/sentry-go v0.20.0
-	github.com/go-co-op/gocron v1.19.0
+	github.com/aws/aws-sdk-go v1.44.298
+	github.com/getsentry/sentry-go v0.22.0
+	github.com/go-co-op/gocron v1.30.1
 	github.com/go-redis/redis/v8 v8.11.5
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/gorilla/mux v1.8.0
-	github.com/hashicorp/consul/api v1.20.0
+	github.com/hashicorp/consul/api v1.22.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/rabbitmq/amqp091-go v1.8.0
-	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
+	github.com/rabbitmq/amqp091-go v1.8.1
+	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 )
 
 require (
@@ -28,11 +28,11 @@ require (
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
-	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
+	golang.org/x/text v0.11.0 // indirect
 )

@@ -7,6 +7,7 @@ import (
 	consul "github.com/hashicorp/consul/api"
 	"log"
 	"os"
+	"path"
 	"strconv"
 )
 
@@ -50,8 +51,19 @@ func RunSingleTask(Srvid string, rdb RedisConn, log Logger, config GlobalConfig)
 
 }
 
+func CleanModels() {
+	dir, err := os.ReadDir(LEAD_CONFIG.SavePath)
+	if err != nil {
+		return
+	}
+	for _, p := range dir {
+		os.RemoveAll(path.Join(LEAD_CONFIG.SavePath, p.Name()))
+	}
+}
+
 func MaintainTasks() {
 	if !LEADER {
+		CleanModels()
 		return
 	}
 	config := LEAD_CONFIG

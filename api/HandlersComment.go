@@ -240,7 +240,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 			for _, comm := range comments {
 				output += connectors.GetLevelComment(comm)
 			}
-			io.WriteString(resp, output[:len(output)-1]+"#"+strconv.Itoa(cc.CountLevelComments(lvlId))+":"+strconv.Itoa(page*10)+":10")
+			io.WriteString(resp, output[:core.MaxInt(len(output)-1, 0)]+"#"+strconv.Itoa(cc.CountLevelComments(lvlId))+":"+strconv.Itoa(page*10)+":10")
 		}
 
 	} else {

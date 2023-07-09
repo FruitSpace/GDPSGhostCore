@@ -41,16 +41,16 @@ type ChestConfig struct {
 }
 
 type ServerConfig struct {
-	SrvID          string
-	SrvKey         string
-	MaxUsers       int
-	MaxLevels      int
-	MaxComments    int
-	MaxPosts       int
-	HalMusic       bool
-	Locked         bool
-	TopSize        int
-	EnabledModules map[string]bool
+	SrvID         string
+	SrvKey        string
+	MaxUsers      int
+	MaxLevels     int
+	MaxComments   int
+	MaxPosts      int
+	HalMusic      bool
+	Locked        bool
+	TopSize       int
+	EnableModules map[string]bool
 }
 
 type SecurityConfig struct {

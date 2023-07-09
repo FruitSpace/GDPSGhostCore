@@ -78,7 +78,7 @@ func GetLevelComment(comment core.CComment) string {
 		role.CommentColor = "~12~" + role.CommentColor
 	}
 	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) +
-		"~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
+		"~8~" + s(comment.Uid) + "~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
 		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + s(acc.Uid) + "|"
 }
 

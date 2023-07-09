@@ -419,3 +419,54 @@ func GetKVEnv(key string) map[string]string {
 	}
 	return kv
 }
+
+func SendAPIWebhook(srvid string, xtype string, data map[string]string) {
+	body, _ := json.Marshal(data)
+	http.Post("https://api.fruitspace.one/v2/internal/gd/"+srvid+"/webhook?type="+xtype,
+		"application/json", bytes.NewReader(body))
+}
+
+func DiffToText(stars int, demonDiff int, isFeatured int, isEpic int) string {
+	diff := "unrated"
+	switch stars {
+	case 1:
+		diff = "auto"
+	case 2:
+		diff = "easy"
+	case 3:
+		diff = "normal"
+	case 4:
+		fallthrough
+	case 5:
+		diff = "hard"
+	case 6:
+		fallthrough
+	case 7:
+		diff = "harder"
+	case 8:
+		fallthrough
+	case 9:
+		diff = "insane"
+	case 10:
+		diff = "demon"
+		switch demonDiff {
+		case 3:
+			diff += "-easy"
+		case 4:
+			diff += "-medium"
+		case 5:
+			diff += "-insane"
+		case 6:
+			diff += "-extreme"
+		default:
+			diff += "-hard"
+		}
+	}
+	if isEpic > 0 {
+		return diff + "-epic"
+	}
+	if isFeatured > 0 {
+		return diff + "-featured"
+	}
+	return diff
+}

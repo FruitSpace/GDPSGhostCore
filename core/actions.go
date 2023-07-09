@@ -48,9 +48,11 @@ func RegisterAction(action int, uid int, target_id int, data map[string]string, 
 	case ACTION_BAN_BAN:
 		types = 3
 		data["action"] = "Ban"
+		data["uname"] = (&CAccount{}).GetUnameByUID(target_id)
 	case ACTION_BAN_UNBAN:
 		types = 3
 		data["action"] = "Unban"
+		data["uname"] = (&CAccount{}).GetUnameByUID(target_id)
 	case ACTION_LEVEL_UPLOAD:
 		types = 4
 		data["action"] = "Upload"

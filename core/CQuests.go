@@ -46,7 +46,7 @@ func (cq *CQuests) GetDaily() (int, int) {
 func (cq *CQuests) GetWeekly() (int, int) {
 	var id, lvlId int
 	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM #DB#.quests WHERE type=1 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id, &lvlId)
-	return id, lvlId + 100001
+	return id + 100001, lvlId
 }
 
 func (cq *CQuests) GetEvent() (int, int) {
