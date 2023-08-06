@@ -312,7 +312,7 @@ func SendMessageDiscord(text string) {
 
 	content := bytes.NewReader(b)
 
-	http.Post("https://discord.com/api/webhooks/1040954033210413066/1uFkSmxjZ4gkG6A_QtSDjoNZRfMHnwgLOTW9iEtVbq40UI_Ez5ODFZVNuBjIP5xuoRIk",
+	http.Post("https://discord.com/api/webhooks/1133487072624263238/QSamyTrVKSE9ASxs3VDY_p9Yuawfy-JjtjLna3VCL2qpFsmp2W8N00aAM9PDt12-yPlt",
 		"application/json", content)
 }
 

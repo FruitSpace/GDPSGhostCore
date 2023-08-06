@@ -240,7 +240,7 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 				if uid < 1 {
 					return "New owner username not found"
 				}
-				db.ShouldExec("UPDATE #DB#.levels SET iud=? WHERE id=?", uid, cl.Id)
+				db.ShouldExec("UPDATE #DB#.levels SET uid=? WHERE id=?", uid, cl.Id)
 				RegisterAction(ACTION_LEVEL_UPDATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Chown:" + command[3]}, db)
 				return "ok"
 			}
