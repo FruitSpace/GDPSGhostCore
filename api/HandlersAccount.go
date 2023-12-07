@@ -221,6 +221,13 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		core.SendMessageDiscord(fmt.Sprintf("[%s] %s reached registration killswitch", vars["gdps"], IPAddr))
 		return
 	}
+
+	//Ballistics
+	if PrepareBallistics(req) {
+		io.WriteString(resp, "Ballistics")
+		return
+	}
+
 	logger := core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {

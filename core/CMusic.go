@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	"io"
 	"net/http"
 	"regexp"
@@ -35,7 +36,8 @@ func (mus *CMusic) Exists(id int) bool {
 
 func (mus *CMusic) RequestNGOuter(id int) bool {
 	mus.Id = id
-	resp, err := http.Get(mus.Config.ApiEndpoint + "?srvid=" + mus.ConfBlob.ServerConfig.SrvID + "&key=" + mus.ConfBlob.ServerConfig.SrvKey + "&action=requestSong&id=" + strconv.Itoa(id))
+	resp, err := http.Get(mus.Config.ApiEndpoint + "?srvid=" + mus.ConfBlob.ServerConfig.SrvID + "&key=" +
+		mus.ConfBlob.ServerConfig.SrvKey + "&action=requestSong&id=" + strconv.Itoa(id))
 	if err != nil {
 		return false
 	}
@@ -50,6 +52,27 @@ func (mus *CMusic) RequestNGOuter(id int) bool {
 
 func (mus *CMusic) TransformHalResource() bool {
 	arn := strings.Split(mus.Url, ":")
+	if !mus.isArnValid(arn) {
+		return false
+	}
+	resp, err := http.Get(mus.Config.ApiEndpoint + "?srvid=" + mus.ConfBlob.ServerConfig.SrvID + "&key=" +
+		mus.ConfBlob.ServerConfig.SrvKey + "&action=requestSongARN&type=" + arn[1] + "&id=" + arn[2])
+	if err != nil {
+		return false
+	}
+	rsp, _ := io.ReadAll(resp.Body)
+	rsp = bytes.ReplaceAll(rsp, []byte("#"), []byte(""))
+	bufArtist := mus.Artist
+	bufTitle := mus.Name
+	if err = json.Unmarshal(rsp, mus); err != nil {
+		fmt.Println(err)
+	}
+	mus.Artist = bufArtist
+	mus.Name = bufTitle
+	return mus.Status == "ok"
+}
+
+func (mus *CMusic) isArnValid(arn []string) bool {
 	if len(arn) != 3 {
 		return false
 	}
@@ -77,20 +100,30 @@ func (mus *CMusic) TransformHalResource() bool {
 	default:
 		return false
 	}
-	resp, err := http.Get(mus.Config.ApiEndpoint + "?srvid=" + mus.ConfBlob.ServerConfig.SrvID + "&key=" + mus.ConfBlob.ServerConfig.SrvKey + "&action=requestSongARN&type=" + arn[1] + "&id=" + arn[2])
+	return true
+}
+
+func (mus *CMusic) TransformBulkHalResources(links []string) []CMusic {
+	var musics []CMusic
+	var linksValid []string
+	for _, link := range links {
+		arn := strings.Split(link, ":")
+		if !mus.isArnValid(arn) {
+			continue
+		}
+		linksValid = append(linksValid, arn[1]+":"+arn[2])
+	}
+	resp, err := http.Get(mus.Config.ApiEndpoint + "?srvid=" + mus.ConfBlob.ServerConfig.SrvID + "&key=" +
+		mus.ConfBlob.ServerConfig.SrvKey + "&action=requestSongARNList&ids=" + strings.Join(linksValid, ","))
 	if err != nil {
-		return false
+		return musics
 	}
 	rsp, _ := io.ReadAll(resp.Body)
 	rsp = bytes.ReplaceAll(rsp, []byte("#"), []byte(""))
-	bufArtist := mus.Artist
-	bufTitle := mus.Name
-	if err = json.Unmarshal(rsp, mus); err != nil {
+	if err = json.Unmarshal(rsp, &musics); err != nil {
 		fmt.Println(err)
 	}
-	mus.Artist = bufArtist
-	mus.Name = bufTitle
-	return mus.Status == "ok"
+	return musics
 }
 
 func (mus *CMusic) GetSong(id int) bool {
@@ -109,6 +142,53 @@ func (mus *CMusic) GetSong(id int) bool {
 		return mus.TransformHalResource()
 	}
 	return true
+}
+
+func (mus *CMusic) GetBulkSongs(ids []int) []CMusic {
+	q, args, _ := sqlx.In("SELECT id,name,artist,size,url,isBanned,downloads FROM #DB#.songs WHERE id IN (?)", ids)
+	rows := mus.DB.ShouldQuery(q, args...)
+	defer rows.Close()
+	var musics []CMusic
+	var queryMusics []CMusic
+	var externalQueries []string
+	for rows.Next() {
+		var xmus CMusic
+		rows.Scan(&xmus.Id, &xmus.Name, &xmus.Artist, &xmus.Size, &xmus.Url, &xmus.IsBanned, &xmus.Downloads)
+		if xmus.IsBanned {
+			continue
+		}
+		if len(xmus.Url) > 4 && xmus.Url[0:4] == "hal:" {
+			externalQueries = append(externalQueries, xmus.Url)
+			queryMusics = append(queryMusics, xmus)
+		} else {
+			musics = append(musics, xmus)
+		}
+	}
+	if len(externalQueries) > 0 {
+		deltas := mus.TransformBulkHalResources(externalQueries)
+		//musics = append(musics, deltas...)
+		for i := 0; i < len(deltas); i++ {
+			delta := deltas[i]
+			delta.Id = queryMusics[i].Id
+			if delta.Status != "ok" {
+				musics = append(musics, queryMusics[i])
+			} else {
+				musics = append(musics, delta)
+			}
+		}
+		//for _, delta := range deltas {
+		//	for _, muss := range queryMusics {
+		//		log.Println("Checking", muss.Id, "against", delta.Id)
+		//		if delta.Id == muss.Id {
+		//			delta.Name = muss.Name
+		//			delta.Artist = muss.Artist
+		//			musics = append(musics, delta)
+		//			log.Println("Added", delta.Id)
+		//		}
+		//	}
+		//}
+	}
+	return musics
 }
 
 func (mus *CMusic) UploadSong() int {

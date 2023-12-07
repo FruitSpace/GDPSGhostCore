@@ -1,6 +1,7 @@
 package core
 
 import (
+	"github.com/jmoiron/sqlx"
 	"time"
 )
 
@@ -59,6 +60,7 @@ type CLevel struct {
 	UpdateDate string
 
 	UnlockLevelObject bool
+	SideloadUname     *string
 
 	DB     *MySQLConn
 	Logger Logger
@@ -344,4 +346,33 @@ func (lvl *CLevel) SendReq(modUid int, stars int, isFeatured int) bool {
 	lvl.DB.ShouldExec("INSERT INTO #DB#.rateQueue (lvl_id,name,uid,mod_uid,stars,isFeatured) VALUES(?,?,?,?,?,?)",
 		lvl.Id, lvl.Name, lvl.Uid, modUid, stars, isFeatured)
 	return true
+}
+
+func (lvl *CLevel) LoadBulkSearch(ids []int) []CLevel {
+	var res []CLevel
+	query := "SELECT id,name,description,#DB#.levels.uid,password,version,length,difficulty,demonDifficulty,suggestDifficulty,suggestDifficultyCnt," +
+		"track_id,song_id,versionGame,versionBinary,stringExtra,stringSettings,stringLevelInfo,original_id,objects," +
+		"starsRequested,starsGot,#DB#.levels.ucoins,#DB#.levels.coins,downloads,likes,reports,is2p,isVerified,isFeatured,isHall,isEpic,isUnlisted,isLDM," +
+		"uploadDate,updateDate, #DB#.users.uname FROM #DB#.levels LEFT JOIN #DB#.users on #DB#.levels.uid=#DB#.users.uid WHERE id IN(?)"
+	q, args, _ := sqlx.In(query, ids)
+	rows := lvl.DB.MustQuery(q, args...)
+	defer rows.Close()
+	for rows.Next() {
+		levl := CLevel{DB: lvl.DB}
+		e := rows.Scan(&levl.Id, &levl.Name, &levl.Description, &levl.Uid, &levl.Password, &levl.Version, &levl.Length, &levl.Difficulty,
+			&levl.DemonDifficulty, &levl.SuggestDifficulty, &levl.SuggestDifficultyCnt, &levl.TrackId, &levl.SongId, &levl.VersionGame, &levl.VersionBinary,
+			&levl.StringExtra, &levl.StringSettings, &levl.StringLevelInfo, &levl.OrigId, &levl.Objects, &levl.StarsRequested,
+			&levl.StarsGot, &levl.Ucoins, &levl.Coins, &levl.Downloads, &levl.Likes, &levl.Reports, &levl.Is2p, &levl.IsVerified, &levl.IsFeatured,
+			&levl.ISHall, &levl.IsEpic, &levl.IsUnlisted, &levl.IsLDM, &levl.UploadDate, &levl.UpdateDate, &levl.SideloadUname)
+		if levl.SideloadUname == nil {
+			s := "[DELETED]"
+			levl.SideloadUname = &s
+		}
+		if e != nil {
+			SendMessageDiscord(e.Error())
+		}
+		res = append(res, levl)
+	}
+
+	return res
 }

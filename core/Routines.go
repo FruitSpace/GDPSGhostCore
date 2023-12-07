@@ -91,7 +91,7 @@ func PrepareElection(config GlobalConfig) {
 	consulConf := consul.DefaultConfig()
 	consulConf.Address = EnvOrDefault("CONSUL_ADDR", "127.0.0.1")
 	consulConf.Token = EnvOrDefault("CONSUL_TOKEN", "")
-	consulConf.Datacenter = "hal"
+	consulConf.Datacenter = EnvOrDefault("CONSUL_DC", "dc1")
 	consulCli, err := consul.NewClient(consulConf)
 	if err != nil {
 		log.Println("Unable to connect to Consul cluster. Assuming self-leadership: " + err.Error())

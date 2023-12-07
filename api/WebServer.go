@@ -122,6 +122,8 @@ func GetFunctionName(i interface{}) string {
 }
 
 func (ghost *GhostServer) StartServer(Host string) {
+	BallisticsCache = make(map[string]int64)
+	BadRepIP = make(map[string]int)
 	mux := gorilla.NewRouter()
 	var nfh NotFoundHandler
 	mux.NotFoundHandler = nfh

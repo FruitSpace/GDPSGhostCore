@@ -283,6 +283,13 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
+
+	metrics := core.NewGoMetrics()
+	//defer func() {
+	//	go core.SendMessageDiscord(fmt.Sprintf("### %s perfromance debug V2\n%s", vars["gdps"], metrics.DumpText()))
+	//}()
+	metrics.NewStep("Parsing")
+
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	log.Printf("%s: %s\n", vars["gdps"], Post)
@@ -429,6 +436,8 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 
 	core.TryInt(&Gauntlet, Post.Get("gauntlet"))
 
+	metrics.NewStep("Searching")
+
 	if Gauntlet != 0 {
 		//get GAU levels
 		levels = filter.GetGauntletLevels(Gauntlet)
@@ -454,6 +463,8 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		case "7":
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_MAGIC) //Magic (New+Old) | Old = >=10k obj & long
 		case "10":
+			fallthrough
+		case "19":
 			levels = filter.SearchListLevels(page, Params) //List levels (id1,id2,... in sterm)
 		case "11":
 			Params["star"] = "1"
@@ -507,6 +518,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 
 	//Output, begins!
 	if len(levels) == 0 {
+		metrics.Done()
 		io.WriteString(resp, "-2")
 		return
 	}
@@ -517,30 +529,85 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	lvlHash := ""
 	usrstring := ""
 	musStr := ""
-	for _, lvl := range levels {
-		cl := core.CLevel{DB: db, Id: lvl}
-		cl.LoadAll()
-		if core.GetGDVersion(Post) == 22 {
-			cl.VersionGame = 21
+	var musQueue []int
+	//for _, lvl := range levels {
+	//	metrics.NewStep("Level " + strconv.Itoa(lvl))
+	//	cl := core.CLevel{DB: db, Id: lvl}
+	//	cl.LoadAll()
+	//if core.GetGDVersion(Post) == 22 {
+	//	cl.VersionGame = 21
+	//}
+	//	lvlS, lvlH, usrH := connectors.GetLevelSearch(cl, Gauntlet != 0)
+	//	out += lvlS
+	//	lvlHash += lvlH
+	//	usrstring += usrH
+	//
+	//	if cl.SongId != 0 {
+	//		musQueue = append(musQueue, cl.SongId)
+	//	}
+	//}
+
+	metrics.NewStep("Levels Fetch")
+	lvlCore := core.CLevel{DB: db}
+	lvlsX := lvlCore.LoadBulkSearch(levels)
+	// Sort lvlsX so they go by ids going in levels variable
+	//sort.SliceStable(lvlsX, func(i, j int) bool {
+	//	return lvlsX[i].Id < lvlsX[j].Id
+	//})
+
+	var lvls []core.CLevel
+	for _, lvlid := range levels {
+		for i, lvl := range lvlsX {
+			if lvl.Id == lvlid {
+				lvls = append(lvls, lvl)
+				lvlsX = append(lvlsX[:i], lvlsX[i+1:]...)
+				break
+			}
 		}
-		lvlS, lvlH, usrH := connectors.GetLevelSearch(cl, Gauntlet != 0)
+	}
+
+	metrics.NewStep("Levels parse")
+	for _, lvl := range lvls {
+		if core.GetGDVersion(Post) == 22 {
+			lvl.VersionGame = 21
+		}
+		lvlS, lvlH, usrH := connectors.GetLevelSearch(lvl, Gauntlet != 0)
 		out += lvlS
 		lvlHash += lvlH
 		usrstring += usrH
-		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
-		if cl.SongId != 0 && mus.GetSong(cl.SongId) {
-			musStr += connectors.GetMusic(mus) + "~:~"
-		}
 
+		if lvl.SongId != 0 {
+			musQueue = append(musQueue, lvl.SongId)
+		}
 	}
+
+	metrics.NewStep("Music v2")
+	if len(musQueue) > 0 {
+		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
+		songs := mus.GetBulkSongs(musQueue)
+		log.Println("Musics:", len(songs))
+		for _, sng := range songs {
+			musStr += connectors.GetMusic(sng) + "~:~"
+		}
+	}
+
 	if len(musStr) == 0 {
 		musStr = "lll"
 	}
-	io.WriteString(resp, out[:len(out)-1]+"#"+
-		usrstring[:len(usrstring)-1]+"#"+
-		musStr[:len(musStr)-3]+"#"+
-		s(filter.Count)+":"+s(page*10)+":10#"+
-		core.HashSolo2(lvlHash))
+
+	if len(out) == 0 {
+		out = "x"
+		usrstring = "x"
+	}
+
+	io.WriteString(resp,
+		out[:len(out)-1]+"#"+
+			usrstring[:len(usrstring)-1]+"#"+
+			musStr[:len(musStr)-3]+"#"+
+			s(filter.Count)+":"+s(page*10)+":10#"+
+			core.HashSolo2(lvlHash))
+
+	metrics.Done()
 
 }
 
