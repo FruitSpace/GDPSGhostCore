@@ -37,20 +37,17 @@ func (cq *CQuests) Exists(cType int) bool {
 	return cnt > 0
 }
 
-func (cq *CQuests) GetDaily() (int, int) {
-	var id, lvlId int
+func (cq *CQuests) GetDaily() (id int, lvlId int) {
 	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM #DB#.quests WHERE type=0 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id, &lvlId)
 	return id, lvlId
 }
 
-func (cq *CQuests) GetWeekly() (int, int) {
-	var id, lvlId int
+func (cq *CQuests) GetWeekly() (id int, lvlId int) {
 	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM #DB#.quests WHERE type=1 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id, &lvlId)
 	return id + 100001, lvlId
 }
 
-func (cq *CQuests) GetEvent() (int, int) {
-	var id, lvlId int
+func (cq *CQuests) GetEvent() (id int, lvlId int) {
 	cq.DB.ShouldQueryRow("SELECT id, lvl_id FROM #DB#.quests WHERE type=-1 AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&id, &lvlId)
 	return id, lvlId
 }
@@ -85,7 +82,7 @@ func (cq *CQuests) GetQuests(uid int) string {
 
 func (cq *CQuests) GetSpecialLevel(xType int) string {
 	timeLeft := 0
-	var lvlId, xLvlid int
+	var evtId, xEvtId int
 	tme, _ := time.ParseInLocation("2006-01-02 15:04:05", strings.Split(time.Now().Format("2006-01-02 15:04:05"), " ")[0]+" 00:00:00", loc)
 	switch xType {
 	case -1:
@@ -95,8 +92,8 @@ func (cq *CQuests) GetSpecialLevel(xType int) string {
 		timeLeft = int(tme.AddDate(0, 0, 1).Unix() - (time.Now().Unix()))
 	case 1:
 		timeLeft = int(tme.AddDate(0, 0, 7).Unix() - (time.Now().Unix()))
-		lvlId = 100001
+		xEvtId = 100001
 	}
-	cq.DB.ShouldQueryRow("SELECT lvl_id FROM #DB#.quests WHERE type=" + strconv.Itoa(xType) + " AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&xLvlid)
-	return strconv.Itoa(xLvlid+lvlId) + "|" + strconv.Itoa(timeLeft)
+	cq.DB.ShouldQueryRow("SELECT id FROM #DB#.quests WHERE type=" + strconv.Itoa(xType) + " AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&evtId)
+	return strconv.Itoa(xEvtId+evtId) + "|" + strconv.Itoa(timeLeft)
 }
