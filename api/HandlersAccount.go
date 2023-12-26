@@ -186,7 +186,8 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	}
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
-	if Post.Get("userName") != "" && Post.Get("password") != "" {
+	if Post.Get("userName") != "" && Post.Get("password")+Post.Get("gjp2") != "" {
+		gjp2 := core.ClearGDRequest(Post.Get("gjp2"))
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		db := &core.MySQLConn{}
@@ -195,7 +196,13 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 			return
 		}
 		acc := core.CAccount{DB: db}
-		uid := acc.LogIn(uname, pass, IPAddr, 0)
+		var uid int
+		if len(gjp2) != 0 {
+			uid = acc.LogIn22(uname, gjp2, IPAddr, 0)
+		} else {
+			uid = acc.LogIn(uname, pass, IPAddr, 0)
+		}
+
 		if uid < 0 {
 			io.WriteString(resp, strconv.Itoa(uid))
 		} else {

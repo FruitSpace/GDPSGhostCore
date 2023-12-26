@@ -417,6 +417,25 @@ func (acc *CAccount) LogIn(uname string, pass string, ip string, uid int) int {
 	return -1
 }
 
+func (acc *CAccount) LogIn22(uname string, gjp string, ip string, uid int) int {
+	if uid == 0 {
+		uid = acc.GetUIDByUname(uname, false)
+	}
+	if uid > 0 {
+		acc.Uid = uid
+		acc.LoadAuth(CAUTH_UID)
+		if acc.IsBanned > 0 {
+			return -12
+		}
+
+		if acc.GjpHash == gjp {
+			acc.UpdateIP(ip)
+			return uid
+		}
+	}
+	return -1
+}
+
 func (acc *CAccount) Register(uname string, pass string, email string, ip string, autoVerify bool) int {
 	isBanned := "1"
 	if autoVerify {
