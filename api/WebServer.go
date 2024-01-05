@@ -2,6 +2,7 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -109,12 +110,19 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	"/db/uploadGJLevel20.php":          LevelUpload,
 	"/db/uploadGJLevel21.php":          LevelUpload,
 	"/db/uploadGJMessage20.php":        MessageUpload,
+
+	"/db/getCustomContentURL.php": GetContentURL,
+	"/db/content/sfx/{sfxid}":     RelaySFX,
+
+	//"/db/content/sfx/sfxlibrary.dat":         GetSFXLibrary,
+	//"/db/content/sfx/sfxlibrary_version.txt": GetSFXLibraryVersion,
+	//"/db/content/sfx/s{sfxid}.ogg":           GetSFXTrack,
 }
 
 var RouteIntegraMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalConfig){
 	// PRIVATE API
-	"/integra/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}": ModifyGDPS,
-	"/integra/killskew": EventAction,
+	"/integra/maintenance": TriggerMaintenance,
+	//"/integra/killskew":    EventAction,
 }
 
 func GetFunctionName(i interface{}) string {
@@ -132,7 +140,11 @@ func (ghost *GhostServer) StartServer(Host string) {
 		mux.HandleFunc("/{gdps:[a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9][a-zA-Z0-9]}"+route,
 			func(resp http.ResponseWriter, req *http.Request) {
 				vars := gorilla.Vars(req)
-				handler := RouteMap[strings.Replace(req.URL.Path, "/"+vars["gdps"], "", 1)]
+				pref := strings.Replace(req.URL.Path, "/"+vars["gdps"], "", 1)
+				handler := RouteMap[pref]
+				if strings.HasPrefix(pref, "/db/content/sfx/") {
+					handler = RelaySFX
+				}
 				IPAddr := req.Header.Get("CF-Connecting-IP")
 				if IPAddr == "" {
 					IPAddr = req.Header.Get("X-Real-IP")
@@ -147,6 +159,12 @@ func (ghost *GhostServer) StartServer(Host string) {
 	for route, handler := range RouteIntegraMap {
 		mux.HandleFunc(route,
 			func(resp http.ResponseWriter, req *http.Request) {
+				defer func() {
+					if err := recover(); err != nil {
+						log.Println(err)
+						core.SendMessageDiscord(fmt.Sprintf("Panic: %s", err))
+					}
+				}()
 				IPAddr := req.Header.Get("CF-Connecting-IP")
 				if IPAddr == "" {
 					IPAddr = req.Header.Get("X-Real-IP")

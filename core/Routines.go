@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/go-co-op/gocron"
 	consul "github.com/hashicorp/consul/api"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -84,6 +86,36 @@ func MaintainTasks() {
 		RunSingleTask(SrvId, rdb, log, config)
 	}
 
+	// Update sfx library
+	updateSFXLibrary()
+
+}
+
+func updateSFXLibrary() {
+	s3 := NewS3FS()
+	d, err := http.Get("https://geometrydashfiles.b-cdn.net/sfx/sfxlibrary.dat")
+	if err != nil {
+		SendMessageDiscord("⚠️ Failed to fetch SFX Library: " + err.Error())
+		return
+	}
+	sfx, _ := io.ReadAll(d.Body)
+	err = s3.PutFile("/gdps_sfx/library.dat", sfx)
+	if err != nil {
+		SendMessageDiscord("⚠️ Failed to save SFX Library: " + err.Error())
+		return
+	}
+
+	v, err := http.Get("https://geometrydashfiles.b-cdn.net/sfx/sfxlibrary_version.txt")
+	if err != nil {
+		SendMessageDiscord("⚠️ Failed to fetch SFX Library Version: " + err.Error())
+		return
+	}
+	ver, _ := io.ReadAll(v.Body)
+	err = s3.PutFile("/gdps_sfx/library_version.txt", ver)
+	if err != nil {
+		SendMessageDiscord("⚠️ Failed to save SFX Library Version: " + err.Error())
+		return
+	}
 }
 
 func PrepareElection(config GlobalConfig) {

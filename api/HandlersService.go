@@ -21,6 +21,7 @@ var NotFoundTemplate = `
 	</head>
 	<body>
 		<h3>You asked for [PATH], but found another 404 page</h3>
+		<p>The chances are there is something, but it's not exactly here</p>
 	</body>
 </html>`
 
@@ -41,24 +42,12 @@ func (n NotFoundHandler) ServeHTTP(resp http.ResponseWriter, req *http.Request) 
 
 // Private API
 
-func ModifyGDPS(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	//vars:= gorilla.Vars(req)
-	//Post:=ReadPost(req)
-	//response:=map[string]string{"status":"ok"}
-	//if Post.Get("key")!=conf.MasterKey {
-	//	response["status"]="error"
-	//	response["error"]="Unauthenticated"
-	//	SendJson(resp, response)
-	//	return
-	//}
-	//logger:=core.Logger{Output: os.Stderr}
-	//config,err:=conf.LoadById(vars["gdps"])
-	//if logger.Should(err)!=nil {return}
-	//switch req.Method {
-	//case "GET":
-	//case "POST":
-	//
-	//}
+func TriggerMaintenance(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	if req.URL.Query().Get("key") != conf.MasterKey {
+		return
+	}
+	io.WriteString(resp, "OK")
+	go core.MaintainTasks()
 }
 
 func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
