@@ -4,6 +4,7 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -42,6 +43,162 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	filter := core.CLevelFilter{DB: db}
 	io.WriteString(resp, filter.GetGauntlets())
 }
+
+//region Lists
+
+func GetLevelLists(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	Post := ReadPost(req)
+	core.SendMessageDiscord(Post.Encode())
+}
+
+func LevelListDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	IPAddr := req.Header.Get("CF-Connecting-IP")
+	if IPAddr == "" {
+		IPAddr = req.Header.Get("X-Real-IP")
+	}
+	if IPAddr == "" {
+		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
+	}
+	vars := gorilla.Vars(req)
+	logger := core.Logger{Output: os.Stderr}
+	config, err := conf.LoadById(vars["gdps"])
+	if logger.Should(err) != nil {
+		return
+	}
+	if core.CheckIPBan(IPAddr, config) {
+		return
+	}
+	//Get:=req.URL.Query()
+	Post := ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("listID") != "" {
+		db := &core.MySQLConn{}
+		defer db.CloseDB()
+		if logger.Should(db.ConnectBlob(config)) != nil {
+			return
+		}
+		xacc := core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr) {
+			io.WriteString(resp, "-1")
+			return
+		}
+		var list_id int
+		core.TryInt(&list_id, Post.Get("listID"))
+		cl := core.CLevelList{DB: db, ID: list_id}
+		if !cl.IsOwnedBy(xacc.Uid) {
+			io.WriteString(resp, "-1")
+			return
+		}
+		cl.DeleteList() //!Fetch before that shit
+		//core.OnLevel(db, conf, config)
+		//core.RegisterAction(core.ACTION_LEVEL_DELETE, xacc.Uid, lvl_id, map[string]string{"uname": xacc.Uname, "type": "Delete:Owner"}, db)
+		io.WriteString(resp, "1")
+	} else {
+		io.WriteString(resp, "-1")
+	}
+}
+
+func LevelListUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	IPAddr := req.Header.Get("CF-Connecting-IP")
+	if IPAddr == "" {
+		IPAddr = req.Header.Get("X-Real-IP")
+	}
+	if IPAddr == "" {
+		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
+	}
+	vars := gorilla.Vars(req)
+	logger := core.Logger{Output: os.Stderr}
+	config, err := conf.LoadById(vars["gdps"])
+	if logger.Should(err) != nil {
+		return
+	}
+
+	if conf.MaintenanceMode {
+		config.SecurityConfig.DisableProtection = false
+	}
+
+	if core.CheckIPBan(IPAddr, config) {
+		return
+	}
+	//Get:=req.URL.Query()
+	Post := ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("listLevels") != "" {
+		db := &core.MySQLConn{}
+		defer db.CloseDB()
+		if logger.Should(db.ConnectBlob(config)) != nil {
+			return
+		}
+		xacc := core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr) {
+			io.WriteString(resp, "-1")
+			return
+		}
+		cl := core.CLevelList{DB: db}
+
+		cl.UID = xacc.Uid
+		core.TryInt(&cl.ID, Post.Get("listID"))
+		cl.Name = core.ClearGDRequest(Post.Get("listName"))
+		cl.Description = core.ClearGDRequest(Post.Get("listDesc"))
+		cl.Levels = core.ClearGDRequest(Post.Get("listLevels"))
+		core.TryInt(&cl.Difficulty, Post.Get("difficulty"))
+		core.TryInt(&cl.Version, Post.Get("listVersion"))
+		//core.TryInt(&cl., Post.Get("original")) //???
+		core.TryInt(&cl.Unlisted, Post.Get("unlisted"))
+
+		if cl.Name == "" {
+			cl.Name = "Unnamed"
+		}
+		if cl.Version == 0 {
+			cl.Version = 1
+		}
+
+		cl.Preload() // Because we have no tables
+
+		if cl.IsOwnedBy(xacc.Uid) {
+			res := cl.UpdateList()
+			io.WriteString(resp, strconv.Itoa(res))
+		} else {
+			if !cl.CheckParams() {
+				io.WriteString(resp, "-1")
+				return
+			}
+			res := cl.UploadList()
+			io.WriteString(resp, strconv.Itoa(res))
+		}
+	} else {
+		io.WriteString(resp, "-1")
+	}
+}
+
+func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	IPAddr := req.Header.Get("CF-Connecting-IP")
+	if IPAddr == "" {
+		IPAddr = req.Header.Get("X-Real-IP")
+	}
+	if IPAddr == "" {
+		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
+	}
+	vars := gorilla.Vars(req)
+	logger := core.Logger{Output: os.Stderr}
+	config, err := conf.LoadById(vars["gdps"])
+	if logger.Should(err) != nil {
+		return
+	}
+	if core.CheckIPBan(IPAddr, config) {
+		return
+	}
+
+	metrics := core.NewGoMetrics()
+	defer func() {
+		go core.SendMessageDiscord(fmt.Sprintf("### %s perfromance debug V2\n%s", vars["gdps"], metrics.DumpText()))
+	}()
+	metrics.NewStep("Parsing")
+
+	//Get:=req.URL.Query()
+	Post := ReadPost(req)
+	log.Printf("%s: %s\n", vars["gdps"], Post)
+}
+
+//endregion
 
 func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
 	IPAddr := req.Header.Get("CF-Connecting-IP")

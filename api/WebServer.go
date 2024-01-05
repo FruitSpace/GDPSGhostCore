@@ -111,6 +111,10 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	"/db/uploadGJLevel21.php":          LevelUpload,
 	"/db/uploadGJMessage20.php":        MessageUpload,
 
+	"/db/deleteGJLevelList.php": LevelListDelete,
+	"/db/uploadGJLevelList.php": LevelListUpload,
+	"/db/getGJLevelLists.php":   LevelListSearch,
+
 	"/db/getCustomContentURL.php": GetContentURL,
 	"/db/content/sfx/{sfxid}":     RelaySFX,
 
