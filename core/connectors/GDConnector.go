@@ -18,13 +18,15 @@ var loc, _ = time.LoadLocation("Europe/Moscow")
 // GetUserProfile used at getUserInfo (w/o trailing hash)
 func GetUserProfile(acc core.CAccount, isFriend bool) string {
 	s := strconv.Itoa
+	// 51=13 - color3, 53=34 -> swingcopter, 54=5 -> jetpack?,
 	role := acc.GetRoleObj(false)
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(acc.GetLeaderboardRank()) + ":7:" + s(acc.Uid) +
 		":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) +
 		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":18:" + s(acc.MS) + ":19:" + s(acc.FrS) +
 		":20:" + acc.Youtube + ":21:" + s(acc.Cube) + ":22:" + s(acc.Ship) + ":23:" + s(acc.Ball) + ":24:" + s(acc.Ufo) + ":25:" + s(acc.Wave) + ":26:" + s(acc.Robot) +
 		":28:" + s(acc.Trace) + ":29:1:30:" + s(acc.GetLeaderboardRank()) + ":31:" + s(core.ToInt(isFriend)) + ":43:" + s(acc.Spider) + ":44:" + acc.Twitter +
-		":45:" + acc.Twitch + ":46:" + s(acc.Diamonds) + ":48:" + s(acc.Death) + ":49:" + s(role.ModLevel) + ":50:" + s(acc.CS) + ":52:" + s(acc.Moons)
+		":45:" + acc.Twitch + ":46:" + s(acc.Diamonds) + ":48:" + s(acc.Death) + ":49:" + s(role.ModLevel) + ":50:" + s(acc.CS) + ":51:" + s(acc.ColorGlow) +
+		":52:" + s(acc.Moons) + ":53:" + s(acc.Swing) + ":54:" + s(acc.Jetpack)
 }
 
 // UserProfilePersonal used at getUserInfo to append some data if user is requesting themselves (w/o trailing hash)
@@ -44,7 +46,7 @@ func UserSearchItem(acc core.CAccount) string {
 	s := strconv.Itoa
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
-		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + "#1:0:10"
+		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
 }
 
 // GetAccountComment used to retrieve account comments (iterative, w/o hash)
@@ -218,7 +220,7 @@ func GetAccLeaderboardItem(acc core.CAccount, lk int) string {
 	acc.LoadAll()
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(lk) + ":7:" + s(acc.Uid) +
 		":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) +
-		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":46:" + s(acc.Diamonds) + "|"
+		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":46:" + s(acc.Diamonds) + ":52:" + s(acc.Moons) + "|"
 }
 
 // GetLeaderboardScore used to retrieve leaderboard scores (iterative, w/o trailing hash)

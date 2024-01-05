@@ -257,6 +257,7 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		xacc.LoadStats()
 		core.TryInt(&xacc.ColorPrimary, Post.Get("color1"))
 		core.TryInt(&xacc.ColorSecondary, Post.Get("color2"))
+		core.TryInt(&xacc.ColorGlow, Post.Get("color3"))
 		core.TryInt(&xacc.Stars, Post.Get("stars"))
 		core.TryInt(&xacc.Demons, Post.Get("demons"))
 		core.TryInt(&xacc.Diamonds, Post.Get("diamonds"))
@@ -272,12 +273,11 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		core.TryInt(&xacc.Ufo, Post.Get("accBird"))
 		core.TryInt(&xacc.Robot, Post.Get("accRobot"))
 		core.TryInt(&xacc.Spider, Post.Get("accSpider"))
-		//!Unconfirmed jetpack and swing
 		core.TryInt(&xacc.Swing, Post.Get("accSwing"))
 		core.TryInt(&xacc.Jetpack, Post.Get("accJetpack"))
-
 		core.TryInt(&xacc.Trace, Post.Get("accGlow"))
 		core.TryInt(&xacc.Death, Post.Get("accExplosion"))
+
 		protect := core.CProtect{DB: db, Savepath: conf.SavePath + "/" + vars["gdps"], DisableProtection: config.SecurityConfig.DisableProtection}
 		protect.LoadModel(conf, config)
 		if !protect.DetectStats(xacc.Uid, xacc.Stars, xacc.Diamonds, xacc.Demons, xacc.Coins, xacc.UCoins) {

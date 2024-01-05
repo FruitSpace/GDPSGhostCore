@@ -128,7 +128,7 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 		if len(command) < 2 {
 			return "Specify difficulty argument (easy, normal, hard, etc.) or 'reset'"
 		}
-		diff := "0"
+		var diff string
 		switch strings.ToLower(command[1]) {
 		case "auto":
 			diff = "-1"

@@ -33,7 +33,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	}
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
-	if Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("saveData") != "" {
+	if Post.Get("saveData") != "" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		saveData := core.ClearGDRequest(Post.Get("saveData"))
@@ -43,7 +43,13 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			return
 		}
 		acc := core.CAccount{DB: db}
-		if acc.LogIn(uname, pass, IPAddr, 0) > 0 {
+		var res int
+		if Post.Get("gameVersion") == "22" {
+			res = core.ToInt(acc.PerformGJPAuth(Post, IPAddr))
+		} else {
+			res = acc.LogIn(uname, pass, IPAddr, 0)
+		}
+		if res > 0 {
 			savepath := "/gdps_savedata/" + vars["gdps"] + "/"
 			taes := core.ThunderAES{}
 			if logger.Should(taes.GenKey(config.ServerConfig.SrvKey)) != nil {
@@ -110,7 +116,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	}
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
-	if Post.Get("userName") != "" && Post.Get("password") != "" {
+	if (Post.Get("userName") != "" && Post.Get("password") != "") || Post.Get("gjp2") != "" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		db := &core.MySQLConn{}
@@ -119,7 +125,13 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			return
 		}
 		acc := core.CAccount{DB: db}
-		if acc.LogIn(uname, pass, IPAddr, 0) > 0 {
+		var res int
+		if Post.Get("gameVersion") == "22" {
+			res = core.ToInt(acc.PerformGJPAuth(Post, IPAddr))
+		} else {
+			res = acc.LogIn(uname, pass, IPAddr, 0)
+		}
+		if res > 0 {
 			savepath := "/gdps_savedata/" + vars["gdps"] + "/" + strconv.Itoa(acc.Uid) + ".hsv"
 			s3 := core.NewS3FS()
 			if d, err := s3.GetFile(savepath); err == nil {

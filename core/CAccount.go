@@ -67,6 +67,7 @@ type CAccount struct {
 	IconType       int
 	ColorPrimary   int
 	ColorSecondary int
+	ColorGlow      int
 	Cube           int
 	Ship           int
 	Ball           int
@@ -154,12 +155,13 @@ func (acc *CAccount) LoadVessels() {
 	json.Unmarshal([]byte(vessels), &clrs)
 	acc.ColorPrimary = clrs["clr_primary"]
 	acc.ColorSecondary = clrs["clr_secondary"]
+	acc.ColorGlow = clrs["clr_glow"]
 }
 
 func (acc *CAccount) PushVessels() {
-	data := map[string]int{"clr_primary": acc.ColorPrimary, "clr_secondary": acc.ColorSecondary, "cube": acc.Cube, "ship": acc.Ship,
-		"ball": acc.Ball, "ufo": acc.Ufo, "wave": acc.Wave, "robot": acc.Robot, "spider": acc.Spider, "swing": acc.Swing,
-		"jetpack": acc.Jetpack, "trace": acc.Trace, "death": acc.Death}
+	data := map[string]int{"clr_primary": acc.ColorPrimary, "clr_secondary": acc.ColorSecondary, "clr_glow": acc.ColorGlow,
+		"cube": acc.Cube, "ship": acc.Ship, "ball": acc.Ball, "ufo": acc.Ufo, "wave": acc.Wave, "robot": acc.Robot,
+		"spider": acc.Spider, "swing": acc.Swing, "jetpack": acc.Jetpack, "trace": acc.Trace, "death": acc.Death}
 	js, _ := json.Marshal(data)
 	acc.DB.ShouldExec("UPDATE #DB#.users SET vessels=?, iconType=? WHERE uid=?", string(js), acc.IconType, acc.Uid)
 }
@@ -214,6 +216,7 @@ func (acc *CAccount) LoadAll() {
 	json.Unmarshal([]byte(vessels), &clrs)
 	acc.ColorPrimary = clrs["clr_primary"]
 	acc.ColorSecondary = clrs["clr_secondary"]
+	acc.ColorGlow = clrs["clr_glow"]
 	json.Unmarshal([]byte(settings), acc)
 	acc.Blacklist = QuickComma(acc.Blacklist)
 	acc.FriendshipIds = QuickComma(acc.FriendshipIds)
@@ -302,6 +305,8 @@ func (acc *CAccount) GetShownIcon() int {
 		return acc.Robot
 	case 6:
 		return acc.Spider
+	case 7:
+		return acc.Swing
 	case 0:
 	default:
 		return acc.Cube
