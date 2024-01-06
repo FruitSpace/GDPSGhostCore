@@ -75,7 +75,10 @@ func (filter *CLevelListFilter) SearchLists(page int, params map[string]string, 
 		query += "" // robtop sniffed some coke
 	case CLEVELLISTFILTER_AWARDED:
 		orderBy = "uploadDate DESC, downloads DESC"
-		query += " AND isFeatured>0"
+		query += " AND isFeatured>0 AND diamonds>0"
+	case CLEVELLISTFILTER_SENT:
+		orderBy = "uploadDate DESC, downloads DESC"
+		query += " AND isFeatured=0 AND diamonds=0"
 	default:
 		query += " AND 1=0" //Because I can
 	}

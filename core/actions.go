@@ -27,10 +27,12 @@ const (
 	ACTION_LEVEL_LIKE            int = 127
 	ACTION_ACCCOMMENT_LIKE       int = 128
 	ACTION_COMMENT_LIKE          int = 129
+	ACTION_LIST_LIKE             int = 130
 
-	ITEMTYPE_LEVEL      int = 130
-	ITEMTYPE_ACCCOMMENT int = 131
-	ITEMTYPE_COMMENT    int = 132
+	ITEMTYPE_LEVEL      int = 131
+	ITEMTYPE_ACCCOMMENT int = 132
+	ITEMTYPE_COMMENT    int = 133
+	ITEMTYPE_LIST       int = 134
 )
 
 func RegisterAction(action int, uid int, target_id int, data map[string]string, db *MySQLConn) {
@@ -101,6 +103,9 @@ func RegisterAction(action int, uid int, target_id int, data map[string]string, 
 	case ACTION_COMMENT_LIKE:
 		types = 8
 		data["action"] = "LikeComment"
+	case ACTION_LIST_LIKE:
+		types = 9
+		data["action"] = "LikeList"
 	default:
 		return
 	}
@@ -133,6 +138,8 @@ func IsLiked(itemType int, uid int, dest_id int, db *MySQLConn) bool {
 		event_id = 7
 	case ITEMTYPE_COMMENT:
 		event_id = 8
+	case ITEMTYPE_LIST:
+		event_id = 9
 	default:
 		return true
 	}

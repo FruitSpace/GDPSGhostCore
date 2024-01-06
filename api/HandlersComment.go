@@ -185,11 +185,22 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		var id, lvl_id int
 		core.TryInt(&id, Post.Get("commentID"))
 		core.TryInt(&lvl_id, Post.Get("levelID"))
-		cl := core.CLevel{DB: db, Id: lvl_id}
-		if cl.IsOwnedBy(xacc.Uid) {
-			cc.DeleteOwnerLevelComment(id, lvl_id)
+		if lvl_id > 0 {
+			// levels
+			cl := core.CLevel{DB: db, Id: lvl_id}
+			if cl.IsOwnedBy(xacc.Uid) {
+				cc.DeleteOwnerLevelComment(id, lvl_id)
+			} else {
+				cc.DeleteLevelComment(id, xacc.Uid)
+			}
 		} else {
-			cc.DeleteLevelComment(id, xacc.Uid)
+			// RobTop is retarded
+			cl := core.CLevelList{DB: db, ID: lvl_id}
+			if cl.IsOwnedBy(xacc.Uid) {
+				cc.DeleteOwnerLevelComment(id, lvl_id)
+			} else {
+				cc.DeleteLevelComment(id, xacc.Uid)
+			}
 		}
 		core.OnComment(db, conf, config)
 		io.WriteString(resp, "1")
@@ -342,6 +353,28 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		percent %= 101
 		cl := core.CLevel{DB: db}
 		core.TryInt(&cl.Id, Post.Get("levelID"))
+		if cl.Id < 0 {
+			// CLevelList
+			list := core.CLevelList{DB: db, ID: cl.Id * -1}
+			if !list.Exists(list.ID) {
+				io.WriteString(resp, "-1")
+				return
+			}
+			cc := core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
+			protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
+			if !core.OnComment(db, conf, config) {
+				io.WriteString(resp, "-1")
+				return
+			}
+			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
+				io.WriteString(resp, "1")
+			} else {
+				io.WriteString(resp, "-1")
+			}
+			return
+		}
+
+		// Next
 		if !cl.Exists(cl.Id) {
 			io.WriteString(resp, "-1")
 			return

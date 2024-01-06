@@ -346,3 +346,34 @@ func GetLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
 
 	//44 isGauntlet
 }
+
+func GetListSearch(cl core.CLevelList) (listStr string, user string, hash string) {
+	s := strconv.Itoa
+
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UploadDate, loc)
+	if err != nil {
+		t = time.Now()
+	}
+	t2, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UpdateDate, loc)
+	if err != nil {
+		t2 = time.Now()
+	}
+
+	acc := core.CAccount{DB: cl.DB, Uid: cl.UID}
+	if cl.SideloadUname == nil {
+		if acc.Exists(acc.Uid) {
+			acc.LoadAuth(core.CAUTH_UID)
+		} else {
+			acc.Uname = "[DELETED]"
+		}
+	} else {
+		acc.Uname = *cl.SideloadUname
+	}
+
+	return "1:" + s(cl.ID) + ":2:" + cl.Name + ":3:" + cl.Description + ":5:" + s(cl.Version) + ":7:" + s(cl.Difficulty) +
+			":10:" + s(cl.Downloads) + ":14:" + s(cl.Likes) + ":19:" + s(core.ToInt(cl.IsFeatured)) + ":28:" + s(int(t.Unix())) +
+			":29:" + s(int(t2.Unix())) + ":49:" + s(cl.UID) + ":50:" + acc.Uname + ":51:" + cl.Levels + ":55:" + s(cl.Diamonds) +
+			":56:" + s(cl.LevelDiamonds) + "|",
+		s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid) + "|", ""
+
+}

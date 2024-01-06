@@ -76,6 +76,12 @@ func (cll *CLevelList) Load(id int) {
 			&cll.IsFeatured, &cll.Unlisted, &cll.UID, &cll.Levels, &cll.Diamonds, &cll.LevelDiamonds, &cll.UploadDate, &cll.UpdateDate)
 }
 
+func (cll *CLevelList) Exists(lid int) bool {
+	var count int
+	cll.DB.MustQueryRow("SELECT COUNT(*) FROM #DB#.lists WHERE id=?", lid).Scan(&count)
+	return count > 0
+}
+
 func (cll *CLevelList) UpdateList() int {
 	if !cll.CheckParams() {
 		return -1
@@ -104,8 +110,23 @@ func (cll *CLevelList) CheckParams() bool {
 	return true
 }
 
-func (cll *CLevelList) OnDownloadLevel() {
+func (cll *CLevelList) OnDownloadList() {
 	cll.DB.ShouldExec("UPDATE #DB#.lists SET downloads=downloads+1 WHERE id=?", cll.ID)
+}
+
+func (cll *CLevelList) LikeList(lid int, uid int, action int) bool {
+	if IsLiked(ITEMTYPE_LEVEL, uid, lid, cll.DB) {
+		return false
+	}
+	actionv := "+"
+	actions := "Like"
+	if action == CLEVEL_ACTION_DISLIKE {
+		actionv = "-"
+		actions = "Dislike"
+	}
+	cll.DB.ShouldExec("UPDATE #DB#.lists SET likes=likes"+actionv+"1 WHERE id=?", lid)
+	RegisterAction(ACTION_LIST_LIKE, uid, lid, map[string]string{"type": actions}, cll.DB)
+	return true
 }
 
 func (cll *CLevelList) DeleteList() {
@@ -114,7 +135,7 @@ func (cll *CLevelList) DeleteList() {
 
 func (cll *CLevelList) IsOwnedBy(uid int) bool {
 	cll.Load(cll.ID)
-	if uid == 0 {
+	if cll.ID == 0 {
 		return false
 	}
 	return uid == cll.UID
@@ -129,8 +150,8 @@ func (cll *CLevelList) LoadBulkSearch(ids []int) []CLevelList {
 	defer rows.Close()
 	for rows.Next() {
 		levl := CLevelList{DB: cll.DB}
-		e := rows.Scan(&cll.ID, &cll.Name, &cll.Description, &cll.Version, &cll.Difficulty, &cll.Downloads, &cll.Likes,
-			&cll.IsFeatured, &cll.Unlisted, &cll.UID, &cll.Levels, &cll.Diamonds, &cll.LevelDiamonds, &cll.UploadDate, &cll.UpdateDate,
+		e := rows.Scan(&levl.ID, &levl.Name, &levl.Description, &levl.Version, &levl.Difficulty, &levl.Downloads, &levl.Likes,
+			&levl.IsFeatured, &levl.Unlisted, &levl.UID, &levl.Levels, &levl.Diamonds, &levl.LevelDiamonds, &levl.UploadDate, &levl.UpdateDate,
 			&levl.SideloadUname)
 		if levl.SideloadUname == nil {
 			s := "[DELETED]"

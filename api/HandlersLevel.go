@@ -196,6 +196,154 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	log.Printf("%s: %s\n", vars["gdps"], Post)
+
+	var mode, page int
+	core.TryInt(&mode, Post.Get("type"))
+	core.TryInt(&page, Post.Get("page"))
+
+	s := strconv.Itoa
+	Params := make(map[string]string)
+	if sterm := Post.Get("str"); sterm != "" {
+		Params["sterm"] = core.ClearGDRequest(Post.Get("str"))
+	}
+
+	//Difficulty selector
+	if diff := Post.Get("diff"); diff != "" {
+		preg, err := regexp.Compile("[^0-9,-]")
+		if logger.Should(err) != nil {
+			return
+		}
+		diff = core.CleanDoubles(preg.ReplaceAllString(diff, ""), ",")
+		if diff != "-" && diff != "," {
+			// The real diff filter begins
+			difflist := strings.Split(diff, ",")
+			var diffl []string
+			for _, sdiff := range difflist {
+				if sdiff == "" || sdiff == "-" {
+					continue
+				}
+				diffl = append(diffl, sdiff)
+			}
+			Params["diff"] = strings.Join(diffl, ",")
+		}
+	}
+
+	//Other params
+
+	var star int
+
+	core.TryInt(&star, Post.Get("star"))
+	if star != 0 {
+		Params["star"] = "1"
+	}
+
+	db := &core.MySQLConn{}
+	defer db.CloseDB()
+	if logger.Should(db.ConnectBlob(config)) != nil {
+		return
+	}
+	filter := core.CLevelListFilter{DB: db}
+	var lists []int
+
+	switch Post.Get("type") {
+	case "1":
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_MOSTDOWNLOADED)
+	case "3":
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_TRENDING)
+	case "4":
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_LATEST)
+	case "7":
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_MAGIC) // Robtop lobotomy
+	case "11":
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_AWARDED) //Awarded tab
+	case "12":
+		//Follow levels
+		preg, err := regexp.Compile("[^0-9,-]")
+		if logger.Should(err) != nil {
+			return
+		}
+		Params["followList"] = preg.ReplaceAllString(core.ClearGDRequest(Post.Get("followed")), "")
+		if Params["followList"] == "" {
+			break
+		}
+		lists = filter.SearchUserLists(page, Params, true)
+	case "13":
+		//Friend levels
+		xacc := core.CAccount{DB: db}
+		if !(core.CheckGDAuth(Post) && xacc.PerformGJPAuth(Post, IPAddr)) {
+			break
+		}
+		xacc.LoadSocial()
+		if xacc.FriendsCount == 0 {
+			break
+		}
+		fr := core.CFriendship{DB: db}
+		friendships := core.Decompose(core.CleanDoubles(xacc.FriendshipIds, ","), ",")
+		friends := []int{xacc.Uid}
+		for _, frid := range friendships {
+			id1, id2 := fr.GetFriendByFID(frid)
+			fid := id1
+			if id1 == xacc.Uid {
+				fid = id2
+			}
+			friends = append(friends, fid)
+		}
+		Params["followList"] = strings.Join(core.ArrTranslate(friends), ",")
+		lists = filter.SearchUserLists(page, Params, false)
+	case "27":
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_SENT)
+
+	default:
+		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_MOSTLIKED)
+	}
+
+	//Output, begins!
+	if len(lists) == 0 {
+		metrics.Done()
+		io.WriteString(resp, "-2")
+		return
+	}
+
+	out := ""
+	lvlHash := ""
+	usrstring := ""
+
+	metrics.NewStep("Levels Fetch")
+	listCore := core.CLevelList{DB: db}
+	llistsX := listCore.LoadBulkSearch(lists)
+
+	var llists []core.CLevelList
+	for _, lid := range lists {
+		for i, list := range llistsX {
+			if list.ID == lid {
+				llists = append(llists, list)
+				llistsX = append(llistsX[:i], llistsX[i+1:]...)
+				break
+			}
+		}
+	}
+
+	metrics.NewStep("Levels parse")
+	for _, list := range llists {
+		lvlS, usrH, lvlH := connectors.GetListSearch(list)
+		out += lvlS
+		lvlHash += lvlH
+		usrstring += usrH
+	}
+
+	if len(out) == 0 {
+		out = "x"
+		usrstring = "x"
+	}
+
+	io.WriteString(resp,
+		out[:len(out)-1]+"#"+
+			usrstring[:len(usrstring)-1]+"#"+
+			s(filter.Count)+":"+s(page*10)+":10#"+
+			core.HashSolo2(lvlHash))
+
+	metrics.Done()
+
 }
 
 //endregion
@@ -659,7 +807,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 				friends = append(friends, fid)
 			}
 			Params["followList"] = strings.Join(core.ArrTranslate(friends), ",")
-			levels = filter.SearchUserLevels(page, Params, true)
+			levels = filter.SearchUserLevels(page, Params, false)
 		case "16":
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_HALL)
 		case "21":
@@ -668,6 +816,13 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_SAFE_WEEKLY)
 		case "23":
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_SAFE_EVENT)
+		case "25":
+			var lid int // Fuck robtop, that's for getting levels from lists
+			core.TryInt(&lid, Post.Get("str"))
+			clist := core.CLevelList{DB: db, ID: lid}
+			clist.OnDownloadList()
+			clist.Load(lid)
+			levels = core.Decompose(core.QuickComma(clist.Levels), ",")
 		default:
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_MOSTLIKED)
 		}
