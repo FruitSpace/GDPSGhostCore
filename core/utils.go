@@ -471,9 +471,9 @@ func DiffToText(stars int, demonDiff int, isFeatured int, isEpic int) string {
 	case 2:
 		return diff + "-epic"
 	case 3:
-		return diff + "-mythic"
-	case 4:
 		return diff + "-legendary"
+	case 4:
+		return diff + "-mythic"
 	}
 	return diff
 }

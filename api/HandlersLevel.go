@@ -1310,9 +1310,9 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 				case 2:
 					cl.EpicLevel(true)
 				case 3:
-					cl.MythicLevel(true)
-				case 4:
 					cl.LegendaryLevel(true)
+				case 4:
+					cl.MythicLevel(true)
 				default:
 					cl.EpicLevel(false)
 				}
