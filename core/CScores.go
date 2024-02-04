@@ -10,6 +10,9 @@ const (
 	CSCORE_TYPE_FRIENDS int = 400
 	CSCORE_TYPE_TOP     int = 401
 	CSCORE_TYPE_WEEK    int = 402
+	CSCORE_PLAT_FRIENDS     = 500
+	CSCORE_PLAT_TOP         = 501
+	CSCORE_PLAT_WEEK        = 502
 )
 
 type CScores struct {
@@ -63,6 +66,34 @@ func (cs *CScores) GetScoresForLevelId(lvlId int, types int, acc CAccount) []CSc
 		} else {
 			xcs.Ranking = 3
 		}
+		scores = append(scores, xcs)
+	}
+	return scores
+}
+
+func (cs *CScores) GetScoresForPlatformerLevelId(lvlId int, types int, modeCoins bool, acc CAccount) []CScores {
+	var suffix string
+	switch types {
+	case CSCORE_PLAT_WEEK:
+		date := strings.Split(time.Now().AddDate(0, 0, 8-int(time.Now().Weekday())).Format("2006-01-02 15:04:05"), " ")[0] + " 00:00:00"
+		suffix = "AND postedTime>='" + date + "'"
+	case CSCORE_PLAT_FRIENDS:
+		acc.LoadSocial()
+		cf := CFriendship{DB: cs.DB}
+		frs := cf.GetAccFriends(acc)
+		frs = append(frs, acc.Uid)
+		xfrs := strings.Trim(strings.Join(strings.Fields(fmt.Sprint(frs)), ","), "[]")
+		suffix = "AND uid IN(" + strings.ReplaceAll(xfrs, ",,", ",") + ")"
+	}
+	req := cs.DB.ShouldQuery("SELECT uid,lvl_id,postedTime,percent,attempts,coins FROM #DB#.scores WHERE lvl_id=? "+suffix+" ORDER BY percent DESC", lvlId)
+	var scores []CScores
+	defer req.Close()
+	rankx := 1
+	for req.Next() {
+		xcs := CScores{DB: cs.DB}
+		req.Scan(&xcs.Uid, &xcs.LvlId, &xcs.PostedTime, &xcs.Percent, &xcs.Attempts, &xcs.Coins)
+		xcs.Ranking = rankx
+		rankx++
 		scores = append(scores, xcs)
 	}
 	return scores

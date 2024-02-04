@@ -3,7 +3,6 @@ package core
 import (
 	"math"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -17,6 +16,7 @@ const (
 	CLEVELFILTER_SAFE_DAILY     int = 706
 	CLEVELFILTER_SAFE_WEEKLY    int = 707
 	CLEVELFILTER_SAFE_EVENT     int = 708
+	CLEVELFILTER_SENT           int = 709
 )
 
 type CLevelFilter struct {
@@ -143,13 +143,10 @@ func (filter *CLevelFilter) SearchLevels(page int, params map[string]string, xty
 		orderBy = "uploadDate DESC, downloads DESC"
 	case CLEVELFILTER_MAGIC:
 		orderBy = "uploadDate DESC, downloads DESC"
-		if strings.Contains(suffix, "starsGot>0") {
-			// Old magic
-			query += " AND objects>9999 AND length>=3 AND original_id=0"
-		} else {
-			// New magic
-			query += " AND EXISTS (SELECT id FROM #DB#.rateQueue WHERE #DB#.levels.id = #DB#.rateQueue.lvl_id)"
-		}
+		query += " AND objects>9999 AND length>=3 AND original_id=0"
+	case CLEVELFILTER_SENT:
+		orderBy = "uploadDate DESC, downloads DESC"
+		query += " AND EXISTS (SELECT id FROM #DB#.rateQueue WHERE #DB#.levels.id = #DB#.rateQueue.lvl_id)"
 	case CLEVELFILTER_HALL:
 		query += " AND isEpic>=1"
 		orderBy = "likes DESC, downloads DESC"

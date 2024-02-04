@@ -31,7 +31,7 @@ type CLevel struct {
 	VersionGame     int
 	VersionBinary   int
 	StringExtra     string
-	StringSettings  string
+	StringSettings  string // FUCKING SONG IDS ; SFX IDS (song;sfx)
 	StringLevel     string
 	StringLevelInfo string
 	OrigId          int
@@ -266,7 +266,7 @@ func (lvl *CLevel) LegendaryLevel(legend bool) {
 	lvl.DB.ShouldExec("UPDATE #DB#.levels SET isEpic=? WHERE id=?", epicd, lvl.Id)
 	lvl.RecalculateCPoints(lvl.Uid)
 }
-func (lvl *CLevel) GodlikeLevel(legend bool) {
+func (lvl *CLevel) MythicLevel(legend bool) {
 	var epicd int
 	if legend {
 		epicd = 3

@@ -155,7 +155,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 				io.WriteString(resp, "-1")
 			}
 		case 4:
-			core.SendMessageDiscord("Like 4: " + strconv.Itoa(itemId) + " by " + strconv.Itoa(xacc.Uid))
 			clist := core.CLevelList{DB: db, ID: itemId}
 			if clist.Exists(itemId) {
 				core.SendMessageDiscord("Exists")

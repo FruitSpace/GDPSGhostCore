@@ -165,7 +165,7 @@ func (lg *Logger) Must(err error) {
 }
 
 func (lg *Logger) Should(err error) error {
-	if err != nil && err != redis.Nil {
+	if err != nil && err != redis.Nil && err.Error() != ".ignore" {
 		sentry.CaptureException(err)
 		ReportFail(err.Error())
 		lg.LogWarn(err, err.Error())
@@ -465,8 +465,15 @@ func DiffToText(stars int, demonDiff int, isFeatured int, isEpic int) string {
 	if isEpic > 0 {
 		return diff + "-epic"
 	}
-	if isFeatured > 0 {
+	switch isFeatured {
+	case 1:
 		return diff + "-featured"
+	case 2:
+		return diff + "-epic"
+	case 3:
+		return diff + "-mythic"
+	case 4:
+		return diff + "-legendary"
 	}
 	return diff
 }

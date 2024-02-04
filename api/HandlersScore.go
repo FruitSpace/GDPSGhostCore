@@ -132,6 +132,98 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	}
 }
 
+func GetLevelPlatScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
+	IPAddr := req.Header.Get("CF-Connecting-IP")
+	if IPAddr == "" {
+		IPAddr = req.Header.Get("X-Real-IP")
+	}
+	if IPAddr == "" {
+		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
+	}
+	vars := gorilla.Vars(req)
+	logger := core.Logger{Output: os.Stderr}
+	config, err := conf.LoadById(vars["gdps"])
+	if logger.Should(err) != nil {
+		return
+	}
+	if core.CheckIPBan(IPAddr, config) {
+		return
+	}
+	//Get:=req.URL.Query()
+	Post := ReadPost(req)
+	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
+		db := &core.MySQLConn{}
+		defer db.CloseDB()
+		if logger.Should(db.ConnectBlob(config)) != nil {
+			return
+		}
+		xacc := core.CAccount{DB: db}
+		if !xacc.PerformGJPAuth(Post, IPAddr) {
+			io.WriteString(resp, "-1")
+			return
+		}
+
+		cs := core.CScores{DB: db}
+
+		var percent, time, points, attempts, coins, lvlId, xtype, mode int
+		core.TryInt(&lvlId, Post.Get("levelID"))
+		core.TryInt(&xtype, Post.Get("type"))
+		core.TryInt(&mode, Post.Get("mode"))
+		core.TryInt(&percent, Post.Get("percent"))
+		core.TryInt(&points, Post.Get("points"))
+		core.TryInt(&time, Post.Get("time"))
+		core.TryInt(&attempts, Post.Get("s1"))
+		core.TryInt(&coins, Post.Get("s9"))
+
+		// COINS = POINTS
+		// ATTEMPTS = TIME
+		//1: Username
+		//2: playerID
+		//3: время прохождения в миллисекундах или поинты
+		//6: ранг
+		//9: иконка
+		//10: цвет1
+		//11: цвет2
+		//14: тип иконки
+		//15: special
+		//16: accountID
+		//42: как давно
+		percent = int(math.Abs(float64(percent))) % 101
+		attempts = int(math.Abs(float64(attempts)))
+		if percent > 0 && attempts > 0 {
+			// Upload score
+			cs.Attempts = time
+			cs.Coins = points
+			cs.Uid = xacc.Uid
+			cs.LvlId = lvlId
+			cs.Percent = percent
+			if cs.ScoreExistsByUid(xacc.Uid, lvlId) {
+				cs.UpdateLevelScore()
+			} else {
+				cs.UploadLevelScore()
+			}
+		}
+		//Retrieve all scores
+		scores := cs.GetScoresForPlatformerLevelId(lvlId, xtype%4+500, mode == 1, xacc)
+		if len(scores) == 0 {
+			io.WriteString(resp, "-2")
+			return
+		}
+		out := ""
+		for _, score := range scores {
+			if mode == 1 {
+				score.Percent = score.Coins
+			} else {
+				score.Percent = score.Attempts
+			}
+			out += connectors.GetLeaderboardScore(score)
+		}
+		io.WriteString(resp, out[:len(out)-1])
+	} else {
+		io.WriteString(resp, "-1")
+	}
+}
+
 func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
 	IPAddr := req.Header.Get("CF-Connecting-IP")
 	if IPAddr == "" {

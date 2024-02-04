@@ -30,11 +30,12 @@ func InvokeCommands(db *MySQLConn, cl CLevel, acc CAccount, comment string, isOw
 		cl.LegendaryLevel(true)
 		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Legendary"}, db)
 		return "ok"
-	case "!godlike":
+	case "!mythic":
 		if role.RoleName == "" || role.Privs["cEpic"] != 1 {
 			return privErr("cEpic")
 		}
-		cl.FeatureLevel(4)
+		cl.FeatureLevel(2)
+		cl.MythicLevel(true)
 		RegisterAction(ACTION_LEVEL_RATE, acc.Uid, cl.Id, map[string]string{"uname": acc.Uname, "type": "Feature"}, db)
 		return "ok"
 	case "!unfeature":

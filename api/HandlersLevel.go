@@ -4,7 +4,6 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
-	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -45,11 +44,6 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 }
 
 //region Lists
-
-func GetLevelLists(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	Post := ReadPost(req)
-	core.SendMessageDiscord(Post.Encode())
-}
 
 func LevelListDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
 	IPAddr := req.Header.Get("CF-Connecting-IP")
@@ -187,12 +181,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		return
 	}
 
-	metrics := core.NewGoMetrics()
-	defer func() {
-		go core.SendMessageDiscord(fmt.Sprintf("### %s perfromance debug V2\n%s", vars["gdps"], metrics.DumpText()))
-	}()
-	metrics.NewStep("Parsing")
-
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	log.Printf("%s: %s\n", vars["gdps"], Post)
@@ -252,6 +240,8 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_TRENDING)
 	case "4":
 		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_LATEST)
+	case "5":
+		lists = filter.SearchUserLists(page, Params, false) //User lists (uid in sterm)
 	case "7":
 		lists = filter.SearchLists(page, Params, core.CLEVELLISTFILTER_MAGIC) // Robtop lobotomy
 	case "11":
@@ -299,7 +289,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 
 	//Output, begins!
 	if len(lists) == 0 {
-		metrics.Done()
 		io.WriteString(resp, "-2")
 		return
 	}
@@ -307,8 +296,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	out := ""
 	lvlHash := ""
 	usrstring := ""
-
-	metrics.NewStep("Levels Fetch")
 	listCore := core.CLevelList{DB: db}
 	llistsX := listCore.LoadBulkSearch(lists)
 
@@ -322,8 +309,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 			}
 		}
 	}
-
-	metrics.NewStep("Levels parse")
 	for _, list := range llists {
 		lvlS, usrH, lvlH := connectors.GetListSearch(list)
 		out += lvlS
@@ -341,8 +326,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 			usrstring[:len(usrstring)-1]+"#"+
 			s(filter.Count)+":"+s(page*10)+":10#"+
 			core.HashSolo2(lvlHash))
-
-	metrics.Done()
 
 }
 
@@ -755,10 +738,6 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		case "4":
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_LATEST)
 		case "5":
-			if Post.Has("uuid") {
-				// If user is unauthorized, we don't want to show his levels
-				Params["sterm"] = "0"
-			}
 			levels = filter.SearchUserLevels(page, Params, false) //User levels (uid in sterm)
 		case "6":
 			fallthrough
@@ -823,6 +802,8 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			clist.OnDownloadList()
 			clist.Load(lid)
 			levels = core.Decompose(core.QuickComma(clist.Levels), ",")
+		case "27":
+			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_SENT) //SENT
 		default:
 			levels = filter.SearchLevels(page, Params, core.CLEVELFILTER_MOSTLIKED)
 		}
@@ -1087,6 +1068,8 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		cl.StringLevelInfo = core.ClearGDRequest(Post.Get("levelInfo"))
 		core.TryInt(&cl.VersionBinary, Post.Get("binaryVersion"))
 		core.TryInt(&cl.Id, Post.Get("levelID"))
+		cl.StringSettings = core.ClearGDRequest(Post.Get("songIDs")) + ";" + core.ClearGDRequest(Post.Get("sfxIDs"))
+
 		cl.UnlockLevelObject = config.SecurityConfig.NoLevelLimits
 
 		if cl.IsOwnedBy(xacc.Uid) {
@@ -1323,6 +1306,16 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 				}
 				cl.RateLevel(diff)
 				cl.FeatureLevel(isFeature % 5)
+				switch isFeature {
+				case 2:
+					cl.EpicLevel(true)
+				case 3:
+					cl.MythicLevel(true)
+				case 4:
+					cl.LegendaryLevel(true)
+				default:
+					cl.EpicLevel(false)
+				}
 				if config.ServerConfig.EnableModules["discord"] {
 					cl.LoadMain()
 					cl.LoadParams()

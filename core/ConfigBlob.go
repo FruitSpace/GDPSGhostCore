@@ -101,7 +101,7 @@ func (glob *GlobalConfig) LoadById(Srvid string) (ConfigBlob, error) {
 	}
 	rdb.DB.Close()
 	if conf.ServerConfig.Locked {
-		return ConfigBlob{}, errors.New(Srvid + ": Server is locked")
+		return ConfigBlob{}, errors.New(".ignore")
 	}
 	return conf, nil
 }

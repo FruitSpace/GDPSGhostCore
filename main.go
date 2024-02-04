@@ -53,48 +53,6 @@ func main() {
 	defer core.StepDown()
 
 	ghostServer.StartServer("0.0.0.0:1997")
-
-}
-
-func GenConfig() core.ConfigBlob {
-	return core.ConfigBlob{
-		DBConfig: core.MysqlConfig{
-			"localhost",
-			3306,
-			"halogen",
-			"D0wn_Th3_r4BB1t_H0lE_731",
-			"gdps_0002",
-		},
-		LogConfig: core.LogConfig{
-			true,
-			false,
-			false,
-			false,
-		},
-		ChestConfig: core.ChestConfig{
-			200, 400, 2, 10,
-			[]int{1, 2, 3, 4, 5, 6}, 1, 6, 3600,
-			2000, 4000, 20, 100,
-			[]int{1, 2, 3, 4, 5, 6}, 1, 6, 14400,
-		},
-		ServerConfig: core.ServerConfig{
-			"0002",
-			"SRV_KEY",
-			100,
-			500,
-			1000,
-			1000,
-			true,
-			false,
-			100,
-			map[string]bool{"discord": true},
-		},
-		SecurityConfig: core.SecurityConfig{
-			DisableProtection: false,
-			AutoActivate:      false,
-			BannedIPs:         []string{},
-		},
-	}
 }
 
 func GenGConfig() core.GlobalConfig {
