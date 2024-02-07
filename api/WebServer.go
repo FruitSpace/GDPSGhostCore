@@ -122,6 +122,10 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	//"/db/content/sfx/sfxlibrary.dat":         GetSFXLibrary,
 	//"/db/content/sfx/sfxlibrary_version.txt": GetSFXLibraryVersion,
 	//"/db/content/sfx/s{sfxid}.ogg":           GetSFXTrack,
+
+	"/db/content/music/musiclibrary.dat":         GetMusicLibrary,
+	"/db/content/music/musiclibrary_version.txt": GetMusicLibraryVersion,
+	"/db/mp3": GetSongInfo,
 }
 
 var RouteIntegraMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalConfig){

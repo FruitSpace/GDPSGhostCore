@@ -3,6 +3,7 @@ package api
 import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -35,7 +36,14 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	}
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
-	if Post.Get("songID") != "" {
+	songid := Post.Get("songID")
+	linkmode := false
+	if songid == "" {
+		songid = req.URL.Query().Get("id")
+		fmt.Println(req.URL.Query().Encode(), req.URL.Query().Get("id"))
+		linkmode = true
+	}
+	if songid != "" {
 		db := &core.MySQLConn{}
 		defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config)) != nil {
@@ -43,9 +51,14 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		}
 		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
 		var id int
-		core.TryInt(&id, Post.Get("songID"))
+		core.TryInt(&id, songid)
 		if mus.GetSong(id) {
-			io.WriteString(resp, connectors.GetMusic(mus))
+			if linkmode {
+				resp.Header().Set("Location", mus.Url)
+				resp.WriteHeader(301)
+			} else {
+				io.WriteString(resp, connectors.GetMusic(mus))
+			}
 		} else {
 			io.WriteString(resp, "-1")
 		}
