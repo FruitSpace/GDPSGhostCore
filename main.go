@@ -34,8 +34,9 @@ func main() {
 
 	DB_USER := EnvOrDefault("DB_USER", "")
 	DB_PASS := EnvOrDefault("DB_PASS", "")
+	DB_HOST := EnvOrDefault("DB_HOST", "")
 
-	core.DBTunnel, err = sqlx.Connect("mysql", DB_USER+":"+DB_PASS+"@tcp(localhost:3306)/")
+	core.DBTunnel, err = sqlx.Connect("mysql", DB_USER+":"+DB_PASS+"@tcp("+DB_HOST+":3306)/")
 	if err != nil {
 		log.Println("Error while connecting to " + DB_USER + "@localhost: " + err.Error())
 		time.Sleep(10 * time.Second)
