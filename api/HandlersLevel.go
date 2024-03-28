@@ -4,6 +4,7 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
+	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -580,7 +581,12 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 
 	//Get:=req.URL.Query()
 	Post := ReadPost(req)
-	log.Printf("%s: %s\n", vars["gdps"], Post)
+	// Check cache
+	cacheKey := fmt.Sprintf("%s/getLevels/%s", vars["gdps"], Post.Encode())
+	if res, errx := cached(cacheKey); errx == nil {
+		io.WriteString(resp, res)
+		return
+	}
 
 	var mode, page int
 	core.TryInt(&mode, Post.Get("type"))
@@ -812,41 +818,19 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	//Output, begins!
 	if len(levels) == 0 {
 		metrics.Done()
-		io.WriteString(resp, "-2")
+		io.WriteString(resp, withCache(cacheKey, "-2"))
 		return
 	}
 
-	//fmt.Println(levels)
-	//fmt.Println(Params)
 	out := ""
 	lvlHash := ""
 	usrstring := ""
 	musStr := ""
 	var musQueue []int
-	//for _, lvl := range levels {
-	//	metrics.NewStep("Level " + strconv.Itoa(lvl))
-	//	cl := core.CLevel{DB: db, Id: lvl}
-	//	cl.LoadAll()
-	//if core.GetGDVersion(Post) == 22 {
-	//	cl.VersionGame = 21
-	//}
-	//	lvlS, lvlH, usrH := connectors.GetLevelSearch(cl, Gauntlet != 0)
-	//	out += lvlS
-	//	lvlHash += lvlH
-	//	usrstring += usrH
-	//
-	//	if cl.SongId != 0 {
-	//		musQueue = append(musQueue, cl.SongId)
-	//	}
-	//}
 
 	metrics.NewStep("Levels Fetch")
 	lvlCore := core.CLevel{DB: db}
 	lvlsX := lvlCore.LoadBulkSearch(levels)
-	// Sort lvlsX so they go by ids going in levels variable
-	//sort.SliceStable(lvlsX, func(i, j int) bool {
-	//	return lvlsX[i].Id < lvlsX[j].Id
-	//})
 
 	var lvls []core.CLevel
 	for _, lvlid := range levels {
@@ -893,12 +877,12 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		usrstring = "x"
 	}
 
-	io.WriteString(resp,
-		out[:len(out)-1]+"#"+
-			usrstring[:len(usrstring)-1]+"#"+
-			musStr[:len(musStr)-3]+"#"+
-			s(filter.Count)+":"+s(page*10)+":10#"+
-			core.HashSolo2(lvlHash))
+	pdata := out[:len(out)-1] + "#" +
+		usrstring[:len(usrstring)-1] + "#" +
+		musStr[:len(musStr)-3] + "#" +
+		s(filter.Count) + ":" + s(page*10) + ":10#" +
+		core.HashSolo2(lvlHash)
+	io.WriteString(resp, withCache(cacheKey, pdata))
 
 	metrics.Done()
 

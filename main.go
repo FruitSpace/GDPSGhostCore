@@ -49,7 +49,7 @@ func main() {
 		},
 		Config: config,
 	}
-
+	api.InitCache(config, 16)
 	core.PrepareElection(config)
 	defer core.StepDown()
 
@@ -69,11 +69,7 @@ func GenGConfig() core.GlobalConfig {
 		7,
 		EnvOrDefault("SAVE_PATH", "./"),
 
-		map[string]string{
-			"rabbitmq_host":     "auto",
-			"rabbitmq_user":     "m41dss",
-			"rabbitmq_password": EnvOrDefault("RABBITMQ_PASSWORD", "None"),
-		},
+		map[string]string{},
 	}
 }
 

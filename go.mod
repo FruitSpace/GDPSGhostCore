@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/consul/api v1.27.0
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/lesismal/arpc v1.2.14
 	github.com/rabbitmq/amqp091-go v1.9.0
 	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 )
@@ -30,7 +31,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.1 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
-	github.com/lesismal/arpc v1.2.14 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
