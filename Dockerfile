@@ -2,7 +2,7 @@ FROM golang:1.22 as builder
 RUN mkdir /app
 WORKDIR /app
 COPY . .
-RUN go mod tidy && \
+RUN go mod download && \
     go install github.com/gordonklaus/ineffassign@latest && \
     go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o HalogenGhostCore .

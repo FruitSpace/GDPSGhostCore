@@ -24,6 +24,6 @@ func cached(key string) (string, error) {
 
 func withCache(key string, value string) string {
 	ctx := context.Background()
-	go cacheClient.Set(ctx, key, value, time.Second*2)
+	cacheClient.Set(ctx, key, value, time.Second*2)
 	return value
 }

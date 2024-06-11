@@ -59,7 +59,7 @@ func main() {
 func GenGConfig() core.GlobalConfig {
 	return core.GlobalConfig{
 		EnvOrDefault("MASTER_KEY", "3XTR4OrD1nArY_K3Y_1907"),
-		EnvOrDefault("API_ENDPOINT", "https://api.fruitspace.one/sched/gd/api"),
+		EnvOrDefault("API_ENDPOINT", "http://127.0.0.1:6000/sched/gd/api"),
 		"stdout",
 		"null",
 		false,

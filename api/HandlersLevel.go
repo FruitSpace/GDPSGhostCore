@@ -574,9 +574,9 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	}
 
 	metrics := core.NewGoMetrics()
-	//defer func() {
-	//	go core.SendMessageDiscord(fmt.Sprintf("### %s perfromance debug V2\n%s", vars["gdps"], metrics.DumpText()))
-	//}()
+	defer func() {
+		log.Printf("### %s perfromance debug V2\n%s", vars["gdps"], metrics.DumpText())
+	}()
 	metrics.NewStep("Parsing")
 
 	//Get:=req.URL.Query()
