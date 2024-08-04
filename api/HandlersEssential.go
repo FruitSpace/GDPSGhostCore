@@ -170,7 +170,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 		case 4:
 			clist := core.CLevelList{DB: db, ID: itemId}
 			if clist.Exists(itemId) {
-				core.SendMessageDiscord("Exists")
 				likeAction := core.CLEVEL_ACTION_DISLIKE
 				if like {
 					likeAction = core.CLEVEL_ACTION_LIKE
@@ -178,7 +177,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 				clist.LikeList(itemId, xacc.Uid, likeAction)
 				io.WriteString(resp, "1")
 			} else {
-				core.SendMessageDiscord("Not exists")
 				io.WriteString(resp, "-1")
 			}
 		default:
