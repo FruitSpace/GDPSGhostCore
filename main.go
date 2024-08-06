@@ -1,6 +1,3 @@
-//go:build (linux && amd64) || (windows && amd64)
-// +build linux,amd64 windows,amd64
-
 package main
 
 import (
@@ -58,18 +55,16 @@ func main() {
 
 func GenGConfig() core.GlobalConfig {
 	return core.GlobalConfig{
-		EnvOrDefault("MASTER_KEY", "3XTR4OrD1nArY_K3Y_1907"),
-		EnvOrDefault("API_ENDPOINT", "http://127.0.0.1:6000/sched/gd/api"),
-		"stdout",
-		"null",
-		false,
-		EnvOrDefault("REDIS_HOST", "localhost"),
-		EnvOrDefault("REDIS_PORT", "6379"),
-		EnvOrDefault("REDIS_PASSWORD", ""),
-		7,
-		EnvOrDefault("SAVE_PATH", "./"),
-
-		map[string]string{},
+		MasterKey:      EnvOrDefault("MASTER_KEY", "3XTR4OrD1nArY_K3Y_1907"),
+		ApiEndpoint:    EnvOrDefault("API_ENDPOINT", "http://127.0.0.1:6000/sched/gd/api"),
+		LogConnector:   "stdout",
+		LogEndpoint:    "null",
+		RedisHost:      EnvOrDefault("REDIS_HOST", "localhost"),
+		RedisPort:      EnvOrDefault("REDIS_PORT", "6379"),
+		RedisPassword:  EnvOrDefault("REDIS_PASSWORD", ""),
+		RedisDB:        7,
+		SavePath:       EnvOrDefault("SAVE_PATH", "./"),
+		ModuleSettings: map[string]string{},
 	}
 }
 
