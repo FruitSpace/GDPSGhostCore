@@ -8,15 +8,15 @@ import (
 )
 
 type CMessage struct {
-	Id         int
-	UidSrc     int
-	UidDest    int
-	Subject    string
-	Message    string
-	PostedTime string
-	IsNew      bool
+	Id         int    `json:"id"`
+	UidSrc     int    `json:"uid_src"`
+	UidDest    int    `json:"uid_dest"`
+	Subject    string `json:"subject"`
+	Message    string `json:"message"`
+	PostedTime string `json:"posted_time"`
+	IsNew      bool   `json:"is_new"`
 
-	DB *MySQLConn
+	DB *MySQLConn `json:"-"`
 }
 
 func (cm *CMessage) Exists(id int) bool {

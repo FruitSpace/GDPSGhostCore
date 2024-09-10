@@ -74,7 +74,18 @@ func (c *GDConnector) Comment_HistoryGet(comments []core.CComment, acc core.CAcc
 	}
 }
 
-// GetAccountComment used to retrieve account comments (iterative, w/o hash)
+func (c *GDConnector) Communication_FriendGetRequests(reqs []map[string]string, count int, page int) {
+	for _, frq := range reqs {
+		c.output += c.getFriendRequest(frq)
+	}
+	c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
+}
+
+func (c *GDConnector) Communication_MessageGet(message core.CMessage, uid int) {
+	c.output = c.getMessage(message, uid)
+}
+
+// getAccountComment used to retrieve account comments (iterative, w/o hash)
 func (c *GDConnector) getAccountComment(comment core.CComment) string {
 	s := strconv.Itoa
 	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
@@ -85,7 +96,7 @@ func (c *GDConnector) getAccountComment(comment core.CComment) string {
 	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) + "~9~" + age + "|"
 }
 
-// GetLevelComment used to retrieve level comment (iterative, w/o hash)
+// getLevelComment used to retrieve level comment (iterative, w/o hash)
 func (c *GDConnector) getLevelComment(comment core.CComment) string {
 	s := strconv.Itoa
 	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
@@ -109,7 +120,7 @@ func (c *GDConnector) getLevelComment(comment core.CComment) string {
 		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + s(acc.Uid) + "|"
 }
 
-// GetCommentHistory used to retrieve level comment history of a user (iterative, w/o hash)
+// getCommentHistory used to retrieve level comment history of a user (iterative, w/o hash)
 func (c *GDConnector) getCommentHistory(comment core.CComment, acc core.CAccount, role core.Role) string {
 	s := strconv.Itoa
 	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
@@ -123,6 +134,35 @@ func (c *GDConnector) getCommentHistory(comment core.CComment, acc core.CAccount
 	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) +
 		"~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + "~12~" + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
 		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + "~16~" + s(acc.Uid) + "|"
+}
+
+// getFriendRequest used to get friend request item (iterative, w/o hash)
+func (c *GDConnector) getFriendRequest(frq map[string]string) string {
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", frq["date"], loc)
+	if err != nil {
+		t = time.Now()
+	}
+	age := core.GetDateAgo(t.Unix())
+	return "1:" + frq["uname"] + ":2:" + frq["uid"] + ":9:" + frq["iconId"] + ":10:" + frq["clr_primary"] + ":11:" + frq["clr_secondary"] +
+		":14:" + frq["iconType"] + ":15:" + frq["special"] + ":16:" + frq["uid"] + ":32:" + frq["id"] + ":35:" + frq["comment"] + ":37:" + age + ":41:" + frq["isNew"] + "|"
+}
+
+// getMessage used to retrieve single message (w/o trailing hash)
+func (c *GDConnector) getMessage(msg core.CMessage, uid int) string {
+	s := strconv.Itoa
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", msg.PostedTime, loc)
+	if err != nil {
+		t = time.Now()
+	}
+	age := core.GetDateAgo(t.Unix())
+	uidx := msg.UidDest
+	if uid == msg.UidDest {
+		uidx = msg.UidSrc
+	}
+	xacc := core.CAccount{DB: msg.DB, Uid: uidx}
+	xacc.LoadAuth(core.CAUTH_UID)
+	return "1:" + s(msg.Id) + ":2:" + s(uidx) + ":3:" + s(uidx) + ":4:" + msg.Subject + ":5:" + msg.Message + ":6:" + xacc.Uname + ":7:" + age +
+		":8:" + s(core.ToInt(!msg.IsNew)) + ":9:" + s(core.ToInt(uid == msg.UidSrc))
 }
 
 //
@@ -163,35 +203,6 @@ func UserSearchItem(acc core.CAccount) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
-
-// GetFriendRequest used to get friend request item (iterative, w/o hash)
-func GetFriendRequest(frq map[string]string) string {
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", frq["date"], loc)
-	if err != nil {
-		t = time.Now()
-	}
-	age := core.GetDateAgo(t.Unix())
-	return "1:" + frq["uname"] + ":2:" + frq["uid"] + ":9:" + frq["iconId"] + ":10:" + frq["clr_primary"] + ":11:" + frq["clr_secondary"] +
-		":14:" + frq["iconType"] + ":15:" + frq["special"] + ":16:" + frq["uid"] + ":32:" + frq["id"] + ":35:" + frq["comment"] + ":37:" + age + ":41:" + frq["isNew"] + "|"
-}
-
-// GetMessage used to retrieve single message (w/o trailing hash)
-func GetMessage(msg core.CMessage, uid int) string {
-	s := strconv.Itoa
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", msg.PostedTime, loc)
-	if err != nil {
-		t = time.Now()
-	}
-	age := core.GetDateAgo(t.Unix())
-	uidx := msg.UidDest
-	if uid == msg.UidDest {
-		uidx = msg.UidSrc
-	}
-	xacc := core.CAccount{DB: msg.DB, Uid: uidx}
-	xacc.LoadAuth(core.CAUTH_UID)
-	return "1:" + s(msg.Id) + ":2:" + s(uidx) + ":3:" + s(uidx) + ":4:" + msg.Subject + ":5:" + msg.Message + ":6:" + xacc.Uname + ":7:" + age +
-		":8:" + s(core.ToInt(!msg.IsNew)) + ":9:" + s(core.ToInt(uid == msg.UidSrc))
 }
 
 // GetMessageStr used to get message item (iterative, w/o hash)

@@ -84,3 +84,30 @@ func (c *JSONConnector) Comment_HistoryGet(comments []core.CComment, acc core.CA
 		acc.Special,
 	}
 }
+
+func (c *JSONConnector) Communication_FriendGetRequests(reqs []map[string]string, count int, page int) {
+	c.output["requests"] = reqs
+	c.output["count"] = count
+	c.output["page"] = page
+	c.Success("Friend requests retrieved")
+}
+
+func (c *JSONConnector) Communication_MessageGet(msg core.CMessage, uid int) {
+	if content, err := base64.StdEncoding.DecodeString(msg.Message); err == nil {
+		msg.Message = string(content)
+	}
+	uidx := msg.UidDest
+	if uid == msg.UidDest {
+		uidx = msg.UidSrc
+	}
+	xacc := core.CAccount{DB: msg.DB, Uid: uidx}
+	xacc.LoadAuth(core.CAUTH_UID)
+	c.output["content"] = struct {
+		core.CMessage
+		Uname string `json:"uname"`
+	}{
+		msg,
+		xacc.Uname,
+	}
+	c.Success("Message retrieved")
+}
