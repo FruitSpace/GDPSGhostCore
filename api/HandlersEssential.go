@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 )
 
 func GetAccountUrl(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
@@ -18,13 +17,7 @@ func GetAccountUrl(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 }
 
 func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
@@ -68,13 +61,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 }
 
 func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
@@ -105,13 +92,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 }
 
 func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
@@ -188,13 +169,7 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 }
 
 func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
 	config, err := conf.LoadById(vars["gdps"])
