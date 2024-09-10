@@ -2,6 +2,7 @@ package connectors
 
 import (
 	"HalogenGhostCore/core"
+	"encoding/base64"
 	"encoding/json"
 	"strconv"
 )
@@ -42,9 +43,44 @@ func (c *JSONConnector) Comment_AccountGet(comments []core.CComment, count int, 
 		c.output["count"] = 0
 		c.output["page"] = page
 	} else {
-		c.output["comments"] = comments
+		cms := make([]core.CComment, 0)
+		for _, comm := range comments {
+			if r, err := base64.StdEncoding.DecodeString(comm.Comment); err == nil {
+				comm.Comment = string(r)
+			}
+			cms = append(cms, comm)
+		}
+
+		c.output["comments"] = cms
 		c.output["count"] = count
 		c.output["page"] = page
 	}
 	c.Success("Comments retrieved")
+}
+
+func (c *JSONConnector) Comment_LevelGet(comments []core.CComment, count int, page int) {
+	c.Comment_AccountGet(comments, count, page)
+}
+
+func (c *JSONConnector) Comment_HistoryGet(comments []core.CComment, acc core.CAccount, role core.Role, count int, page int) {
+	c.Comment_AccountGet(comments, count, page)
+	c.output["user"] = struct {
+		ModBadge       int    `json:"mod_badge"`
+		CommentColor   string `json:"comment_color"`
+		Uname          string `json:"uname"`
+		IconId         int    `json:"icon_id"`
+		IconType       int    `json:"icon_type"`
+		ColorPrimary   int    `json:"color_primary"`
+		ColorSecondary int    `json:"color_secondary"`
+		Special        int    `json:"special"`
+	}{
+		role.ModLevel,
+		role.CommentColor,
+		acc.Uname,
+		acc.GetShownIcon(),
+		acc.IconType,
+		acc.ColorPrimary,
+		acc.ColorSecondary,
+		acc.Special,
+	}
 }

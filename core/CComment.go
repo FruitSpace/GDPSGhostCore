@@ -6,17 +6,17 @@ import (
 )
 
 type CComment struct {
-	Id         int
-	Uid        int
-	Likes      int
-	PostedTime string
-	Comment    string
+	Id         int    `json:"id"`
+	Uid        int    `json:"uid"`
+	Likes      int    `json:"likes"`
+	PostedTime string `json:"posted_time"`
+	Comment    string `json:"comment"`
 
-	LvlId   int
-	Percent int
-	IsSpam  bool
+	LvlId   int  `json:"lvl_id"`
+	Percent int  `json:"percent"`
+	IsSpam  bool `json:"is_spam"`
 
-	DB *MySQLConn
+	DB *MySQLConn `json:"-"`
 }
 
 func (cc *CComment) ExistsLevelComment(id int) bool {

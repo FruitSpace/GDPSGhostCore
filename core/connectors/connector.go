@@ -15,6 +15,8 @@ type Connector interface {
 	Account_Sync(savedata string)
 	Account_Login(uid int)
 	Comment_AccountGet(comments []core.CComment, count int, page int)
+	Comment_LevelGet(comments []core.CComment, count int, page int)
+	Comment_HistoryGet(comments []core.CComment, acc core.CAccount, role core.Role, count int, page int)
 }
 
 func NewConnector(isJson bool) Connector {

@@ -52,6 +52,28 @@ func (c *GDConnector) Comment_AccountGet(comments []core.CComment, count int, pa
 	}
 }
 
+func (c *GDConnector) Comment_LevelGet(comments []core.CComment, count int, page int) {
+	if len(comments) == 0 {
+		c.output = "#0:0:0"
+	} else {
+		for _, comm := range comments {
+			c.output += c.getLevelComment(comm)
+		}
+		c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
+	}
+}
+
+func (c *GDConnector) Comment_HistoryGet(comments []core.CComment, acc core.CAccount, role core.Role, count int, page int) {
+	if len(comments) == 0 {
+		c.output = "#0:0:0"
+	} else {
+		for _, comm := range comments {
+			c.output += c.getCommentHistory(comm, acc, role)
+		}
+		c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
+	}
+}
+
 // GetAccountComment used to retrieve account comments (iterative, w/o hash)
 func (c *GDConnector) getAccountComment(comment core.CComment) string {
 	s := strconv.Itoa
@@ -62,6 +84,52 @@ func (c *GDConnector) getAccountComment(comment core.CComment) string {
 	age := core.GetDateAgo(t.Unix())
 	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) + "~9~" + age + "|"
 }
+
+// GetLevelComment used to retrieve level comment (iterative, w/o hash)
+func (c *GDConnector) getLevelComment(comment core.CComment) string {
+	s := strconv.Itoa
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
+	if err != nil {
+		t = time.Now()
+	}
+	age := core.GetDateAgo(t.Unix())
+	acc := core.CAccount{DB: comment.DB, Uid: comment.Uid}
+	if !acc.Exists(comment.Uid) {
+		return ""
+	}
+	acc.LoadAuth(core.CAUTH_UID)
+	acc.LoadStats()
+	acc.LoadVessels()
+	role := acc.GetRoleObj(false)
+	if role.CommentColor != "" {
+		role.CommentColor = "~12~" + role.CommentColor
+	}
+	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) +
+		"~8~" + s(comment.Uid) + "~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
+		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + s(acc.Uid) + "|"
+}
+
+// GetCommentHistory used to retrieve level comment history of a user (iterative, w/o hash)
+func (c *GDConnector) getCommentHistory(comment core.CComment, acc core.CAccount, role core.Role) string {
+	s := strconv.Itoa
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
+	if err != nil {
+		t = time.Now()
+	}
+	age := core.GetDateAgo(t.Unix())
+	if role.CommentColor != "" {
+		role.CommentColor = "~12~" + role.CommentColor
+	}
+	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) +
+		"~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + "~12~" + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
+		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + "~16~" + s(acc.Uid) + "|"
+}
+
+//
+//
+//
+//
+//
 
 // GetUserProfile used at getUserInfo (w/o trailing hash)
 func GetUserProfile(acc core.CAccount, isFriend bool) string {
@@ -95,46 +163,6 @@ func UserSearchItem(acc core.CAccount) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
-
-// GetLevelComment used to retrieve level comment (iterative, w/o hash)
-func GetLevelComment(comment core.CComment) string {
-	s := strconv.Itoa
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
-	if err != nil {
-		t = time.Now()
-	}
-	age := core.GetDateAgo(t.Unix())
-	acc := core.CAccount{DB: comment.DB, Uid: comment.Uid}
-	if !acc.Exists(comment.Uid) {
-		return ""
-	}
-	acc.LoadAuth(core.CAUTH_UID)
-	acc.LoadStats()
-	acc.LoadVessels()
-	role := acc.GetRoleObj(false)
-	if role.CommentColor != "" {
-		role.CommentColor = "~12~" + role.CommentColor
-	}
-	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) +
-		"~8~" + s(comment.Uid) + "~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
-		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + s(acc.Uid) + "|"
-}
-
-// GetCommentHistory used to retrieve level comment history of a user (iterative, w/o hash)
-func GetCommentHistory(comment core.CComment, acc core.CAccount, role core.Role) string {
-	s := strconv.Itoa
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", comment.PostedTime, loc)
-	if err != nil {
-		t = time.Now()
-	}
-	age := core.GetDateAgo(t.Unix())
-	if role.CommentColor != "" {
-		role.CommentColor = "~12~" + role.CommentColor
-	}
-	return "2~" + comment.Comment + "~3~" + s(comment.Uid) + "~4~" + s(comment.Likes) + "~5~0~6~" + s(comment.Id) + "~7~" + s(core.ToInt(comment.IsSpam)) +
-		"~9~" + age + "~10~" + s(comment.Percent) + "~11~" + s(role.ModLevel) + role.CommentColor + ":1~" + acc.Uname + "~9~" + s(acc.GetShownIcon()) +
-		"~10~" + s(acc.ColorPrimary) + "~11~" + s(acc.ColorSecondary) + "~14~" + s(acc.IconType) + "~15~" + s(acc.Special) + s(acc.Uid) + "|"
 }
 
 // GetFriendRequest used to get friend request item (iterative, w/o hash)

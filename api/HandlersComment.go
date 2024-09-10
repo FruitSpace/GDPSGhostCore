@@ -9,8 +9,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 )
 
 func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
@@ -99,17 +97,17 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 }
 
 func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 
@@ -118,6 +116,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	}
 
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -126,45 +125,47 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		comment := core.ClearGDRequest(Post.Get("comment"))
 		cc := core.CComment{DB: db, Uid: xacc.Uid, Comment: comment}
 		protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
-		c := "-1"
 		if !core.OnPost(db, conf, config) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Post limits exceeded")
 			return
 		}
 		if protect.DetectPosts(xacc.Uid) && cc.PostAccComment() {
-			c = "1"
+			connector.Success("Comment posted")
+			return
 		}
-		io.WriteString(resp, c)
+		se()
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -173,11 +174,12 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		cc := core.CComment{DB: db}
@@ -202,27 +204,28 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			}
 		}
 		core.OnComment(db, conf, config)
-		io.WriteString(resp, "1")
+		connector.Success("Comment deleted")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -237,42 +240,35 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		var lvlId int
 		core.TryInt(&lvlId, Post.Get("levelID"))
 		cc := core.CComment{DB: db}
 		comments := cc.GetAllLevelComments(lvlId, page, mode)
-		if len(comments) == 0 {
-			io.WriteString(resp, "#0:0:0")
-		} else {
-			output := ""
-			for _, comm := range comments {
-				output += connectors.GetLevelComment(comm)
-			}
-			io.WriteString(resp, output[:core.MaxInt(len(output)-1, 0)]+"#"+strconv.Itoa(cc.CountLevelComments(lvlId))+":"+strconv.Itoa(page*10)+":10")
-		}
-
+		connector.Comment_LevelGet(comments, cc.CountLevelComments(lvlId), page)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -287,12 +283,13 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		acc := core.CAccount{DB: db}
 		core.TryInt(&acc.Uid, Post.Get("userID"))
 		if !acc.Exists(acc.Uid) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		acc.LoadAuth(core.CAUTH_UID)
@@ -301,36 +298,28 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 		role := acc.GetRoleObj(false)
 		cc := core.CComment{DB: db}
 		comments := cc.GetAllCommentsHistory(acc.Uid, page, mode)
-		if len(comments) == 0 {
-			io.WriteString(resp, "#0:0:0")
-		} else {
-			output := ""
-			for _, comm := range comments {
-				output += connectors.GetCommentHistory(comm, acc, role)
-			}
-			io.WriteString(resp, output[:len(output)-1]+"#"+strconv.Itoa(cc.CountCommentHistory(acc.Uid))+":"+strconv.Itoa(page*10)+":10")
-		}
-
+		connector.Comment_HistoryGet(comments, acc, role, cc.CountCommentHistory(acc.Uid), page)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -339,11 +328,12 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		comment := core.ClearGDRequest(Post.Get("comment"))
@@ -356,26 +346,26 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			// CLevelList
 			list := core.CLevelList{DB: db, ID: cl.Id * -1}
 			if !list.Exists(list.ID) {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Invalid LevelList ID")
 				return
 			}
 			cc := core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 			protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 			if !core.OnComment(db, conf, config) {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Comment limit exceeded")
 				return
 			}
 			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
-				io.WriteString(resp, "1")
+				connector.Success("Comment posted")
 			} else {
-				io.WriteString(resp, "-1")
+				se()
 			}
 			return
 		}
 
 		// Next
 		if !cl.Exists(cl.Id) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Level ID")
 			return
 		}
 		acc := core.CAccount{DB: db, Uid: xacc.Uid}
@@ -391,40 +381,39 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 				cmdRes := core.InvokeCommands(db, cl, acc, modComment, isOwned, role)
 				switch cmdRes {
 				case "err":
-					io.WriteString(resp, "-1")
+					connector.Error("-1", cmdRes)
 				case "ok":
-					io.WriteString(resp, "1")
+					connector.Success("Command executed")
 				default:
-					io.WriteString(resp, "temp_1_"+cmdRes)
+					connector.Error("-1", cmdRes)
 				}
 			} else {
 				cc := core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 				protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 				if !core.OnComment(db, conf, config) {
-					io.WriteString(resp, "-1")
+					connector.Error("-1", "Comment limit exceeded")
 					return
 				}
 				if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
-					io.WriteString(resp, "1")
+					connector.Success("Comment posted")
 				} else {
-					io.WriteString(resp, "-1")
+					se()
 				}
 			}
-
 		} else {
 			cc := core.CComment{DB: db, Uid: xacc.Uid, LvlId: cl.Id, Comment: comment, Percent: percent}
 			protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 			if !core.OnComment(db, conf, config) {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Comment limit exceeded")
 				return
 			}
 			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
-				io.WriteString(resp, "1")
+				connector.Success("Comment posted")
 			} else {
-				io.WriteString(resp, "-1")
+				se()
 			}
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

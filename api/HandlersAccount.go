@@ -103,7 +103,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			connector.Error("-2", "Invalid credentials")
 		}
 	} else {
-		connector.Error("-1", "Invalid request")
+		connector.Error("-1", "Bad request")
 	}
 }
 
@@ -189,7 +189,7 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			connector.Error("-2", "Invalid credentials")
 		}
 	} else {
-		connector.Error("-1", "Invalid request")
+		connector.Error("-1", "Bad request")
 	}
 }
 
@@ -242,7 +242,7 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 			core.RegisterAction(core.ACTION_USER_LOGIN, 0, uid, map[string]string{"uname": uname}, db)
 		}
 	} else {
-		connector.Error("-1", "Invalid request")
+		connector.Error("-1", "Bad request")
 	}
 }
 
@@ -300,6 +300,6 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 			connector.Error("-1", "Player limits exceeded")
 		}
 	} else {
-		connector.Error("-1", "Invalid request")
+		connector.Error("-1", "Bad request")
 	}
 }
