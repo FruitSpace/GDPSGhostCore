@@ -28,11 +28,11 @@ func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -69,11 +69,11 @@ func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -110,11 +110,11 @@ func FriendAcceptRequest(resp http.ResponseWriter, req *http.Request, conf *core
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("requestID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -153,11 +153,11 @@ func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -196,11 +196,11 @@ func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.G
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -245,11 +245,11 @@ func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.G
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("requestID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -287,11 +287,11 @@ func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -329,11 +329,11 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("toAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -374,11 +374,11 @@ func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("messageID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -416,11 +416,11 @@ func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("messageID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -465,11 +465,11 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -520,11 +520,11 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("toAccountID") != "" && Post.Get("body") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}

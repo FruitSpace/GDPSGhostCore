@@ -29,11 +29,11 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("chk") != "" && Post.Get("udid") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -69,11 +69,11 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && len(Post.Get("chk")) > 5 && Post.Get("udid") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}

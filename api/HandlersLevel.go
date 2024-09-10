@@ -33,10 +33,10 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	//Post:=ReadPost(req)
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -63,11 +63,11 @@ func LevelListDelete(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("listID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -114,11 +114,11 @@ func LevelListUpload(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("listLevels") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -182,7 +182,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		return
 	}
 
-	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	log.Printf("%s: %s\n", vars["gdps"], Post)
 
@@ -227,7 +226,7 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	}
 
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -349,10 +348,10 @@ func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -379,11 +378,11 @@ func LevelDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -426,11 +425,11 @@ func LevelDownload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -531,10 +530,10 @@ func LevelGetDaily(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -579,7 +578,6 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	}()
 	metrics.NewStep("Parsing")
 
-	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	// Check cache
 	cacheKey := fmt.Sprintf("%s/getLevels/%s", vars["gdps"], Post.Encode())
@@ -721,7 +719,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	}
 
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -905,11 +903,11 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -942,11 +940,11 @@ func LevelUpdateDescription(resp http.ResponseWriter, req *http.Request, conf *c
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -995,11 +993,11 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelString") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -1132,11 +1130,11 @@ func RateDemon(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -1209,11 +1207,11 @@ func RateStar(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -1256,11 +1254,11 @@ func SuggestStars(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}

@@ -141,6 +141,7 @@ func GetFunctionName(i interface{}) string {
 func (ghost *GhostServer) StartServer(Host string) {
 	BallisticsCache = make(map[string]int64)
 	BadRepIP = make(map[string]int)
+	clusterFuck = make(map[string][]string)
 	mux := gorilla.NewRouter()
 	var nfh NotFoundHandler
 	mux.NotFoundHandler = nfh
@@ -218,4 +219,15 @@ func ReadPost(req *http.Request) url.Values {
 		vals[rkey] = append(vals[rkey], rval)
 	}
 	return vals
+}
+
+func ipOf(req *http.Request) string {
+	IPAddr := req.Header.Get("CF-Connecting-IP")
+	if IPAddr == "" {
+		IPAddr = req.Header.Get("X-Real-IP")
+	}
+	if IPAddr == "" {
+		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
+	}
+	return IPAddr
 }

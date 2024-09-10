@@ -4,10 +4,10 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	gorilla "github.com/gorilla/mux"
-	"golang.org/x/exp/slices"
 	"io"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -29,11 +29,11 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -85,11 +85,11 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -166,11 +166,11 @@ func GetUsers(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("str") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -206,11 +206,11 @@ func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request, conf *co
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}

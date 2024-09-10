@@ -1,8 +1,8 @@
 module HalogenGhostCore
 
-go 1.21
+go 1.22.0
 
-toolchain go1.22.5
+toolchain go1.23.1
 
 require (
 	github.com/aws/aws-sdk-go v1.55.5
@@ -11,16 +11,15 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gorilla/mux v1.8.1
-	github.com/hashicorp/consul/api v1.29.2
+	github.com/hashicorp/consul/api v1.29.4
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lesismal/arpc v1.2.16
-	github.com/rabbitmq/amqp091-go v1.10.0
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56
 )
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
+	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/fatih/color v1.17.0 // indirect
@@ -40,6 +39,8 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/robfig/cron/v3 v3.0.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
-	golang.org/x/sys v0.23.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	go.uber.org/ratelimit v0.3.1 // indirect
+	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
+	golang.org/x/sys v0.25.0 // indirect
+	golang.org/x/text v0.18.0 // indirect
 )

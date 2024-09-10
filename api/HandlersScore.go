@@ -29,10 +29,10 @@ func GetCreators(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	//Post:=ReadPost(req)
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -69,11 +69,11 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -149,11 +149,11 @@ func GetLevelPlatScores(resp http.ResponseWriter, req *http.Request, conf *core.
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -241,14 +241,14 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	xType := Post.Get("type")
 	if xType == "" {
 		xType = "top"
 	}
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -333,11 +333,11 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}

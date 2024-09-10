@@ -1,4 +1,4 @@
-FROM golang:1.22 as builder
+FROM golang:1.23 AS builder
 RUN mkdir /app
 WORKDIR /app
 COPY go.* .

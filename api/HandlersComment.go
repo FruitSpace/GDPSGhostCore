@@ -14,33 +14,33 @@ import (
 )
 
 func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("commentID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		cc := core.CComment{DB: db}
@@ -48,37 +48,39 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 		core.TryInt(&id, Post.Get("commentID"))
 		cc.DeleteAccComment(id, xacc.Uid)
 		core.OnPost(db, conf, config)
-		io.WriteString(resp, "1")
+		connector.Success("Comment deleted")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("accountID") != "" {
 		page := 0
 		core.TryInt(&page, Post.Get("page"))
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		var uid int
@@ -90,18 +92,9 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 		core.TryInt(&uid, xuid)
 		cc := core.CComment{DB: db}
 		comments := cc.GetAllAccComments(uid, page)
-		if len(comments) == 0 {
-			io.WriteString(resp, "#0:0:0")
-		} else {
-			output := ""
-			for _, comm := range comments {
-				output += connectors.GetAccountComment(comm)
-			}
-			io.WriteString(resp, output[:len(output)-1]+"#"+strconv.Itoa(cc.CountAccComments(uid))+":"+strconv.Itoa(page*10)+":10")
-		}
-
+		connector.Comment_AccountGet(comments, cc.CountAccComments(uid), page)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -127,11 +120,11 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("comment") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -174,11 +167,11 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("commentID") != "" && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -232,7 +225,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("levelID") != "" {
 		page := 0
@@ -242,7 +235,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 			mode = true
 		}
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -282,7 +275,7 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("userID") != "" {
 		page := 0
@@ -292,7 +285,7 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 			mode = true
 		}
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -340,11 +333,11 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("comment") != "" && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}

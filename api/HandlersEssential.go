@@ -34,7 +34,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	songid := Post.Get("songID")
 	linkmode := false
@@ -45,7 +45,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	}
 	if songid != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -84,10 +84,10 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}
@@ -121,11 +121,11 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("itemID") != "" && Post.Get("type") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -204,11 +204,11 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	if core.CheckIPBan(IPAddr, config) {
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
