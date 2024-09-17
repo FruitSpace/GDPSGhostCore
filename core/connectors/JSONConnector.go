@@ -119,3 +119,8 @@ func (c *JSONConnector) Communication_MessageGetAll(messages []map[string]string
 	c.output["sent"] = getSent
 	c.Success("Messages retrieved")
 }
+
+func (c *JSONConnector) Essential_GetMusic(mus core.CMusic) {
+	c.output["music"] = mus
+	c.Success("Music retrieved")
+}

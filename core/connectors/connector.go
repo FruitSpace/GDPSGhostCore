@@ -20,6 +20,7 @@ type Connector interface {
 	Communication_FriendGetRequests(reqs []map[string]string, count int, page int)
 	Communication_MessageGet(message core.CMessage, uid int)
 	Communication_MessageGetAll(messages []map[string]string, getSent bool, count int, page int)
+	Essential_GetMusic(core.CMusic)
 }
 
 func NewConnector(isJson bool) Connector {

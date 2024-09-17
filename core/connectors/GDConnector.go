@@ -92,6 +92,19 @@ func (c *GDConnector) Communication_MessageGetAll(messages []map[string]string, 
 	c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
 }
 
+// GetMusic used to get simple music string (w/o traling hash)
+func (c *GDConnector) Essential_GetMusic(mus core.CMusic) {
+	//convert size to string
+	size := mus.Size
+	size = math.Round(size*100) / 100
+
+	//convert size to string
+	sizeStr := strconv.FormatFloat(size, 'f', 2, 64)
+	mstr := "1~|~" + strconv.Itoa(mus.Id) + "~|~2~|~" + mus.Name + "~|~3~|~1~|~4~|~" + mus.Artist + "~|~5~|~" + sizeStr + "~|~6~|~~|~10~|~" +
+		url.QueryEscape(mus.Url)
+	c.output = strings.ReplaceAll(mstr, "#", "")
+}
+
 // -- Internals --
 
 // getAccountComment used to retrieve account comments (iterative, w/o hash)
@@ -223,20 +236,6 @@ func UserSearchItem(acc core.CAccount) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
-
-// GetMusic used to get simple music string (w/o traling hash)
-func GetMusic(mus core.CMusic) string {
-
-	//convert size to string
-	size := mus.Size
-	size = math.Round(size*100) / 100
-
-	//convert size to string
-	sizeStr := strconv.FormatFloat(size, 'f', 2, 64)
-	mstr := "1~|~" + strconv.Itoa(mus.Id) + "~|~2~|~" + mus.Name + "~|~3~|~1~|~4~|~" + mus.Artist + "~|~5~|~" + sizeStr + "~|~6~|~~|~10~|~" +
-		url.QueryEscape(mus.Url)
-	return strings.ReplaceAll(mstr, "#", "")
 }
 
 // used to get simple top artists string (w/o trailing hash)

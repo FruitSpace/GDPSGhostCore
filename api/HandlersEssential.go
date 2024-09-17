@@ -3,7 +3,6 @@ package api
 import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
-	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -20,11 +19,18 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -33,13 +39,13 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	linkmode := false
 	if songid == "" {
 		songid = req.URL.Query().Get("id")
-		fmt.Println(req.URL.Query().Encode(), req.URL.Query().Get("id"))
 		linkmode = true
 	}
 	if songid != "" {
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
@@ -50,13 +56,13 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 				resp.Header().Set("Location", mus.Url)
 				resp.WriteHeader(301)
 			} else {
-				io.WriteString(resp, connectors.GetMusic(mus))
+				connector.Essential_GetMusic(mus)
 			}
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Music Not Found")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -95,11 +101,18 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -108,11 +121,12 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var itemId, cType int
@@ -128,25 +142,25 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 					likeAction = core.CLEVEL_ACTION_LIKE
 				}
 				cl.LikeLevel(itemId, xacc.Uid, likeAction)
-				io.WriteString(resp, "1")
+				connector.Success("Liked level")
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Level Not Found")
 			}
 		case 2:
 			comm := core.CComment{DB: db}
 			if comm.ExistsLevelComment(itemId) {
 				comm.LikeLevelComment(itemId, xacc.Uid, like)
-				io.WriteString(resp, "1")
+				connector.Success("Liked comment")
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Comment Not Found")
 			}
 		case 3:
 			comm := core.CComment{DB: db}
 			if comm.ExistsAccComment(itemId) {
 				comm.LikeAccComment(itemId, xacc.Uid, like)
-				io.WriteString(resp, "1")
+				connector.Success("Liked account comment")
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Account Comment Not Found")
 			}
 		case 4:
 			clist := core.CLevelList{DB: db, ID: itemId}
@@ -156,15 +170,15 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 					likeAction = core.CLEVEL_ACTION_LIKE
 				}
 				clist.LikeList(itemId, xacc.Uid, likeAction)
-				io.WriteString(resp, "1")
+				connector.Success("Liked list")
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "List Not Found")
 			}
 		default:
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Type")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -172,11 +186,18 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -185,20 +206,21 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		role := xacc.GetRoleObj(true)
 		if len(role.Privs) > 0 && role.Privs["aReqMod"] > 0 {
-			io.WriteString(resp, "1")
+			connector.Success("Request approved")
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Insufficient Privileges")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

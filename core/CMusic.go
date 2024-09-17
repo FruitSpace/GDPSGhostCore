@@ -13,19 +13,19 @@ import (
 )
 
 type CMusic struct {
-	Status    string
-	Id        int
-	Name      string
-	Artist    string
-	Size      float64
-	Url       string
-	IsBanned  bool
-	Downloads int
+	Status    string  `json:"status"`
+	Id        int     `json:"id"`
+	Name      string  `json:"name"`
+	Artist    string  `json:"artist"`
+	Size      float64 `json:"size"`
+	Url       string  `json:"url"`
+	IsBanned  bool    `json:"is_banned"`
+	Downloads int     `json:"downloads"`
 
-	DB       *MySQLConn
-	Logger   Logger
-	Config   *GlobalConfig
-	ConfBlob ConfigBlob
+	DB       *MySQLConn    `json:"-"`
+	Logger   Logger        `json:"-"`
+	Config   *GlobalConfig `json:"-"`
+	ConfBlob ConfigBlob    `json:"-"`
 }
 
 func (mus *CMusic) Exists(id int) bool {
