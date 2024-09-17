@@ -111,3 +111,11 @@ func (c *JSONConnector) Communication_MessageGet(msg core.CMessage, uid int) {
 	}
 	c.Success("Message retrieved")
 }
+
+func (c *JSONConnector) Communication_MessageGetAll(messages []map[string]string, getSent bool, count int, page int) {
+	c.output["messages"] = messages
+	c.output["count"] = count
+	c.output["page"] = page
+	c.output["sent"] = getSent
+	c.Success("Messages retrieved")
+}

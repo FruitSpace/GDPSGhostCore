@@ -85,6 +85,15 @@ func (c *GDConnector) Communication_MessageGet(message core.CMessage, uid int) {
 	c.output = c.getMessage(message, uid)
 }
 
+func (c *GDConnector) Communication_MessageGetAll(messages []map[string]string, getSent bool, count int, page int) {
+	for _, msg := range messages {
+		c.output += c.getMessageStr(msg, getSent)
+	}
+	c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
+}
+
+// -- Internals --
+
 // getAccountComment used to retrieve account comments (iterative, w/o hash)
 func (c *GDConnector) getAccountComment(comment core.CComment) string {
 	s := strconv.Itoa
@@ -165,6 +174,17 @@ func (c *GDConnector) getMessage(msg core.CMessage, uid int) string {
 		":8:" + s(core.ToInt(!msg.IsNew)) + ":9:" + s(core.ToInt(uid == msg.UidSrc))
 }
 
+// getMessageStr used to get message item (iterative, w/o hash)
+func (c *GDConnector) getMessageStr(msg map[string]string, getSent bool) string {
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", msg["date"], loc)
+	if err != nil {
+		t = time.Now()
+	}
+	age := core.GetDateAgo(t.Unix())
+	return "1:" + msg["id"] + ":2:" + msg["uid"] + ":3:" + msg["uid"] + ":4:" + msg["subject"] + ":5:" + msg["message"] + ":6:" + msg["uname"] + ":7:" + age +
+		":8:" + msg["isOld"] + ":9:" + strconv.Itoa(core.ToInt(getSent)) + "|"
+}
+
 //
 //
 //
@@ -203,17 +223,6 @@ func UserSearchItem(acc core.CAccount) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
-
-// GetMessageStr used to get message item (iterative, w/o hash)
-func GetMessageStr(msg map[string]string, getSent bool) string {
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", msg["date"], loc)
-	if err != nil {
-		t = time.Now()
-	}
-	age := core.GetDateAgo(t.Unix())
-	return "1:" + msg["id"] + ":2:" + msg["uid"] + ":3:" + msg["uid"] + ":4:" + msg["subject"] + ":5:" + msg["message"] + ":6:" + msg["uname"] + ":7:" + age +
-		":8:" + msg["isOld"] + ":9:" + strconv.Itoa(core.ToInt(getSent)) + "|"
 }
 
 // GetMusic used to get simple music string (w/o traling hash)

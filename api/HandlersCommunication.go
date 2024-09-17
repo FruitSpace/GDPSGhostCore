@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
@@ -481,11 +480,18 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -494,11 +500,12 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		page := 0
@@ -507,17 +514,13 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		cm := core.CMessage{DB: db}
 		count, msgs := cm.GetMessageForUid(xacc.Uid, page, getSent)
 		if len(msgs) == 0 {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "No messages found")
 		} else {
-			output := ""
-			for _, msg := range msgs {
-				output += connectors.GetMessageStr(msg, getSent)
-			}
-			io.WriteString(resp, output[:len(output)-1]+"#"+strconv.Itoa(count)+":"+strconv.Itoa(page*10)+":10")
+			connector.Communication_MessageGetAll(msgs, getSent, count, page)
 		}
 
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -525,8 +528,14 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
+	se := func() {
+		connector.Error("-1", "Server Error")
+	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 
@@ -535,6 +544,7 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	}
 
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -543,11 +553,12 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			se()
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var uidDest int
@@ -563,11 +574,11 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		}
 		protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 		if protect.DetectMessages(xacc.Uid) && cm.SendMessageObj() {
-			io.WriteString(resp, "1")
+			connector.Success("Message sent successfully")
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Failed to send message")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

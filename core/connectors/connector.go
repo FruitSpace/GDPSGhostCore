@@ -19,6 +19,7 @@ type Connector interface {
 	Comment_HistoryGet(comments []core.CComment, acc core.CAccount, role core.Role, count int, page int)
 	Communication_FriendGetRequests(reqs []map[string]string, count int, page int)
 	Communication_MessageGet(message core.CMessage, uid int)
+	Communication_MessageGetAll(messages []map[string]string, getSent bool, count int, page int)
 }
 
 func NewConnector(isJson bool) Connector {
