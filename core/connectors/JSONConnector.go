@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"strconv"
+	"strings"
 )
 
 type JSONConnector struct {
@@ -123,4 +124,40 @@ func (c *JSONConnector) Communication_MessageGetAll(messages []map[string]string
 func (c *JSONConnector) Essential_GetMusic(mus core.CMusic) {
 	c.output["music"] = mus
 	c.Success("Music retrieved")
+}
+
+func (c *JSONConnector) Level_GetGauntlets(gaus []map[string]string, hash string) {
+	type r struct {
+		PackName string   `json:"pack_name"`
+		Levels   []string `json:"levels"`
+	}
+	var gaunts []r
+	for _, gau := range gaus {
+		gaunts = append(gaunts, r{
+			PackName: gau["pack_name"],
+			Levels:   strings.Split(gau["levels"], ","),
+		})
+	}
+	c.output["gauntlets"] = gaunts
+	c.output["hash"] = hash
+	c.Success("Gauntlets retrieved")
+}
+
+func (c *JSONConnector) Level_UploadList(id int) {
+	c.output["id"] = id
+	c.Success("Level list uploaded")
+}
+
+func (c *JSONConnector) Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int) {
+	c.output["lists"] = lists
+	c.output["count"] = count
+	c.output["page"] = page
+	c.Success("Level list retrieved")
+}
+
+func (c *JSONConnector) Level_GetMapPacks(packs []core.LevelPack, count int, page int) {
+	c.output["packs"] = packs
+	c.output["count"] = count
+	c.output["page"] = page
+	c.Success("Map packs retrieved")
 }

@@ -105,6 +105,61 @@ func (c *GDConnector) Essential_GetMusic(mus core.CMusic) {
 	c.output = strings.ReplaceAll(mstr, "#", "")
 }
 
+func (c *GDConnector) Level_GetGauntlets(gaus []map[string]string, hash string) {
+	for _, gau := range gaus {
+		c.output += "1:" + gau["pack_name"] + ":3:" + gau["levels"] + "|"
+	}
+	c.output = c.output[:len(c.output)-1] + "#" + hash
+}
+
+func (c *GDConnector) Level_UploadList(id int) {
+	c.output = strconv.Itoa(id)
+}
+
+func (c *GDConnector) Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int) {
+	lvlHash := ""
+	usrstring := ""
+	var llists []core.CLevelList
+	for _, lid := range intlists {
+		for i, list := range lists {
+			if list.ID == lid {
+				llists = append(llists, list)
+				lists = append(lists[:i], lists[i+1:]...)
+				break
+			}
+		}
+	}
+	for _, list := range llists {
+		lvlS, usrH, lvlH := c.getListSearch(list)
+		c.output += lvlS
+		lvlHash += lvlH
+		usrstring += usrH
+	}
+
+	if len(c.output) == 0 {
+		c.output = "x"
+		usrstring = "x"
+	}
+
+	c.output = c.output[:len(c.output)-1] + "#" +
+		usrstring[:len(usrstring)-1] + "#" +
+		strconv.Itoa(count) + ":" + strconv.Itoa(page*10) + ":10#" +
+		core.HashSolo2(lvlHash)
+}
+
+func (c *GDConnector) Level_GetMapPacks(packs []core.LevelPack, count int, page int) {
+	hashstr := ""
+	for _, pack := range packs {
+		c.output += fmt.Sprintf("1:%d:2:%s:3:%s:4:%d:5:%d:6:%d:7:%s:8:%s|",
+			pack.Id, pack.PackName, pack.Levels, pack.PackStars, pack.PackCoins, pack.PackDifficulty,
+			pack.PackColor, pack.PackColor)
+		id_s := strconv.Itoa(pack.Id)
+		hashstr += fmt.Sprintf("%s%s%d%d", string(id_s[0]), string(id_s[len(id_s)-1]), pack.PackStars, pack.PackCoins)
+
+	}
+	c.output = c.output[:len(c.output)-1] + "#" + strconv.Itoa(count) + ":" + strconv.Itoa(page*10) + ":10#" + core.HashSolo2(hashstr)
+}
+
 // -- Internals --
 
 // getAccountComment used to retrieve account comments (iterative, w/o hash)
@@ -196,6 +251,37 @@ func (c *GDConnector) getMessageStr(msg map[string]string, getSent bool) string 
 	age := core.GetDateAgo(t.Unix())
 	return "1:" + msg["id"] + ":2:" + msg["uid"] + ":3:" + msg["uid"] + ":4:" + msg["subject"] + ":5:" + msg["message"] + ":6:" + msg["uname"] + ":7:" + age +
 		":8:" + msg["isOld"] + ":9:" + strconv.Itoa(core.ToInt(getSent)) + "|"
+}
+
+func (c *GDConnector) getListSearch(cl core.CLevelList) (listStr string, user string, hash string) {
+	s := strconv.Itoa
+
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UploadDate, loc)
+	if err != nil {
+		t = time.Now()
+	}
+	t2, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UpdateDate, loc)
+	if err != nil {
+		t2 = time.Now()
+	}
+
+	acc := core.CAccount{DB: cl.DB, Uid: cl.UID}
+	if cl.SideloadUname == nil {
+		if acc.Exists(acc.Uid) {
+			acc.LoadAuth(core.CAUTH_UID)
+		} else {
+			acc.Uname = "[DELETED]"
+		}
+	} else {
+		acc.Uname = *cl.SideloadUname
+	}
+
+	return "1:" + s(cl.ID) + ":2:" + cl.Name + ":3:" + cl.Description + ":5:" + s(cl.Version) + ":7:" + s(cl.Difficulty) +
+			":10:" + s(cl.Downloads) + ":14:" + s(cl.Likes) + ":19:" + s(core.ToInt(cl.IsFeatured)) + ":28:" + s(int(t.Unix())) +
+			":29:" + s(int(t2.Unix())) + ":49:" + s(cl.UID) + ":50:" + acc.Uname + ":51:" + cl.Levels + ":55:" + s(cl.Diamonds) +
+			":56:" + s(cl.LevelDiamonds) + "|",
+		s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid) + "|", ""
+
 }
 
 //
@@ -433,35 +519,4 @@ func GetLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
 		s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid) + "|"
 
 	//44 isGauntlet
-}
-
-func GetListSearch(cl core.CLevelList) (listStr string, user string, hash string) {
-	s := strconv.Itoa
-
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UploadDate, loc)
-	if err != nil {
-		t = time.Now()
-	}
-	t2, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UpdateDate, loc)
-	if err != nil {
-		t2 = time.Now()
-	}
-
-	acc := core.CAccount{DB: cl.DB, Uid: cl.UID}
-	if cl.SideloadUname == nil {
-		if acc.Exists(acc.Uid) {
-			acc.LoadAuth(core.CAUTH_UID)
-		} else {
-			acc.Uname = "[DELETED]"
-		}
-	} else {
-		acc.Uname = *cl.SideloadUname
-	}
-
-	return "1:" + s(cl.ID) + ":2:" + cl.Name + ":3:" + cl.Description + ":5:" + s(cl.Version) + ":7:" + s(cl.Difficulty) +
-			":10:" + s(cl.Downloads) + ":14:" + s(cl.Likes) + ":19:" + s(core.ToInt(cl.IsFeatured)) + ":28:" + s(int(t.Unix())) +
-			":29:" + s(int(t2.Unix())) + ":49:" + s(cl.UID) + ":50:" + acc.Uname + ":51:" + cl.Levels + ":55:" + s(cl.Diamonds) +
-			":56:" + s(cl.LevelDiamonds) + "|",
-		s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid) + "|", ""
-
 }
