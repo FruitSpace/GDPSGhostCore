@@ -17,9 +17,6 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -33,7 +30,7 @@ func AccountCommentDelete(resp http.ResponseWriter, req *http.Request, conf *cor
 	if core.CheckGDAuth(Post) && Post.Get("commentID") != "" {
 		db := &core.MySQLConn{}
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -58,9 +55,6 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -78,7 +72,7 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		var uid int
@@ -102,9 +96,6 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -125,7 +116,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -144,7 +135,7 @@ func AccountCommentUpload(resp http.ResponseWriter, req *http.Request, conf *cor
 			connector.Success("Comment posted")
 			return
 		}
-		se()
+		serverError(connector)
 	} else {
 		connector.Error("-1", "Bad Request")
 	}
@@ -156,9 +147,6 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -174,7 +162,7 @@ func CommentDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -216,9 +204,6 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -240,7 +225,7 @@ func CommentGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		var lvlId int
@@ -259,9 +244,6 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -283,7 +265,7 @@ func CommentGetHistory(resp http.ResponseWriter, req *http.Request, conf *core.G
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
@@ -310,9 +292,6 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -328,7 +307,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -358,7 +337,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 				connector.Success("Comment posted")
 			} else {
-				se()
+				serverError(connector)
 			}
 			return
 		}
@@ -397,7 +376,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 				if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 					connector.Success("Comment posted")
 				} else {
-					se()
+					serverError(connector)
 				}
 			}
 		} else {
@@ -410,7 +389,7 @@ func CommentUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			if protect.DetectComments(xacc.Uid) && cc.PostLevelComment() {
 				connector.Success("Comment posted")
 			} else {
-				se()
+				serverError(connector)
 			}
 		}
 	} else {

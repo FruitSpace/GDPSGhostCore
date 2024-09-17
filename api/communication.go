@@ -15,9 +15,6 @@ func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -33,7 +30,7 @@ func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -58,9 +55,6 @@ func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -76,7 +70,7 @@ func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -101,9 +95,6 @@ func FriendAcceptRequest(resp http.ResponseWriter, req *http.Request, conf *core
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -119,7 +110,7 @@ func FriendAcceptRequest(resp http.ResponseWriter, req *http.Request, conf *core
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -150,9 +141,6 @@ func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -168,7 +156,7 @@ func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -197,9 +185,6 @@ func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.G
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -215,7 +200,7 @@ func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.G
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -244,9 +229,6 @@ func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.G
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -262,7 +244,7 @@ func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.G
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -290,9 +272,6 @@ func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -308,7 +287,7 @@ func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -336,9 +315,6 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -354,7 +330,7 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -387,9 +363,6 @@ func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -405,7 +378,7 @@ func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -431,9 +404,6 @@ func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -449,7 +419,7 @@ func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -482,9 +452,6 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -500,7 +467,7 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -530,9 +497,6 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -553,7 +517,7 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}

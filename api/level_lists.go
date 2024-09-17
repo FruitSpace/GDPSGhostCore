@@ -18,9 +18,6 @@ func LevelListDelete(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -36,7 +33,7 @@ func LevelListDelete(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -64,9 +61,6 @@ func LevelListUpload(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -87,7 +81,7 @@ func LevelListUpload(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -146,9 +140,6 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -205,7 +196,7 @@ func LevelListSearch(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	db := &core.MySQLConn{}
 
 	if logger.Should(db.ConnectBlob(config)) != nil {
-		se()
+		serverError(connector)
 		return
 	}
 	filter := core.CLevelListFilter{DB: db}

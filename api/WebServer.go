@@ -2,6 +2,7 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"HalogenGhostCore/core/connectors"
 	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
@@ -230,4 +231,8 @@ func ipOf(req *http.Request) string {
 		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
 	}
 	return IPAddr
+}
+
+func serverError(connector connectors.Connector) {
+	connector.Error("-1", "Server Error")
 }

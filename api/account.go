@@ -21,9 +21,6 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -42,7 +39,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
@@ -56,39 +53,39 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			savepath := "/gdps_savedata/" + vars["gdps"] + "/"
 			taes := core.ThunderAES{}
 			if logger.Should(taes.GenKey(config.ServerConfig.SrvKey)) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 			if logger.Should(taes.Init()) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 			datax, err := taes.EncryptRaw(saveData)
 			if logger.Should(err) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 
 			s3 := core.NewS3FS()
 			if logger.Should(s3.PutFile(savepath+strconv.Itoa(acc.Uid)+".hsv", datax)) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 
 			saveData = strings.ReplaceAll(strings.ReplaceAll(strings.Split(saveData, ";")[0], "_", "/"), "-", "+")
 			b, err := base64.StdEncoding.DecodeString(saveData)
 			if logger.Should(err) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 			r, err := gzip.NewReader(bytes.NewBuffer(b))
 			if logger.Should(err) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 			d, err := io.ReadAll(r)
 			if logger.Should(err) != nil {
-				se()
+				serverError(connector)
 				return
 			}
 			saveData = string(d)
@@ -113,12 +110,9 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
-		se()
+		serverError(connector)
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
@@ -143,23 +137,20 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		}
 		if res > 0 {
 			savepath := "/gdps_savedata/" + vars["gdps"] + "/" + strconv.Itoa(acc.Uid) + ".hsv"
-			se := func() {
-				connector.Error("-1", "Server Error")
-			}
 			s3 := core.NewS3FS()
 			if d, err := s3.GetFile(savepath); err == nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(config.ServerConfig.SrvKey)) != nil {
-					se()
+					serverError(connector)
 					return
 				}
 				if logger.Should(taes.Init()) != nil {
-					se()
+					serverError(connector)
 					return
 				}
 				data, err := taes.DecryptRaw(d)
 				if err != nil {
-					se()
+					serverError(connector)
 					core.ReportFail(fmt.Sprintf("[%s] NG savedata decrypt error for `%s`", vars["gdps"], uname))
 					return
 				}
@@ -168,16 +159,16 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			} else if d, err := s3.GetFile("/savedata_old/" + vars["gdps"] + "/files/savedata/" + strconv.Itoa(acc.Uid) + ".hal"); err == nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(pass)) != nil {
-					se()
+					serverError(connector)
 					return
 				}
 				if logger.Should(taes.Init()) != nil {
-					se()
+					serverError(connector)
 					return
 				}
 				data, err := taes.DecryptLegacy(string(d))
 				if err != nil {
-					se()
+					serverError(connector)
 					core.ReportFail(fmt.Sprintf("[%s] HAL savedata decrypt error for `%s`", vars["gdps"], uname))
 					return
 				}
@@ -204,9 +195,6 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -224,7 +212,7 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
@@ -263,9 +251,6 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -284,7 +269,7 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}

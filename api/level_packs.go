@@ -15,9 +15,6 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -32,7 +29,7 @@ func GetGauntlets(resp http.ResponseWriter, req *http.Request, conf *core.Global
 	db := &core.MySQLConn{}
 
 	if logger.Should(db.ConnectBlob(config)) != nil {
-		se()
+		serverError(connector)
 		return
 	}
 	filter := core.CLevelFilter{DB: db}
@@ -46,9 +43,6 @@ func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -63,7 +57,7 @@ func GetMapPacks(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	db := &core.MySQLConn{}
 
 	if logger.Should(db.ConnectBlob(config)) != nil {
-		se()
+		serverError(connector)
 		return
 	}
 	filter := core.CLevelFilter{DB: db}
