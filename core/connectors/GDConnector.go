@@ -105,6 +105,14 @@ func (c *GDConnector) Essential_GetMusic(mus core.CMusic) {
 	c.output = strings.ReplaceAll(mstr, "#", "")
 }
 
+// used to get simple top artists string (w/o trailing hash)
+func (c *GDConnector) Essential_GetTopArtists(artists map[string]string) {
+	for artist, youtube := range artists {
+		c.output += "4:" + artist + ":7:" + youtube + "|"
+	}
+	c.output = c.output[:len(c.output)-1] + "#" + strconv.Itoa(len(artists)) + ":0:10"
+}
+
 func (c *GDConnector) Level_GetGauntlets(gaus []map[string]string, hash string) {
 	for _, gau := range gaus {
 		c.output += "1:" + gau["pack_name"] + ":3:" + gau["levels"] + "|"
@@ -322,15 +330,6 @@ func UserSearchItem(acc core.CAccount) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
-
-// used to get simple top artists string (w/o trailing hash)
-func GetTopArtists(artists map[string]string) string {
-	out := ""
-	for artist, youtube := range artists {
-		out += "4:" + artist + ":7:" + youtube + "|"
-	}
-	return out[:len(out)-1]
 }
 
 // GenerateChestSmall used to generate small chest loot

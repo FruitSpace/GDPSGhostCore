@@ -7,12 +7,11 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
 )
 
 func GetAccountUrl(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
 	vars := gorilla.Vars(req)
-	io.WriteString(resp, "https://rugd.gofruit.space/"+vars["gdps"]+"/db")
+	_, _ = io.WriteString(resp, "https://rugd.gofruit.space/"+vars["gdps"]+"/db")
 }
 
 func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
@@ -21,9 +20,6 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -45,7 +41,7 @@ func GetSongInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
@@ -70,11 +66,15 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -82,6 +82,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	db := &core.MySQLConn{}
 
 	if logger.Should(db.ConnectBlob(config)) != nil {
+		serverError(connector)
 		return
 	}
 	page := 0
@@ -94,7 +95,7 @@ func GetTopArtists(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	}
 	mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
 	artists := mus.GetTopArtists()
-	io.WriteString(resp, connectors.GetTopArtists(artists)+"#"+strconv.Itoa(len(artists))+"0:"+strconv.Itoa(len(artists)))
+	connector.Essential_GetTopArtists(artists)
 }
 
 func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
@@ -103,9 +104,6 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -121,7 +119,7 @@ func LikeItem(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -188,9 +186,6 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	logger := core.Logger{Output: os.Stderr}
 	connector := connectors.NewConnector(req.URL.Query().Has("json"))
 	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
-	se := func() {
-		connector.Error("-1", "Server Error")
-	}
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
 		connector.Error("-1", "Not Found")
@@ -206,7 +201,7 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
-			se()
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}

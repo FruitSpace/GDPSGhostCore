@@ -126,6 +126,11 @@ func (c *JSONConnector) Essential_GetMusic(mus core.CMusic) {
 	c.Success("Music retrieved")
 }
 
+func (c *JSONConnector) Essential_GetTopArtists(artists map[string]string) {
+	c.output["artists"] = artists
+	c.Success("Top artists retrieved")
+}
+
 func (c *JSONConnector) Level_GetGauntlets(gaus []map[string]string, hash string) {
 	type r struct {
 		PackName string   `json:"pack_name"`

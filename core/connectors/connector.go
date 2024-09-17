@@ -21,6 +21,7 @@ type Connector interface {
 	Communication_MessageGet(message core.CMessage, uid int)
 	Communication_MessageGetAll(messages []map[string]string, getSent bool, count int, page int)
 	Essential_GetMusic(core.CMusic)
+	Essential_GetTopArtists(artists map[string]string)
 	Level_GetGauntlets(gaus []map[string]string, hash string)
 	Level_UploadList(id int)
 	Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int)

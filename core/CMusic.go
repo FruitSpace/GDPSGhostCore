@@ -215,10 +215,6 @@ func (mus *CMusic) CountDownloads() {
 
 // ! Implement normal API
 func (mus *CMusic) GetTopArtists() map[string]string {
-	//	resp,err:=http.Get(mus.Config.ApiEndpoint+"?srvid="+mus.ConfBlob.ServerConfig.SrvID+"&key="+mus.ConfBlob.ServerConfig.SrvKey+"&action=requestSong&id="+strconv.Itoa(id))
-	//	if err!=nil {return []map[string]string}
-	//	rsp,_:=io.ReadAll(resp.Body)
-	//	json.Unmarshal(rsp,mus)
 	return map[string]string{
 		"Riot [Monstercat]": "Monstercat",
 		"Noisestorm":        "noisestorm",
