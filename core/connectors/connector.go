@@ -12,6 +12,7 @@ type Connector interface {
 
 	Error(code string, reason string)
 	Success(message string)
+	NumberedSuccess(id int)
 	Account_Sync(savedata string)
 	Account_Login(uid int)
 	Comment_AccountGet(comments []core.CComment, count int, page int)
@@ -23,7 +24,6 @@ type Connector interface {
 	Essential_GetMusic(core.CMusic)
 	Essential_GetTopArtists(artists map[string]string)
 	Level_GetGauntlets(gaus []map[string]string, hash string)
-	Level_UploadList(id int)
 	Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int)
 	Level_GetMapPacks(packs []core.LevelPack, count int, page int)
 }

@@ -113,7 +113,7 @@ func LevelListUpload(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		if cl.IsOwnedBy(xacc.Uid) {
 			res := cl.UpdateList()
 			if res > 0 {
-				connector.Level_UploadList(res)
+				connector.NumberedSuccess(res)
 			} else {
 				connector.Error("-1", "Failed to update list")
 			}
@@ -124,7 +124,7 @@ func LevelListUpload(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 			}
 			res := cl.UploadList()
 			if res > 0 {
-				connector.Level_UploadList(res)
+				connector.NumberedSuccess(res)
 			} else {
 				connector.Error("-1", "Failed to upload list")
 			}

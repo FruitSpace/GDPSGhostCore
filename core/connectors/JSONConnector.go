@@ -28,6 +28,11 @@ func (c *JSONConnector) Success(message string) {
 	c.output["message"] = message
 }
 
+func (c *JSONConnector) NumberedSuccess(id int) {
+	c.output["code"] = id
+	c.Success("Success indeed")
+}
+
 func (c *JSONConnector) Account_Sync(savedata string) {
 	c.output["savedata"] = savedata
 	c.Success("Savedata present")
@@ -146,11 +151,6 @@ func (c *JSONConnector) Level_GetGauntlets(gaus []map[string]string, hash string
 	c.output["gauntlets"] = gaunts
 	c.output["hash"] = hash
 	c.Success("Gauntlets retrieved")
-}
-
-func (c *JSONConnector) Level_UploadList(id int) {
-	c.output["id"] = id
-	c.Success("Level list uploaded")
 }
 
 func (c *JSONConnector) Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int) {

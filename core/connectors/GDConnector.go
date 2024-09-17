@@ -33,6 +33,10 @@ func (c *GDConnector) Success(message string) {
 	c.output = "1"
 }
 
+func (c *GDConnector) NumberedSuccess(id int) {
+	c.output = strconv.Itoa(id)
+}
+
 func (c *GDConnector) Account_Sync(savedata string) {
 	c.output = savedata + ";21;30;a;a"
 }
@@ -118,10 +122,6 @@ func (c *GDConnector) Level_GetGauntlets(gaus []map[string]string, hash string) 
 		c.output += "1:" + gau["pack_name"] + ":3:" + gau["levels"] + "|"
 	}
 	c.output = c.output[:len(c.output)-1] + "#" + hash
-}
-
-func (c *GDConnector) Level_UploadList(id int) {
-	c.output = strconv.Itoa(id)
 }
 
 func (c *GDConnector) Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int) {
