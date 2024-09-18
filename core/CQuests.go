@@ -80,7 +80,7 @@ func (cq *CQuests) GetQuests(uid int) string {
 	return out[:len(out)-1]
 }
 
-func (cq *CQuests) GetSpecialLevel(xType int) string {
+func (cq *CQuests) GetSpecialLevel(xType int) (id int, timeleft int) {
 	timeLeft := 0
 	var evtId, xEvtId int
 	tme, _ := time.ParseInLocation("2006-01-02 15:04:05", strings.Split(time.Now().Format("2006-01-02 15:04:05"), " ")[0]+" 00:00:00", loc)
@@ -95,5 +95,5 @@ func (cq *CQuests) GetSpecialLevel(xType int) string {
 		xEvtId = 100001
 	}
 	cq.DB.ShouldQueryRow("SELECT id FROM #DB#.quests WHERE type=" + strconv.Itoa(xType) + " AND timeExpire<now() ORDER BY timeExpire DESC LIMIT 1").Scan(&evtId)
-	return strconv.Itoa(xEvtId+evtId) + "|" + strconv.Itoa(timeLeft)
+	return xEvtId + evtId, timeLeft
 }

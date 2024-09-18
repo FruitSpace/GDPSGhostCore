@@ -26,6 +26,8 @@ type Connector interface {
 	Level_GetGauntlets(gaus []map[string]string, hash string)
 	Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int)
 	Level_GetMapPacks(packs []core.LevelPack, count int, page int)
+	Level_GetLevelFull(lvl core.CLevel, passwd string, phash string, quest_id int)
+	Level_GetSpecials(id int, timeLeft int)
 }
 
 func NewConnector(isJson bool) Connector {

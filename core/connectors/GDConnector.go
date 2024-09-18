@@ -168,6 +168,67 @@ func (c *GDConnector) Level_GetMapPacks(packs []core.LevelPack, count int, page 
 	c.output = c.output[:len(c.output)-1] + "#" + strconv.Itoa(count) + ":" + strconv.Itoa(page*10) + ":10#" + core.HashSolo2(hashstr)
 }
 
+// Levels_GetLevelFull used to retrieve full Level data (w/ trailing hash)
+func (c *GDConnector) Level_GetLevelFull(cl core.CLevel, password string, phash string, quest_id int) {
+	s := strconv.Itoa
+	t, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UploadDate, loc)
+	if err != nil {
+		t = time.Now()
+	}
+	uplAge := core.GetDateAgo(t.Unix())
+	t2, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UpdateDate, loc)
+	if err != nil {
+		t2 = time.Now()
+	}
+	updAge := core.GetDateAgo(t2.Unix())
+	diffNom := 0
+	if cl.Difficulty > 0 {
+		diffNom = 10
+	}
+	var auto int
+	if cl.Difficulty < 0 {
+		auto = 1
+		cl.Difficulty = 0
+	}
+	coinsVer := 0
+	if cl.Coins > 0 {
+		coinsVer = 1
+	}
+	demonDiff := 3
+	isDemon := 0
+	if cl.DemonDifficulty >= 0 {
+		isDemon = 1
+		demonDiff = cl.DemonDifficulty
+	}
+	quest := ""
+	questHash := ""
+	if quest_id > 0 {
+		quest = ":41:" + s(quest_id)
+		acc := core.CAccount{DB: cl.DB, Uid: cl.Uid}
+		acc.LoadAuth(core.CAUTH_UID)
+		questHash = "#" + s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid)
+	}
+	sfxSongs := strings.Split(cl.StringSettings, ";")
+	if len(sfxSongs) == 1 {
+		sfxSongs = append(sfxSongs, "")
+	}
+	hash := s(cl.Uid) + "," + s(cl.StarsGot) + "," + s(isDemon) + "," + s(cl.Id) + "," + s(coinsVer) + "," + s(cl.IsFeatured) + "," + phash +
+		"," + s(quest_id)
+	c.output = "1:" + s(cl.Id) + ":2:" + cl.Name + ":3:" + cl.Description + ":4:" + cl.StringLevel + ":5:" + s(cl.Version) + ":6:" + s(cl.Uid) + ":8:" + s(diffNom) +
+		":9:" + s(cl.Difficulty) + ":10:" + s(cl.Downloads) + ":12:" + s(cl.TrackId) + ":13:" + s(cl.VersionGame) + ":14:" + s(cl.Likes) +
+		":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(cl.IsFeatured) + ":25:" + s(auto) + ":26:" + cl.StringLevelInfo +
+		":27:" + password + ":28:" + uplAge + ":29:" + updAge + ":30:" + s(cl.OrigId) + ":31:" + s(core.ToInt(cl.Is2p)) + ":35:" + s(cl.SongId) +
+		":36:" + cl.StringExtra + ":37:" + s(cl.Ucoins) + ":38:" + s(coinsVer) + ":39:" + s(cl.StarsRequested) + ":40:" + s(core.ToInt(cl.IsLDM)) +
+		":42:" + s(cl.IsEpic) + ":43:" + s(demonDiff) + ":45:" + s(cl.Objects) + ":46:1:47:2:48::52:" + sfxSongs[0] + ":53:" + sfxSongs[1] + quest +
+		"#" + core.HashSolo(cl.StringLevel) + "#" + core.HashSolo2(hash) + questHash
+
+	//44 isGauntlet
+}
+
+func (c *GDConnector) GetSpecials(id int, left int) {
+	c.output = strconv.Itoa(id) + "|" + strconv.Itoa(left)
+}
+
 // -- Internals --
 
 // getAccountComment used to retrieve account comments (iterative, w/o hash)
@@ -407,63 +468,6 @@ func GetLeaderboardScore(score core.CScores) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(score.Percent) + ":6:" + s(score.Ranking) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(score.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":42:" + age + "|"
-}
-
-// GetLevelFull used to retrieve full Level data (w/ trailing hash)
-func GetLevelFull(cl core.CLevel, password string, phash string, quest_id int) string {
-	s := strconv.Itoa
-	t, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UploadDate, loc)
-	if err != nil {
-		t = time.Now()
-	}
-	uplAge := core.GetDateAgo(t.Unix())
-	t2, err := time.ParseInLocation("2006-01-02 15:04:05", cl.UpdateDate, loc)
-	if err != nil {
-		t2 = time.Now()
-	}
-	updAge := core.GetDateAgo(t2.Unix())
-	diffNom := 0
-	if cl.Difficulty > 0 {
-		diffNom = 10
-	}
-	var auto int
-	if cl.Difficulty < 0 {
-		auto = 1
-		cl.Difficulty = 0
-	}
-	coinsVer := 0
-	if cl.Coins > 0 {
-		coinsVer = 1
-	}
-	demonDiff := 3
-	isDemon := 0
-	if cl.DemonDifficulty >= 0 {
-		isDemon = 1
-		demonDiff = cl.DemonDifficulty
-	}
-	quest := ""
-	questHash := ""
-	if quest_id > 0 {
-		quest = ":41:" + s(quest_id)
-		acc := core.CAccount{DB: cl.DB, Uid: cl.Uid}
-		acc.LoadAuth(core.CAUTH_UID)
-		questHash = "#" + s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid)
-	}
-	sfxSongs := strings.Split(cl.StringSettings, ";")
-	if len(sfxSongs) == 1 {
-		sfxSongs = append(sfxSongs, "")
-	}
-	hash := s(cl.Uid) + "," + s(cl.StarsGot) + "," + s(isDemon) + "," + s(cl.Id) + "," + s(coinsVer) + "," + s(cl.IsFeatured) + "," + phash +
-		"," + s(quest_id)
-	return "1:" + s(cl.Id) + ":2:" + cl.Name + ":3:" + cl.Description + ":4:" + cl.StringLevel + ":5:" + s(cl.Version) + ":6:" + s(cl.Uid) + ":8:" + s(diffNom) +
-		":9:" + s(cl.Difficulty) + ":10:" + s(cl.Downloads) + ":12:" + s(cl.TrackId) + ":13:" + s(cl.VersionGame) + ":14:" + s(cl.Likes) +
-		":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(cl.IsFeatured) + ":25:" + s(auto) + ":26:" + cl.StringLevelInfo +
-		":27:" + password + ":28:" + uplAge + ":29:" + updAge + ":30:" + s(cl.OrigId) + ":31:" + s(core.ToInt(cl.Is2p)) + ":35:" + s(cl.SongId) +
-		":36:" + cl.StringExtra + ":37:" + s(cl.Ucoins) + ":38:" + s(coinsVer) + ":39:" + s(cl.StarsRequested) + ":40:" + s(core.ToInt(cl.IsLDM)) +
-		":42:" + s(cl.IsEpic) + ":43:" + s(demonDiff) + ":45:" + s(cl.Objects) + ":46:1:47:2:48::52:" + sfxSongs[0] + ":53:" + sfxSongs[1] + quest +
-		"#" + core.HashSolo(cl.StringLevel) + "#" + core.HashSolo2(hash) + questHash
-
-	//44 isGauntlet
 }
 
 // GetLevelSearch used to retrieve data about level in search (iterative, w/ half-hash), returns (lvlString, lvlHash, usrString)

@@ -166,3 +166,18 @@ func (c *JSONConnector) Level_GetMapPacks(packs []core.LevelPack, count int, pag
 	c.output["page"] = page
 	c.Success("Map packs retrieved")
 }
+
+func (c *JSONConnector) Level_GetLevelFull(lvl core.CLevel, passwd string, phash string, quest_id int) {
+	if txt, err := base64.StdEncoding.DecodeString(lvl.Description); err == nil {
+		lvl.Description = string(txt)
+	}
+	c.output["level"] = lvl
+	c.output["quest_id"] = quest_id
+	c.Success("Level retrieved")
+}
+
+func (c *JSONConnector) GetSpecials(id int, left int) {
+	c.output["id"] = id
+	c.output["seconds_left"] = left
+	c.Success("Specials retrieved")
+}
