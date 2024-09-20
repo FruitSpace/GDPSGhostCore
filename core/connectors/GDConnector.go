@@ -266,7 +266,7 @@ func (c *GDConnector) Level_SearchLevels(
 		for _, sng := range songs {
 			mc := GDConnector{}
 			mc.Essential_GetMusic(sng)
-			musStr += c.Output() + "~:~"
+			musStr += mc.Output() + "~:~"
 		}
 	}
 
@@ -284,7 +284,7 @@ func (c *GDConnector) Level_SearchLevels(
 		c.output[:len(c.output)-1],
 		usrstring[:len(usrstring)-1],
 		musStr[:len(musStr)-3],
-		count, page*10, core.HashSolo(lvlHash),
+		count, page*10, core.HashSolo2(lvlHash),
 	)
 }
 

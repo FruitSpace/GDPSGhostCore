@@ -154,12 +154,12 @@ func (c *JSONConnector) Level_GetGauntlets(gaus []map[string]string, hash string
 }
 
 func (c *JSONConnector) Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int) {
-	var llists []core.CLevelList
+	var llists []*core.CLevelList
 	for _, lid := range intlists {
 		for i, list := range lists {
 			if list.ID == lid {
 				list.DecoupledLevels = strings.Split(list.Levels, ",")
-				llists = append(llists, list)
+				llists = append(llists, &list)
 				lists = append(lists[:i], lists[i+1:]...)
 				break
 			}
@@ -201,14 +201,17 @@ func (c *JSONConnector) Level_SearchLevels(
 	musMap := make(map[int]core.CMusic)
 
 	// To keep in order
-	var lvls []core.CLevel
+	var lvls []*core.CLevel
 	for _, lvlid := range intlevels {
 		for i, lvl := range levels {
 			if lvl.Id == lvlid {
 				if lvl.SongId != 0 {
 					musQueue = append(musQueue, lvl.SongId)
 				}
-				lvls = append(lvls, lvl)
+				if ns, err := base64.StdEncoding.DecodeString(lvl.Description); err == nil {
+					lvl.Description = string(ns)
+				}
+				lvls = append(lvls, &lvl)
 				levels = append(levels[:i], levels[i+1:]...)
 				break
 			}
