@@ -288,6 +288,35 @@ func (c *GDConnector) Level_SearchLevels(
 	)
 }
 
+// Rewards_ChallengesOutput used to retrieve all quests/challenges data (w/ trailing hash)
+func (c *GDConnector) Rewards_ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) {
+	s := strconv.Itoa
+	virt := core.RandStringBytes(5)
+	tme, _ := time.ParseInLocation("2006-01-02 15:04:05", strings.Split(time.Now().Format("2006-01-02 15:04:05"), " ")[0]+" 00:00:00", loc)
+	//!Additional 10800 Review is needed
+	timeLeft := int(tme.AddDate(0, 0, 1).Unix() - (time.Now().Unix()))
+	out := virt + ":" + s(uid) + ":" + chk + ":" + udid + ":" + s(uid) + ":" + s(timeLeft) + ":" + cq.GetQuests(uid)
+	out = strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out, "19847"))), "/", "_"), "+", "-")
+	c.output = virt + out + "|" + core.HashSolo3(out)
+}
+
+// Rewards_ChestOutput used to retrieve all chest data (w/ trailing hash)
+func (c *GDConnector) Rewards_ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) {
+	s := strconv.Itoa
+	config.ChestConfig.ChestSmallOrbsMax = core.MaxInt(config.ChestConfig.ChestSmallOrbsMax, config.ChestConfig.ChestSmallOrbsMin)
+	config.ChestConfig.ChestSmallDiamondsMax = core.MaxInt(config.ChestConfig.ChestSmallDiamondsMax, config.ChestConfig.ChestSmallDiamondsMin)
+	config.ChestConfig.ChestSmallKeysMax = core.MaxInt(config.ChestConfig.ChestSmallKeysMax, config.ChestConfig.ChestSmallKeysMin)
+
+	config.ChestConfig.ChestBigOrbsMax = core.MaxInt(config.ChestConfig.ChestBigOrbsMax, config.ChestConfig.ChestBigOrbsMin)
+	config.ChestConfig.ChestBigDiamondsMax = core.MaxInt(config.ChestConfig.ChestBigDiamondsMax, config.ChestConfig.ChestBigDiamondsMin)
+	config.ChestConfig.ChestBigKeysMax = core.MaxInt(config.ChestConfig.ChestBigKeysMax, config.ChestConfig.ChestBigKeysMin)
+
+	out := core.RandStringBytes(5) + ":" + s(acc.Uid) + ":" + chk + ":" + udid + ":" + s(acc.Uid) + ":" + s(smallLeft) + ":" + c.generateChestSmall(config) + ":" + s(acc.ChestSmallCount) + ":" +
+		s(bigLeft) + ":" + c.generateChestBig(config) + ":" + s(acc.ChestBigCount) + ":" + s(chestType)
+	out = strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out, "59182"))), "/", "_"), "+", "-")
+	c.output = core.RandStringBytes(5) + out + "|" + core.HashSolo4(out)
+}
+
 // -- Internals --
 
 // getAccountComment used to retrieve account comments (iterative, w/o hash)
@@ -466,6 +495,28 @@ func (c *GDConnector) getLevelSearch(cl core.CLevel, gau bool) (string, string, 
 	//44 isGauntlet
 }
 
+// generateChestSmall used to generate small chest loot
+func (c *GDConnector) generateChestSmall(config core.ConfigBlob) string {
+	s := strconv.Itoa
+	rand.Seed(time.Now().UnixNano())
+	intR := func(min, max int) int { return rand.Intn(core.MaxInt(max-min+1, 0)) + min }
+	return s(intR(config.ChestConfig.ChestSmallOrbsMin, config.ChestConfig.ChestSmallOrbsMax)) + "," +
+		s(intR(config.ChestConfig.ChestSmallDiamondsMin, config.ChestConfig.ChestSmallDiamondsMax)) + "," +
+		s(config.ChestConfig.ChestSmallShards[rand.Intn(len(config.ChestConfig.ChestSmallShards))]) + "," +
+		s(intR(config.ChestConfig.ChestSmallKeysMin, config.ChestConfig.ChestSmallKeysMax))
+}
+
+// generateChestBig used to generate big chest loot
+func (c *GDConnector) generateChestBig(config core.ConfigBlob) string {
+	s := strconv.Itoa
+	rand.Seed(time.Now().UnixNano())
+	intR := func(min, max int) int { return rand.Intn(max-min+1) + min }
+	return s(intR(config.ChestConfig.ChestBigOrbsMin, config.ChestConfig.ChestBigOrbsMax)) + "," +
+		s(intR(config.ChestConfig.ChestBigDiamondsMin, config.ChestConfig.ChestBigDiamondsMax)) + "," +
+		s(config.ChestConfig.ChestBigShards[rand.Intn(len(config.ChestConfig.ChestBigShards))]) + "," +
+		s(intR(config.ChestConfig.ChestBigKeysMin, config.ChestConfig.ChestBigKeysMax))
+}
+
 //
 //
 //
@@ -504,57 +555,6 @@ func UserSearchItem(acc core.CAccount) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
-
-// GenerateChestSmall used to generate small chest loot
-func GenerateChestSmall(config core.ConfigBlob) string {
-	s := strconv.Itoa
-	rand.Seed(time.Now().UnixNano())
-	intR := func(min, max int) int { return rand.Intn(core.MaxInt(max-min+1, 0)) + min }
-	return s(intR(config.ChestConfig.ChestSmallOrbsMin, config.ChestConfig.ChestSmallOrbsMax)) + "," +
-		s(intR(config.ChestConfig.ChestSmallDiamondsMin, config.ChestConfig.ChestSmallDiamondsMax)) + "," +
-		s(config.ChestConfig.ChestSmallShards[rand.Intn(len(config.ChestConfig.ChestSmallShards))]) + "," +
-		s(intR(config.ChestConfig.ChestSmallKeysMin, config.ChestConfig.ChestSmallKeysMax))
-}
-
-// GenerateChestBig used to generate big chest loot
-func GenerateChestBig(config core.ConfigBlob) string {
-	s := strconv.Itoa
-	rand.Seed(time.Now().UnixNano())
-	intR := func(min, max int) int { return rand.Intn(max-min+1) + min }
-	return s(intR(config.ChestConfig.ChestBigOrbsMin, config.ChestConfig.ChestBigOrbsMax)) + "," +
-		s(intR(config.ChestConfig.ChestBigDiamondsMin, config.ChestConfig.ChestBigDiamondsMax)) + "," +
-		s(config.ChestConfig.ChestBigShards[rand.Intn(len(config.ChestConfig.ChestBigShards))]) + "," +
-		s(intR(config.ChestConfig.ChestBigKeysMin, config.ChestConfig.ChestBigKeysMax))
-}
-
-// ChestOutput used to retrieve all chest data (w/ trailing hash)
-func ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) string {
-	s := strconv.Itoa
-	config.ChestConfig.ChestSmallOrbsMax = core.MaxInt(config.ChestConfig.ChestSmallOrbsMax, config.ChestConfig.ChestSmallOrbsMin)
-	config.ChestConfig.ChestSmallDiamondsMax = core.MaxInt(config.ChestConfig.ChestSmallDiamondsMax, config.ChestConfig.ChestSmallDiamondsMin)
-	config.ChestConfig.ChestSmallKeysMax = core.MaxInt(config.ChestConfig.ChestSmallKeysMax, config.ChestConfig.ChestSmallKeysMin)
-
-	config.ChestConfig.ChestBigOrbsMax = core.MaxInt(config.ChestConfig.ChestBigOrbsMax, config.ChestConfig.ChestBigOrbsMin)
-	config.ChestConfig.ChestBigDiamondsMax = core.MaxInt(config.ChestConfig.ChestBigDiamondsMax, config.ChestConfig.ChestBigDiamondsMin)
-	config.ChestConfig.ChestBigKeysMax = core.MaxInt(config.ChestConfig.ChestBigKeysMax, config.ChestConfig.ChestBigKeysMin)
-
-	out := core.RandStringBytes(5) + ":" + s(acc.Uid) + ":" + chk + ":" + udid + ":" + s(acc.Uid) + ":" + s(smallLeft) + ":" + GenerateChestSmall(config) + ":" + s(acc.ChestSmallCount) + ":" +
-		s(bigLeft) + ":" + GenerateChestBig(config) + ":" + s(acc.ChestBigCount) + ":" + s(chestType)
-	out = strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out, "59182"))), "/", "_"), "+", "-")
-	return core.RandStringBytes(5) + out + "|" + core.HashSolo4(out)
-}
-
-// ChallengesOutput used to retrieve all quests/challenges data (w/ trailing hash)
-func ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) string {
-	s := strconv.Itoa
-	virt := core.RandStringBytes(5)
-	tme, _ := time.ParseInLocation("2006-01-02 15:04:05", strings.Split(time.Now().Format("2006-01-02 15:04:05"), " ")[0]+" 00:00:00", loc)
-	//!Additional 10800 Review is needed
-	timeLeft := int(tme.AddDate(0, 0, 1).Unix() - (time.Now().Unix()))
-	out := virt + ":" + s(uid) + ":" + chk + ":" + udid + ":" + s(uid) + ":" + s(timeLeft) + ":" + cq.GetQuests(uid)
-	out = strings.ReplaceAll(strings.ReplaceAll(base64.StdEncoding.EncodeToString([]byte(core.DoXOR(out, "19847"))), "/", "_"), "+", "-")
-	return virt + out + "|" + core.HashSolo3(out)
 }
 
 // GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/o trailing hash)

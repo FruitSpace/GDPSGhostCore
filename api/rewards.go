@@ -15,11 +15,15 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -28,6 +32,7 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		cq := core.CQuests{DB: db}
@@ -36,12 +41,12 @@ func GetChallenges(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			chk := core.DoXOR(string(chalk), "19847")
 			var uid int
 			core.TryInt(&uid, Post.Get("accountID"))
-			io.WriteString(resp, connectors.ChallengesOutput(cq, uid, chk, Post.Get("udid")))
+			connector.Rewards_ChallengesOutput(cq, uid, chk, Post.Get("udid"))
 		} else {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "Challenge not found")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -49,11 +54,15 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -62,11 +71,12 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var chestType int
@@ -86,7 +96,7 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 				xacc.PushChests()
 				chestSmallLeft = config.ChestConfig.ChestSmallWait
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Small chest is not ready yet")
 				return
 			}
 		case 2:
@@ -96,12 +106,12 @@ func GetRewards(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 				xacc.PushChests()
 				chestBigLeft = config.ChestConfig.ChestBigWait
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Big chest is not ready yet")
 				return
 			}
 		}
-		io.WriteString(resp, connectors.ChestOutput(xacc, config, Post.Get("udid"), chk, chestSmallLeft, chestBigLeft, chestType))
+		connector.Rewards_ChestOutput(xacc, config, Post.Get("udid"), chk, chestSmallLeft, chestBigLeft, chestType)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

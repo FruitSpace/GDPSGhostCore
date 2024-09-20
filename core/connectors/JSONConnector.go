@@ -229,3 +229,17 @@ func (c *JSONConnector) Level_SearchLevels(
 	c.output["music"] = musMap
 	c.Success("Levels search completed")
 }
+
+func (c *JSONConnector) Rewards_ChallengesOutput(cq core.CQuests, uid int, chk string, udid string) {
+	q := cq.GetQuests(uid)
+	c.output["challenges"] = q
+	c.Success("Challenges retrieved")
+}
+
+func (c *JSONConnector) Rewards_ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int) {
+	c.output["readme"] = "You DO realise chests are imaginary and all the loot is managed by the game client itself? " +
+		"I mean the server is just posing some time restrictions and spitting random numbers to make loot seem random. " +
+		"Also querying this endpoint usually means that chests timer will be reset, so you won't be able to automate looting " +
+		"or just \"peek\" inside chests."
+	c.Success("Did absolutely nothing")
+}

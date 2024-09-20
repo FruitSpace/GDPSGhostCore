@@ -29,6 +29,8 @@ type Connector interface {
 	Level_GetLevelFull(lvl core.CLevel, passwd string, phash string, quest_id int)
 	Level_GetSpecials(id int, timeLeft int)
 	Level_SearchLevels(intlevels []int, levels []core.CLevel, mus *core.CMusic, count int, page int, gdVersion int, gauntlet int)
+	Rewards_ChallengesOutput(cq core.CQuests, uid int, chk string, udid string)
+	Rewards_ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int)
 }
 
 func NewConnector(isJson bool) Connector {
