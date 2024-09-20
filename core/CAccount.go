@@ -115,7 +115,7 @@ func (acc *CAccount) SearchUsers(sterm string) []int {
 	if _, err := strconv.Atoi(sterm); err != nil && len(sterm) < 3 {
 		return uids
 	}
-	rows := acc.DB.ShouldQuery("SELECT uid FROM #DB#.users WHERE uid=? OR uname LIKE ? ORDER BY stars", sterm, "%"+sterm+"%")
+	rows := acc.DB.ShouldQuery("SELECT uid FROM #DB#.users WHERE uid=? OR uname LIKE ? ORDER BY stars DESC LIMIT 10", sterm, "%"+sterm+"%")
 	defer rows.Close()
 	for rows.Next() {
 		var uid int

@@ -181,7 +181,7 @@ func GetUsers(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 			for _, uid := range uids {
 				accs = append(accs, core.CAccount{DB: db, Uid: uid})
 			}
-			connector.Profile_ListUserProfiles(accs)
+			connector.Profile_GetSearchableUsers(accs, len(uids), 0)
 		}
 	} else {
 		connector.Error("-1", "Bad Request")
