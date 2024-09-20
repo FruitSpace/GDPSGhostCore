@@ -34,6 +34,8 @@ type Connector interface {
 	Profile_GetUserProfile(acc core.CAccount, selfUid int)
 	Profile_ListUserProfiles(accs []core.CAccount)
 	Profile_GetSearchableUsers(accs []core.CAccount, count int, page int)
+	Score_GetLeaderboard(intaccs []int, xacc core.CAccount)
+	Score_GetScores(scores []core.CScores, mode string)
 }
 
 func NewConnector(isJson bool) Connector {

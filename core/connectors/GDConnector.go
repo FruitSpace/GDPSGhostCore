@@ -340,7 +340,34 @@ func (c *GDConnector) Profile_GetSearchableUsers(accs []core.CAccount, count int
 	c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
 }
 
-// -- Internals --
+func (c *GDConnector) Score_GetLeaderboard(intaccs []int, xacc core.CAccount) {
+	s := strconv.Itoa
+	lpos := 0
+	for _, uid := range intaccs {
+		lpos++
+		acc := core.CAccount{DB: xacc.DB, Uid: uid}
+		acc.LoadAll()
+		c.output += "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(lpos) + ":7:" + s(acc.Uid) +
+			":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) +
+			":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":46:" + s(acc.Diamonds) + ":52:" + s(acc.Moons) + "|"
+	}
+	c.output = c.output[:len(c.output)-1]
+}
+
+func (c *GDConnector) Score_GetScores(scores []core.CScores, mode string) {
+	for _, score := range scores {
+		switch mode {
+		case "coins":
+			score.Percent = score.Coins
+		case "attempts":
+			score.Percent = score.Attempts
+		}
+		c.output += c.getLeaderboardScore(score)
+	}
+	c.output = c.output[:len(c.output)-1]
+}
+
+// region Internals
 
 func (c *GDConnector) getSearchableUser(acc core.CAccount) string {
 	s := strconv.Itoa
@@ -577,28 +604,11 @@ func (c *GDConnector) userListItem(acc core.CAccount) string {
 		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":18:0:41:1|"
 }
 
-//
-//
-//
-//
-//
-
-// GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/o trailing hash)
-func GetAccLeaderboardItem(acc core.CAccount, lk int) string {
-	s := strconv.Itoa
-	acc.LoadAll()
-	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(lk) + ":7:" + s(acc.Uid) +
-		":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) +
-		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":46:" + s(acc.Diamonds) + ":52:" + s(acc.Moons) + "|"
-}
-
-// GetLeaderboardScore used to retrieve leaderboard scores (iterative, w/o trailing hash)
-func GetLeaderboardScore(score core.CScores) string {
+// getLeaderboardScore used to retrieve leaderboard scores (iterative, w/o trailing hash)
+func (c *GDConnector) getLeaderboardScore(score core.CScores) string {
 	s := strconv.Itoa
 	acc := core.CAccount{DB: score.DB, Uid: score.Uid}
-	acc.LoadAuth(core.CAUTH_UID)
-	acc.LoadVessels()
-	acc.LoadStats()
+	acc.LoadAll()
 	t, err := time.ParseInLocation("2006-01-02 15:04:05", score.PostedTime, loc)
 	if err != nil {
 		t = time.Now()
@@ -608,3 +618,5 @@ func GetLeaderboardScore(score core.CScores) string {
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(score.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":42:" + age + "|"
 }
+
+// endregion

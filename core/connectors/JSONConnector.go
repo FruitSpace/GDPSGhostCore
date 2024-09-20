@@ -278,3 +278,44 @@ func (c *JSONConnector) Profile_GetSearchableUsers(accs []core.CAccount, count i
 	c.output["page"] = page
 	c.Success("Users retrieved successfully")
 }
+
+func (c *JSONConnector) Score_GetLeaderboard(intaccs []int, xacc core.CAccount) {
+	var accs []core.CAccountJSON
+
+	lpos := 0
+	for _, uid := range intaccs {
+		lpos++
+		acc := core.CAccount{DB: xacc.DB, Uid: uid}
+		acc.LoadAll()
+		ja := core.NewCAccountJSONFromAccountLite(acc)
+		ja.LeaderboardRank = lpos
+		accs = append(accs, ja)
+	}
+	c.output["leaderboard"] = accs
+	c.Success("Leaderboard retrieved")
+}
+
+func (c *JSONConnector) Score_GetScores(scores []core.CScores, mode string) {
+	type CoupledScore struct {
+		core.CScores
+		User core.CAccountJSON `json:"user"`
+	}
+
+	var coupledScores []CoupledScore
+	for _, score := range scores {
+		switch mode {
+		case "coins":
+			score.Percent = score.Coins
+		case "attempts":
+			score.Percent = score.Attempts
+		}
+		acc := core.CAccount{DB: score.DB, Uid: score.Uid}
+		acc.LoadAll()
+		coupledScores = append(coupledScores, CoupledScore{
+			CScores: score,
+			User:    core.NewCAccountJSONFromAccountLite(acc),
+		})
+	}
+	c.output["scores"] = coupledScores
+	c.Success("Scores retrieved")
+}

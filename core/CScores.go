@@ -16,16 +16,16 @@ const (
 )
 
 type CScores struct {
-	Id         int
-	Uid        int
-	LvlId      int
-	PostedTime string
-	Percent    int
-	Ranking    int
-	Attempts   int
-	Coins      int
+	Id         int    `json:"id"`
+	Uid        int    `json:"uid"`
+	LvlId      int    `json:"lvl_id"`
+	PostedTime string `json:"posted_time"`
+	Percent    int    `json:"percent"`
+	Ranking    int    `json:"ranking"`
+	Attempts   int    `json:"attempts"`
+	Coins      int    `json:"coins"`
 
-	DB *MySQLConn
+	DB *MySQLConn `json:"-"`
 }
 
 func (cs *CScores) ScoreExistsByUid(uid int, lvlId int) bool {
