@@ -58,14 +58,15 @@ type CLevelList struct {
 	Likes         int    `json:"likes"`
 	IsFeatured    bool   `json:"is_featured"`
 	UID           int    `json:"uid"`
-	Levels        string `json:"levels"`
+	Levels        string `json:"-"`
 	Diamonds      int    `json:"diamonds"`
 	LevelDiamonds int    `json:"level_diamonds"`
 	UploadDate    string `json:"upload_date"`
 	UpdateDate    string `json:"update_date"`
 	Unlisted      int    `json:"unlisted"`
 
-	SideloadUname *string `json:"sideload_uname,omitempty"`
+	SideloadUname   *string  `json:"sideload_uname,omitempty"`
+	DecoupledLevels []string `json:"levels"`
 
 	DB *MySQLConn `json:"-"`
 }

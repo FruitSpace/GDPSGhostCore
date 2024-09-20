@@ -154,7 +154,18 @@ func (c *JSONConnector) Level_GetGauntlets(gaus []map[string]string, hash string
 }
 
 func (c *JSONConnector) Level_SearchList(intlists []int, lists []core.CLevelList, count int, page int) {
-	c.output["lists"] = lists
+	var llists []core.CLevelList
+	for _, lid := range intlists {
+		for i, list := range lists {
+			if list.ID == lid {
+				list.DecoupledLevels = strings.Split(list.Levels, ",")
+				llists = append(llists, list)
+				lists = append(lists[:i], lists[i+1:]...)
+				break
+			}
+		}
+	}
+	c.output["lists"] = llists
 	c.output["count"] = count
 	c.output["page"] = page
 	c.Success("Level list retrieved")
