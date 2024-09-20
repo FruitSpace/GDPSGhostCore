@@ -4,7 +4,6 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
-	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"log"
@@ -211,11 +210,15 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -226,12 +229,17 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	metrics.NewStep("Parsing")
 
 	Post := ReadPost(req)
+	//FIXME: Cache doesn't work well with connectors
 	// Check cache
-	cacheKey := fmt.Sprintf("%s/getLevels/%s", vars["gdps"], Post.Encode())
-	if res, errx := cached(cacheKey); errx == nil {
-		io.WriteString(resp, res)
-		return
-	}
+	//t := "gd"
+	//if req.URL.Query().Has("json") {
+	//	t = "json"
+	//}
+	//cacheKey := fmt.Sprintf("%s/getLevels/%s/%s", vars["gdps"], t, Post.Encode())
+	//if res, errx := cached(cacheKey); errx == nil {
+	//	io.WriteString(resp, res)
+	//	return
+	//}
 
 	var mode, page int
 	core.TryInt(&mode, Post.Get("type"))
@@ -248,6 +256,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if diff := Post.Get("diff"); diff != "" {
 		preg, err := regexp.Compile("[^0-9,-]")
 		if logger.Should(err) != nil {
+			serverError(connector)
 			return
 		}
 		diff = core.CleanDoubles(preg.ReplaceAllString(diff, ""), ",")
@@ -302,6 +311,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if plen := Post.Get("len"); plen != "" {
 		preg, err := regexp.Compile("[^0-9,-]")
 		if logger.Should(err) != nil {
+			serverError(connector)
 			return
 		}
 		plen = core.CleanDoubles(preg.ReplaceAllString(plen, ""), ",")
@@ -321,6 +331,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if completed := Post.Get("completedLevels"); completed != "" {
 		preg, err := regexp.Compile("[^0-9,-]")
 		if logger.Should(err) != nil {
+			serverError(connector)
 			return
 		}
 		completed = core.CleanDoubles(preg.ReplaceAllString(completed, ""), ",")
@@ -368,6 +379,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	db := &core.MySQLConn{}
 
 	if logger.Should(db.ConnectBlob(config)) != nil {
+		serverError(connector)
 		return
 	}
 	filter := core.CLevelFilter{DB: db}
@@ -408,6 +420,7 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 			//Follow levels
 			preg, err := regexp.Compile("[^0-9,-]")
 			if logger.Should(err) != nil {
+				serverError(connector)
 				return
 			}
 			Params["followList"] = preg.ReplaceAllString(core.ClearGDRequest(Post.Get("followed")), "")
@@ -463,71 +476,19 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	//Output, begins!
 	if len(levels) == 0 {
 		metrics.Done()
-		io.WriteString(resp, withCache(cacheKey, "-2"))
+		connector.Error("-2", "No levels found")
+
+		// FIXME
+		//io.WriteString(resp, withCache(cacheKey, "-2"))
 		return
 	}
-
-	out := ""
-	lvlHash := ""
-	usrstring := ""
-	musStr := ""
-	var musQueue []int
 
 	metrics.NewStep("Levels Fetch")
 	lvlCore := core.CLevel{DB: db}
 	lvlsX := lvlCore.LoadBulkSearch(levels)
+	mus := &core.CMusic{DB: db, ConfBlob: config, Config: conf}
 
-	var lvls []core.CLevel
-	for _, lvlid := range levels {
-		for i, lvl := range lvlsX {
-			if lvl.Id == lvlid {
-				lvls = append(lvls, lvl)
-				lvlsX = append(lvlsX[:i], lvlsX[i+1:]...)
-				break
-			}
-		}
-	}
-
-	metrics.NewStep("Levels parse")
-	for _, lvl := range lvls {
-		if core.GetGDVersion(Post) == 22 {
-			lvl.VersionGame = 21
-		}
-		lvlS, lvlH, usrH := connectors.GetLevelSearch(lvl, Gauntlet != 0)
-		out += lvlS
-		lvlHash += lvlH
-		usrstring += usrH
-
-		if lvl.SongId != 0 {
-			musQueue = append(musQueue, lvl.SongId)
-		}
-	}
-
-	metrics.NewStep("Music v2")
-	if len(musQueue) > 0 {
-		mus := core.CMusic{DB: db, ConfBlob: config, Config: conf}
-		songs := mus.GetBulkSongs(musQueue)
-		log.Println("Musics:", len(songs))
-		for _, sng := range songs {
-			musStr += connectors.GetMusic(sng) + "~:~"
-		}
-	}
-
-	if len(musStr) == 0 {
-		musStr = "lll"
-	}
-
-	if len(out) == 0 {
-		out = "x"
-		usrstring = "x"
-	}
-
-	pdata := out[:len(out)-1] + "#" +
-		usrstring[:len(usrstring)-1] + "#" +
-		musStr[:len(musStr)-3] + "#" +
-		s(filter.Count) + ":" + s(page*10) + ":10#" +
-		core.HashSolo2(lvlHash)
-	io.WriteString(resp, withCache(cacheKey, pdata))
+	connector.Level_SearchLevels(levels, lvlsX, mus, filter.Count, page, core.GetGDVersion(Post), Gauntlet)
 
 	metrics.Done()
 
@@ -537,11 +498,15 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -550,6 +515,7 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		var lvl_id int
@@ -558,9 +524,9 @@ func LevelReport(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if cl.Exists(lvl_id) {
 			cl.ReportLevel()
 		}
-		io.WriteString(resp, "1")
+		connector.Success("Level was reported")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -568,11 +534,15 @@ func LevelUpdateDescription(resp http.ResponseWriter, req *http.Request, conf *c
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -581,28 +551,29 @@ func LevelUpdateDescription(resp http.ResponseWriter, req *http.Request, conf *c
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var lvl_id int
 		core.TryInt(&lvl_id, Post.Get("levelID"))
 		cl := core.CLevel{DB: db, Id: lvl_id}
 		if !cl.IsOwnedBy(xacc.Uid) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Level doesn't exist or you don't own it")
 			return
 		}
 		desc := core.ClearGDRequest(Post.Get("levelDesc"))
 		if cl.UpdateDescription(desc) {
-			io.WriteString(resp, "1")
+			connector.Success("Description updated")
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Failed to update description")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -610,8 +581,11 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 
@@ -620,6 +594,7 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	}
 
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -628,11 +603,12 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		cl := core.CLevel{DB: db}
@@ -685,8 +661,8 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 
 		if cl.IsOwnedBy(xacc.Uid) {
 			res := cl.UpdateLevel()
-			io.WriteString(resp, strconv.Itoa(res))
 			if res > 0 {
+				connector.NumberedSuccess(res)
 				if config.ServerConfig.EnableModules["discord"] {
 					desc, _ := base64.StdEncoding.DecodeString(cl.Description)
 					data := map[string]string{
@@ -702,14 +678,16 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
 				}, db)
 				//!Here be plug
+			} else {
+				connector.Error("-1", "Level Update Failed")
 			}
 		} else {
 			if !cl.CheckParams() {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Invalid level data")
 				return
 			}
 			if !core.OnLevel(db, conf, config) {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "Level Update Failed")
 				return
 			}
 			protect := core.CProtect{DB: db, Savepath: conf.SavePath + "/" + vars["gdps"], DisableProtection: config.SecurityConfig.DisableProtection}
@@ -718,8 +696,8 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			if protect.DetectLevelModel(xacc.Uid) {
 				res = cl.UploadLevel()
 			}
-			io.WriteString(resp, strconv.Itoa(res))
 			if res > 0 {
+				connector.NumberedSuccess(res)
 				if config.ServerConfig.EnableModules["discord"] {
 					desc, _ := base64.StdEncoding.DecodeString(cl.Description)
 					data := map[string]string{
@@ -735,9 +713,11 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					"objects": strconv.Itoa(cl.Objects), "starsReq": strconv.Itoa(cl.StarsRequested),
 				}, db)
 				//!Here be plug
+			} else {
+				connector.Error("-1", "Level Upload Failed")
 			}
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

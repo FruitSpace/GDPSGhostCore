@@ -176,8 +176,42 @@ func (c *JSONConnector) Level_GetLevelFull(lvl core.CLevel, passwd string, phash
 	c.Success("Level retrieved")
 }
 
-func (c *JSONConnector) GetSpecials(id int, left int) {
+func (c *JSONConnector) Level_GetSpecials(id int, left int) {
 	c.output["id"] = id
 	c.output["seconds_left"] = left
 	c.Success("Specials retrieved")
+}
+
+func (c *JSONConnector) Level_SearchLevels(
+	intlevels []int, levels []core.CLevel, mus *core.CMusic,
+	count int, page int, gdVersion int, gauntlet int,
+) {
+	var musQueue []int
+	musMap := make(map[int]core.CMusic)
+
+	// To keep in order
+	var lvls []core.CLevel
+	for _, lvlid := range intlevels {
+		for i, lvl := range levels {
+			if lvl.Id == lvlid {
+				if lvl.SongId != 0 {
+					musQueue = append(musQueue, lvl.SongId)
+				}
+				lvls = append(lvls, lvl)
+				levels = append(levels[:i], levels[i+1:]...)
+				break
+			}
+		}
+	}
+
+	if len(musQueue) > 0 {
+		songs := mus.GetBulkSongs(musQueue)
+		for _, sng := range songs {
+			musMap[sng.Id] = sng
+		}
+	}
+
+	c.output["levels"] = lvls
+	c.output["music"] = musMap
+	c.Success("Levels search completed")
 }

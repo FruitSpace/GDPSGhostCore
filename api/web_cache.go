@@ -23,7 +23,11 @@ func cached(key string) (string, error) {
 }
 
 func withCache(key string, value string) string {
+	return withCacheDuration(key, value, time.Second*2)
+}
+
+func withCacheDuration(key string, value string, duration time.Duration) string {
 	ctx := context.Background()
-	cacheClient.Set(ctx, key, value, time.Second*2)
+	cacheClient.Set(ctx, key, value, duration)
 	return value
 }

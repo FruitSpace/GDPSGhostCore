@@ -225,8 +225,67 @@ func (c *GDConnector) Level_GetLevelFull(cl core.CLevel, password string, phash 
 	//44 isGauntlet
 }
 
-func (c *GDConnector) GetSpecials(id int, left int) {
+func (c *GDConnector) Level_GetSpecials(id int, left int) {
 	c.output = strconv.Itoa(id) + "|" + strconv.Itoa(left)
+}
+
+func (c *GDConnector) Level_SearchLevels(
+	intlevels []int, levels []core.CLevel, mus *core.CMusic,
+	count int, page int, gdVersion int, gauntlet int,
+) {
+	lvlHash := ""
+	usrstring := ""
+	musStr := ""
+	var musQueue []int
+
+	var lvls []core.CLevel
+	for _, lvlid := range intlevels {
+		for i, lvl := range levels {
+			if lvl.Id == lvlid {
+				lvls = append(lvls, lvl)
+				levels = append(levels[:i], levels[i+1:]...)
+				break
+			}
+		}
+	}
+	for _, lvl := range lvls {
+		if gdVersion == 22 {
+			lvl.VersionGame = 21
+		}
+		lvlS, lvlH, usrH := c.getLevelSearch(lvl, gauntlet != 0)
+		c.output += lvlS
+		lvlHash += lvlH
+		usrstring += usrH
+
+		if lvl.SongId != 0 {
+			musQueue = append(musQueue, lvl.SongId)
+		}
+	}
+	if len(musQueue) > 0 {
+		songs := mus.GetBulkSongs(musQueue)
+		for _, sng := range songs {
+			mc := GDConnector{}
+			mc.Essential_GetMusic(sng)
+			musStr += c.Output() + "~:~"
+		}
+	}
+
+	if len(musStr) == 0 {
+		musStr = "lll"
+	}
+
+	if len(c.output) == 0 {
+		c.output = "x"
+		usrstring = "x"
+	}
+
+	c.output = fmt.Sprintf(
+		"%s#%s#%s#%d:%d:10#%s",
+		c.output[:len(c.output)-1],
+		usrstring[:len(usrstring)-1],
+		musStr[:len(musStr)-3],
+		count, page*10, core.HashSolo(lvlHash),
+	)
 }
 
 // -- Internals --
@@ -353,6 +412,60 @@ func (c *GDConnector) getListSearch(cl core.CLevelList) (listStr string, user st
 
 }
 
+// getLevelSearch used to retrieve data about level in search (iterative, w/ half-hash), returns (lvlString, lvlHash, usrString)
+func (c *GDConnector) getLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
+	s := strconv.Itoa
+	diffNom := 0
+	if cl.Difficulty > 0 {
+		diffNom = 10
+	}
+	var auto int
+	if cl.Difficulty < 0 {
+		auto = 1
+		cl.Difficulty = 0
+	}
+	coinsVer := 0
+	if cl.Coins > 0 {
+		coinsVer = 1
+	}
+	demonDiff := 3
+	isDemon := 0
+	if cl.DemonDifficulty >= 0 {
+		isDemon = 1
+		demonDiff = cl.DemonDifficulty
+	}
+	acc := core.CAccount{DB: cl.DB, Uid: cl.Uid}
+	if cl.SideloadUname == nil {
+		if acc.Exists(acc.Uid) {
+			acc.LoadAuth(core.CAUTH_UID)
+		} else {
+			acc.Uname = "[DELETED]"
+		}
+	} else {
+		acc.Uname = *cl.SideloadUname
+	}
+
+	gaustr := ""
+	if gau {
+		gaustr = ":44:1"
+	}
+	//lvlString
+	strID := s(cl.Id)
+	sliceL := len(strID) - 1
+	//if sliceL==0 {sliceL=1}
+	return "1:" + s(cl.Id) + ":2:" + cl.Name + ":3:" + cl.Description + ":5:" + s(cl.Version) + ":6:" + s(cl.Uid) + ":8:" + s(diffNom) +
+			":9:" + s(cl.Difficulty) + ":10:" + s(cl.Downloads) + ":12:" + s(cl.TrackId) + ":13:" + s(cl.VersionGame) + ":14:" + s(cl.Likes) +
+			":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(cl.IsFeatured) + ":25:" + s(auto) +
+			":30:" + s(cl.OrigId) + ":31:" + s(core.ToInt(cl.Is2p)) + ":35:" + s(cl.SongId) + ":37:" + s(cl.Ucoins) + ":38:" + s(coinsVer) +
+			":39:" + s(cl.StarsRequested) + ":42:" + s(cl.IsEpic) + ":43:" + s(demonDiff) + gaustr + ":45:" + s(cl.Objects) + ":46:1:47:2|",
+		//lvlHash
+		string(strID[0]) + string(strID[sliceL]) + s(cl.StarsGot) + s(coinsVer),
+		//usrString
+		s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid) + "|"
+
+	//44 isGauntlet
+}
+
 //
 //
 //
@@ -468,58 +581,4 @@ func GetLeaderboardScore(score core.CScores) string {
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(score.Percent) + ":6:" + s(score.Ranking) + ":9:" + s(acc.GetShownIcon()) +
 		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(score.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
 		":16:" + s(acc.Uid) + ":42:" + age + "|"
-}
-
-// GetLevelSearch used to retrieve data about level in search (iterative, w/ half-hash), returns (lvlString, lvlHash, usrString)
-func GetLevelSearch(cl core.CLevel, gau bool) (string, string, string) {
-	s := strconv.Itoa
-	diffNom := 0
-	if cl.Difficulty > 0 {
-		diffNom = 10
-	}
-	var auto int
-	if cl.Difficulty < 0 {
-		auto = 1
-		cl.Difficulty = 0
-	}
-	coinsVer := 0
-	if cl.Coins > 0 {
-		coinsVer = 1
-	}
-	demonDiff := 3
-	isDemon := 0
-	if cl.DemonDifficulty >= 0 {
-		isDemon = 1
-		demonDiff = cl.DemonDifficulty
-	}
-	acc := core.CAccount{DB: cl.DB, Uid: cl.Uid}
-	if cl.SideloadUname == nil {
-		if acc.Exists(acc.Uid) {
-			acc.LoadAuth(core.CAUTH_UID)
-		} else {
-			acc.Uname = "[DELETED]"
-		}
-	} else {
-		acc.Uname = *cl.SideloadUname
-	}
-
-	gaustr := ""
-	if gau {
-		gaustr = ":44:1"
-	}
-	//lvlString
-	strID := s(cl.Id)
-	sliceL := len(strID) - 1
-	//if sliceL==0 {sliceL=1}
-	return "1:" + s(cl.Id) + ":2:" + cl.Name + ":3:" + cl.Description + ":5:" + s(cl.Version) + ":6:" + s(cl.Uid) + ":8:" + s(diffNom) +
-			":9:" + s(cl.Difficulty) + ":10:" + s(cl.Downloads) + ":12:" + s(cl.TrackId) + ":13:" + s(cl.VersionGame) + ":14:" + s(cl.Likes) +
-			":15:" + s(cl.Length) + ":17:" + s(isDemon) + ":18:" + s(cl.StarsGot) + ":19:" + s(cl.IsFeatured) + ":25:" + s(auto) +
-			":30:" + s(cl.OrigId) + ":31:" + s(core.ToInt(cl.Is2p)) + ":35:" + s(cl.SongId) + ":37:" + s(cl.Ucoins) + ":38:" + s(coinsVer) +
-			":39:" + s(cl.StarsRequested) + ":42:" + s(cl.IsEpic) + ":43:" + s(demonDiff) + gaustr + ":45:" + s(cl.Objects) + ":46:1:47:2|",
-		//lvlHash
-		string(strID[0]) + string(strID[sliceL]) + s(cl.StarsGot) + s(coinsVer),
-		//usrString
-		s(acc.Uid) + ":" + acc.Uname + ":" + s(acc.Uid) + "|"
-
-	//44 isGauntlet
 }
