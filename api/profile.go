@@ -16,11 +16,15 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -29,6 +33,7 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
@@ -38,27 +43,24 @@ func GetUserInfo(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			xacc := core.CAccount{DB: db}
 			if !xacc.PerformGJPAuth(Post, IPAddr) {
 				uidSelf = 0
+			} else {
+				uidSelf = xacc.Uid
 			}
 		}
 		if !acc.Exists(acc.Uid) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "User not Found")
 			return
 		}
 		acc.LoadAll()
 		blacklist := strings.Split(acc.Blacklist, ",")
 		if uidSelf > 0 && slices.Contains(blacklist, strconv.Itoa(uidSelf)) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "User has blacklisted you")
 			return
 		}
-		cf := core.CFriendship{DB: db}
-		data := connectors.GetUserProfile(acc, cf.IsAlreadyFriend(acc.Uid, uidSelf))
-		if acc.Uid == uidSelf {
-			cm := core.CMessage{DB: db}
-			data += connectors.UserProfilePersonal(cf.CountFriendRequests(acc.Uid, true), cm.CountMessages(acc.Uid, true))
-		}
-		io.WriteString(resp, data)
+
+		connector.Profile_GetUserProfile(acc, uidSelf)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -66,11 +68,15 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -79,23 +85,25 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		var cType int
 		core.TryInt(&cType, Post.Get("type"))
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		xacc.LoadSocial()
+		var usersToDump []core.CAccount
 		switch cType {
 		case 0:
 			if xacc.FriendsCount == 0 {
-				io.WriteString(resp, "-2")
+				connector.Error("-2", "No Friends")
+				return
 			} else {
 				flist := strings.Split(xacc.FriendshipIds, ",")
-				out := ""
 				for _, fid := range flist {
 					var Xfid int
 					core.TryInt(&Xfid, fid)
@@ -108,16 +116,15 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					acc.LoadAuth(core.CAUTH_UID)
 					acc.LoadVessels()
 					acc.LoadStats()
-					out += connectors.UserListItem(acc)
+					usersToDump = append(usersToDump, acc)
 				}
-				io.WriteString(resp, out[:len(out)-1])
 			}
 		case 1:
 			blacklist := strings.Split(xacc.Blacklist, ",")
 			if len(xacc.Blacklist) == 0 || len(blacklist) == 0 {
-				io.WriteString(resp, "-2")
+				connector.Error("-2", "No blacklisted users")
+				return
 			} else {
-				out := ""
 				for _, buid := range blacklist {
 					acc := core.CAccount{DB: db}
 					core.TryInt(&acc.Uid, buid)
@@ -127,13 +134,17 @@ func GetUserList(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 					acc.LoadAuth(core.CAUTH_UID)
 					acc.LoadVessels()
 					acc.LoadStats()
-					out += connectors.UserListItem(acc)
+					usersToDump = append(usersToDump, acc)
 				}
-				io.WriteString(resp, out[:len(out)-1])
 			}
+		default:
+			connector.Error("-1", "Bad Request")
+			return
 		}
+
+		connector.Profile_ListUserProfiles(usersToDump)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -141,11 +152,15 @@ func GetUsers(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -154,20 +169,22 @@ func GetUsers(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConf
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
-		acc := core.CAccount{DB: db}
-		acc.Uid = acc.SearchUsers(core.ClearGDRequest(Post.Get("str")))
-		if acc.Uid == 0 {
-			io.WriteString(resp, "-1")
+		xacc := core.CAccount{DB: db}
+		uids := xacc.SearchUsers(core.ClearGDRequest(Post.Get("str")))
+		if len(uids) == 0 {
+			connector.Error("-1", "No users found")
 		} else {
-			acc.LoadAuth(core.CAUTH_UID)
-			acc.LoadVessels()
-			acc.LoadStats()
-			io.WriteString(resp, connectors.UserSearchItem(acc))
+			var accs []core.CAccount
+			for _, uid := range uids {
+				accs = append(accs, core.CAccount{DB: db, Uid: uid})
+			}
+			connector.Profile_ListUserProfiles(accs)
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
@@ -175,11 +192,15 @@ func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request, conf *co
 	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
 
@@ -188,11 +209,12 @@ func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request, conf *co
 		db := &core.MySQLConn{}
 
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 
@@ -203,8 +225,8 @@ func UpdateAccountSettings(resp http.ResponseWriter, req *http.Request, conf *co
 		xacc.Twitter = core.ClearGDRequest(Post.Get("twitter"))
 		xacc.Twitch = core.ClearGDRequest(Post.Get("twitch"))
 		xacc.PushSettings()
-		io.WriteString(resp, "1")
+		connector.Success("Account updated")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

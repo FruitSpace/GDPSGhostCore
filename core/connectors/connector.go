@@ -31,6 +31,9 @@ type Connector interface {
 	Level_SearchLevels(intlevels []int, levels []core.CLevel, mus *core.CMusic, count int, page int, gdVersion int, gauntlet int)
 	Rewards_ChallengesOutput(cq core.CQuests, uid int, chk string, udid string)
 	Rewards_ChestOutput(acc core.CAccount, config core.ConfigBlob, udid string, chk string, smallLeft int, bigLeft int, chestType int)
+	Profile_GetUserProfile(acc core.CAccount, selfUid int)
+	Profile_ListUserProfiles(accs []core.CAccount)
+	Profile_GetSearchableUsers(accs []core.CAccount, count int, page int)
 }
 
 func NewConnector(isJson bool) Connector {

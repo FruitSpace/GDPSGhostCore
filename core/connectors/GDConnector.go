@@ -317,7 +317,40 @@ func (c *GDConnector) Rewards_ChestOutput(acc core.CAccount, config core.ConfigB
 	c.output = core.RandStringBytes(5) + out + "|" + core.HashSolo4(out)
 }
 
+func (c *GDConnector) Profile_GetUserProfile(acc core.CAccount, selfUid int) {
+	cf := core.CFriendship{DB: acc.DB}
+	cm := core.CMessage{DB: acc.DB}
+	c.output = c.getUserProfile(acc, cf.IsAlreadyFriend(acc.Uid, selfUid))
+	if acc.Uid == selfUid {
+		c.output += c.userProfilePersonal(cf.CountFriendRequests(acc.Uid, true), cm.CountMessages(acc.Uid, true))
+	}
+}
+
+func (c *GDConnector) Profile_ListUserProfiles(accs []core.CAccount) {
+	for _, acc := range accs {
+		c.output += c.userListItem(acc)
+	}
+	c.output = c.output[:len(c.output)-1]
+}
+
+func (c *GDConnector) Profile_GetSearchableUsers(accs []core.CAccount, count int, page int) {
+	for _, acc := range accs {
+		c.output += c.getSearchableUser(acc)
+	}
+	c.output = fmt.Sprintf("%s#%d:%d:10", c.output[:len(c.output)-1], count, page*10)
+}
+
 // -- Internals --
+
+func (c *GDConnector) getSearchableUser(acc core.CAccount) string {
+	s := strconv.Itoa
+	acc.LoadAuth(core.CAUTH_UID)
+	acc.LoadVessels()
+	acc.LoadStats()
+	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
+		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
+		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "|"
+}
 
 // getAccountComment used to retrieve account comments (iterative, w/o hash)
 func (c *GDConnector) getAccountComment(comment core.CComment) string {
@@ -517,45 +550,38 @@ func (c *GDConnector) generateChestBig(config core.ConfigBlob) string {
 		s(intR(config.ChestConfig.ChestBigKeysMin, config.ChestConfig.ChestBigKeysMax))
 }
 
-//
-//
-//
-//
-//
-
-// GetUserProfile used at getUserInfo (w/o trailing hash)
-func GetUserProfile(acc core.CAccount, isFriend bool) string {
+// getUserProfile used at getUserInfo (w/o trailing hash)
+func (c *GDConnector) getUserProfile(acc core.CAccount, isFriend bool) string {
 	s := strconv.Itoa
 	// 51=13 - color3, 53=34 -> swingcopter, 54=5 -> jetpack?,
 	role := acc.GetRoleObj(false)
-	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(acc.GetLeaderboardRank()) + ":7:" + s(acc.Uid) +
+	rank := acc.GetLeaderboardRank()
+	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(rank) + ":7:" + s(acc.Uid) +
 		":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) +
 		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":18:" + s(acc.MS) + ":19:" + s(acc.FrS) +
 		":20:" + acc.Youtube + ":21:" + s(acc.Cube) + ":22:" + s(acc.Ship) + ":23:" + s(acc.Ball) + ":24:" + s(acc.Ufo) + ":25:" + s(acc.Wave) + ":26:" + s(acc.Robot) +
-		":28:" + s(acc.Trace) + ":29:1:30:" + s(acc.GetLeaderboardRank()) + ":31:" + s(core.ToInt(isFriend)) + ":43:" + s(acc.Spider) + ":44:" + acc.Twitter +
+		":28:" + s(acc.Trace) + ":29:1:30:" + s(rank) + ":31:" + s(core.ToInt(isFriend)) + ":43:" + s(acc.Spider) + ":44:" + acc.Twitter +
 		":45:" + acc.Twitch + ":46:" + s(acc.Diamonds) + ":48:" + s(acc.Death) + ":49:" + s(role.ModLevel) + ":50:" + s(acc.CS) + ":51:" + s(acc.ColorGlow) +
 		":52:" + s(acc.Moons) + ":53:" + s(acc.Swing) + ":54:" + s(acc.Jetpack)
 }
 
-// UserProfilePersonal used at getUserInfo to append some data if user is requesting themselves (w/o trailing hash)
-func UserProfilePersonal(frReq int, msgNewCnt int) string {
+// userProfilePersonal used at getUserInfo to append some data if user is requesting themselves (w/o trailing hash)
+func (c *GDConnector) userProfilePersonal(frReq int, msgNewCnt int) string {
 	return ":38:" + strconv.Itoa(msgNewCnt) + ":39:" + strconv.Itoa(frReq) + ":40:0"
 }
 
-// UserListItem used at getUserList to provide minimum data for user lists (iterative, w/o hash)
-func UserListItem(acc core.CAccount) string {
+// userListItem used at getUserList to provide minimum data for user lists (iterative, w/o hash)
+func (c *GDConnector) userListItem(acc core.CAccount) string {
 	s := strconv.Itoa
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) +
 		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":18:0:41:1|"
 }
 
-// UserSearchItem used at getUsers (w/ trailing hash)
-func UserSearchItem(acc core.CAccount) string {
-	s := strconv.Itoa
-	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) +
-		":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) + ":14:" + s(acc.IconType) + ":15:" + s(acc.Special) +
-		":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":52:" + s(acc.Moons) + "#1:0:10"
-}
+//
+//
+//
+//
+//
 
 // GetAccLeaderboardItem used to retrieve user for leaderboards (iterative, w/o trailing hash)
 func GetAccLeaderboardItem(acc core.CAccount, lk int) string {

@@ -292,6 +292,16 @@ func ArrTranslate(arr []int) []string {
 	return vs
 }
 
+func ArrTranslateToInt(arr []string) []int {
+	var vs []int
+	for _, l := range arr {
+		if v, err := strconv.Atoi(l); err == nil {
+			vs = append(vs, v)
+		}
+	}
+	return vs
+}
+
 func QuickComma(str string) string {
 	return strings.Join(ArrTranslate(Decompose(CleanDoubles(str, ","), ",")), ",")
 }
@@ -547,4 +557,14 @@ func (gm *GoMetrics) DumpJSON() string {
 		Total: gm.lastTime.Sub(gm.startTime).Milliseconds(),
 	})
 	return string(data)
+}
+
+func Clamp(val, min, max int) int {
+	if val < min {
+		return min
+	}
+	if val > max {
+		return max
+	}
+	return val
 }

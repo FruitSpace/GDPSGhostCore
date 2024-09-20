@@ -243,3 +243,38 @@ func (c *JSONConnector) Rewards_ChestOutput(acc core.CAccount, config core.Confi
 		"or just \"peek\" inside chests."
 	c.Success("Did absolutely nothing")
 }
+
+func (c *JSONConnector) Profile_GetUserProfile(acc core.CAccount, selfUid int) {
+	role := acc.GetRoleObj(acc.Uid == selfUid)
+	obj := core.NewCAccountJSONFromAccount(acc, &role, acc.Uid == selfUid)
+	cf := core.CFriendship{DB: acc.DB}
+	obj.WeAreFriends = cf.IsAlreadyFriend(acc.Uid, selfUid)
+	c.output["user"] = obj
+	c.Success("User retrieved successfully")
+}
+
+func (c *JSONConnector) Profile_ListUserProfiles(accs []core.CAccount) {
+	var users []core.CAccountJSON
+
+	for _, acc := range accs {
+		users = append(users, core.NewCAccountJSONFromAccountLite(acc))
+	}
+
+	c.output["users"] = users
+	c.Success("User list retrieved successfully")
+}
+
+func (c *JSONConnector) Profile_GetSearchableUsers(accs []core.CAccount, count int, page int) {
+	var users []core.CAccountJSON
+	for _, acc := range accs {
+		acc.LoadAuth(core.CAUTH_UID)
+		acc.LoadVessels()
+		acc.LoadStats()
+		users = append(users, core.NewCAccountJSONFromAccountLite(acc))
+	}
+
+	c.output["users"] = users
+	c.output["count"] = count
+	c.output["page"] = page
+	c.Success("Users retrieved successfully")
+}
