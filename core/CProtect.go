@@ -158,7 +158,7 @@ func (protect *CProtect) DetectPosts(uid int) bool {
 	}
 	meta := protect.GetMeta(uid)
 	t := int(time.Now().Unix())
-	if t-meta["post_time"] < 900 {
+	if t-meta["post_time"] < 120 {
 		return false
 	}
 	meta["post_time"] = t
