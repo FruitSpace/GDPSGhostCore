@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+var restartAttempts = 3
+
 func main() {
 	// Start Sentry so I can sleep well
 	err := sentry.Init(sentry.ClientOptions{
@@ -35,6 +37,10 @@ func main() {
 
 	core.DBTunnel, err = sqlx.Connect("mysql", DB_USER+":"+DB_PASS+"@tcp("+DB_HOST+":3306)/")
 	if err != nil {
+		if restartAttempts == 0 {
+			os.Exit(1)
+		}
+		restartAttempts--
 		log.Println("Error while connecting to " + DB_USER + "@localhost: " + err.Error())
 		time.Sleep(10 * time.Second)
 		main()
