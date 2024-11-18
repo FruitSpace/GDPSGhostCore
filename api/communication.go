@@ -7,38 +7,35 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 )
 
 func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var uidTarget int
@@ -46,40 +43,39 @@ func BlockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		if uidTarget > 0 {
 			xacc.UpdateBlacklist(core.CBLACKLIST_BLOCK, uidTarget)
 		}
-		io.WriteString(resp, "1")
+		connector.Success("Blocked user successfully")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var uidTarget int
@@ -87,83 +83,85 @@ func UnblockUser(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		if uidTarget > 0 {
 			xacc.UpdateBlacklist(core.CBLACKLIST_UNBLOCK, uidTarget)
 		}
-		io.WriteString(resp, "1")
+		connector.Success("Unblocked user successfully")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func FriendAcceptRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("requestID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var requestId int
 		core.TryInt(&requestId, Post.Get("requestID"))
 		if requestId > 0 {
 			cf := core.CFriendship{DB: db}
-			io.WriteString(resp, strconv.Itoa(cf.AcceptFriendRequest(requestId, xacc.Uid)))
+			if stat := cf.AcceptFriendRequest(requestId, xacc.Uid); stat > 0 {
+				connector.Success("Accepted friend request successfully")
+			} else {
+				connector.Error("-1", "Friend request not found")
+			}
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Bad Request")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var targetId int
@@ -172,36 +170,37 @@ func FriendRejectRequest(resp http.ResponseWriter, req *http.Request, conf *core
 			cf := core.CFriendship{DB: db}
 			issender := Post.Get("isSender") == "1"
 			cf.RejectFriendRequestByUid(xacc.Uid, targetId, issender)
+			connector.Success("Rejected friend request successfully")
+		} else {
+			connector.Error("-1", "Bad Request")
 		}
-		io.WriteString(resp, "1")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
@@ -209,53 +208,48 @@ func FriendGetRequests(resp http.ResponseWriter, req *http.Request, conf *core.G
 		core.TryInt(&page, Post.Get("page"))
 		getSent := Post.Get("getSent") == "1"
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		cf := core.CFriendship{DB: db}
 		count, frqs := cf.GetFriendRequests(xacc.Uid, page, getSent)
 		if len(frqs) == 0 {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "No requests found")
 		} else {
-			output := ""
-			for _, frq := range frqs {
-				output += connectors.GetFriendRequest(frq)
-			}
-			io.WriteString(resp, output[:len(output)-1]+"#"+strconv.Itoa(count)+":"+strconv.Itoa(page*10)+":10")
+			connector.Communication_FriendGetRequests(frqs, count, page)
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("requestID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var requestId int
@@ -263,41 +257,42 @@ func FriendReadRequest(resp http.ResponseWriter, req *http.Request, conf *core.G
 		if requestId > 0 {
 			cf := core.CFriendship{DB: db}
 			cf.ReadFriendRequest(requestId)
+			connector.Success("Read friend request successfully")
+		} else {
+			connector.Error("-1", "Bad Request")
 		}
-		io.WriteString(resp, "1")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("targetAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var targetId int
@@ -305,41 +300,42 @@ func FriendRemove(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		if targetId > 0 {
 			cf := core.CFriendship{DB: db}
 			cf.DeleteFriendship(xacc.Uid, targetId)
+			connector.Success("Removed friend successfully")
+		} else {
+			connector.Error("-1", "Bad Request")
 		}
-		io.WriteString(resp, "1")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("toAccountID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var targetId int
@@ -348,43 +344,46 @@ func FriendRequest(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			cf := core.CFriendship{DB: db}
 			comment := Post.Get("comment")
 			comment = core.ClearGDRequest(comment)
-			io.WriteString(resp, strconv.Itoa(cf.RequestFriend(xacc.Uid, targetId, comment)))
+			if stat := cf.RequestFriend(xacc.Uid, targetId, comment); stat > 0 {
+				connector.Success("Request sent successfully")
+			} else {
+				connector.Error("-1", "Failed to send request")
+			}
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Bad Request")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("messageID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var msgId int
@@ -393,40 +392,39 @@ func MessageDelete(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			cm := core.CMessage{DB: db, Id: msgId}
 			cm.DeleteMessage(xacc.Uid)
 		}
-		io.WriteString(resp, "1")
+		connector.Success("Message deleted successfully")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("messageID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var msgId int
@@ -435,47 +433,46 @@ func MessageGet(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		if cm.Exists(msgId) {
 			cm.LoadMessageById(msgId)
 			if xacc.Uid == cm.UidSrc || xacc.Uid == cm.UidDest {
-				io.WriteString(resp, connectors.GetMessage(cm, xacc.Uid))
+				connector.Communication_MessageGet(cm, xacc.Uid)
 			} else {
-				io.WriteString(resp, "1")
+				connector.Error("-1", "Message not found")
 			}
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Message not found")
 		}
 
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		page := 0
@@ -484,32 +481,25 @@ func MessageGetAll(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		cm := core.CMessage{DB: db}
 		count, msgs := cm.GetMessageForUid(xacc.Uid, page, getSent)
 		if len(msgs) == 0 {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "No messages found")
 		} else {
-			output := ""
-			for _, msg := range msgs {
-				output += connectors.GetMessageStr(msg, getSent)
-			}
-			io.WriteString(resp, output[:len(output)-1]+"#"+strconv.Itoa(count)+":"+strconv.Itoa(page*10)+":10")
+			connector.Communication_MessageGetAll(msgs, getSent, count, page)
 		}
 
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 
@@ -518,19 +508,21 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 	}
 
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("toAccountID") != "" && Post.Get("body") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid Credentials")
 			return
 		}
 		var uidDest int
@@ -546,11 +538,11 @@ func MessageUpload(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 		}
 		protect := core.CProtect{DB: db, DisableProtection: config.SecurityConfig.DisableProtection}
 		if protect.DetectMessages(xacc.Uid) && cm.SendMessageObj() {
-			io.WriteString(resp, "1")
+			connector.Success("Message sent successfully")
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Failed to send message")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }

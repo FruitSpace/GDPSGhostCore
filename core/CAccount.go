@@ -5,8 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/exp/slices"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -109,10 +109,20 @@ func (acc *CAccount) Exists(uid int) bool {
 	return cnt > 0
 }
 
-func (acc *CAccount) SearchUsers(sterm string) int {
-	var uid int
-	acc.DB.ShouldQueryRow("SELECT uid FROM #DB#.users WHERE uid=? OR uname=? ORDER BY stars LIMIT 1", sterm, sterm).Scan(&uid)
-	return uid
+func (acc *CAccount) SearchUsers(sterm string) []int {
+	var uids []int
+	sterm = strings.ReplaceAll(sterm, "%", "")
+	if _, err := strconv.Atoi(sterm); err != nil && len(sterm) < 3 {
+		return uids
+	}
+	rows := acc.DB.ShouldQuery("SELECT uid FROM #DB#.users WHERE uid=? OR uname LIKE ? ORDER BY stars DESC LIMIT 10", sterm, "%"+sterm+"%")
+	defer rows.Close()
+	for rows.Next() {
+		var uid int
+		rows.Scan(&uid)
+		uids = append(uids, uid)
+	}
+	return uids
 }
 
 func (acc *CAccount) LoadSettings() {
@@ -527,8 +537,8 @@ func (acc *CAccount) PerformGJPAuth(Post url.Values, IPAddr string) bool {
 
 // Role
 type Role struct {
-	RoleName     string
-	CommentColor string
-	ModLevel     int
-	Privs        map[string]int
+	RoleName     string         `json:"role_name"`
+	CommentColor string         `json:"comment_color"`
+	ModLevel     int            `json:"mod_level"`
+	Privs        map[string]int `json:"privileges,omitempty"`
 }

@@ -300,10 +300,9 @@ func (filter *CLevelFilter) SearchListLevels(page int, params map[string]string)
 }
 
 // GetGauntlets retrieves gauntlet list and levels (w/ trailing hash)
-func (filter *CLevelFilter) GetGauntlets() string {
+func (filter *CLevelFilter) GetGauntlets() (gauntlets []map[string]string, hashString string) {
 	rows := filter.DB.ShouldQuery("SELECT packName, levels FROM #DB#.levelpacks WHERE packType=1 ORDER BY CAST(packname as int)")
 	defer rows.Close()
-	var gau, hashstr string
 	for rows.Next() {
 		var packName, levels string
 		rows.Scan(&packName, &levels)
@@ -313,13 +312,10 @@ func (filter *CLevelFilter) GetGauntlets() string {
 		if _, err := strconv.Atoi(packName); err != nil {
 			continue
 		}
-		gau += "1:" + packName + ":3:" + levels + "|"
-		hashstr += packName + levels
+		gauntlets = append(gauntlets, map[string]string{"pack_name": packName, "levels": levels})
+		hashString += packName + levels
 	}
-	if len(gau) == 0 {
-		return "-2"
-	}
-	return gau[:len(gau)-1] + "#" + HashSolo2(hashstr)
+	return gauntlets, HashSolo2(hashString)
 }
 
 // GetGauntletLevels returns gauntlet level IDs
@@ -340,21 +336,28 @@ func (filter *CLevelFilter) CountMapPacks() int {
 }
 
 // GetMapPacks retrieves MapPacks list and levels (w/ trailing hash)
-func (filter *CLevelFilter) GetMapPacks(page int) string {
+func (filter *CLevelFilter) GetMapPacks(page int) (packs []LevelPack, count int) {
 	page = int(math.Abs(float64(page))) * 10
 	rows := filter.DB.ShouldQuery("SELECT id,packName,levels,packStars,packCoins,packDifficulty,packColor FROM #DB#.levelpacks WHERE packType=0 LIMIT 10 OFFSET " + strconv.Itoa(page))
 	defer rows.Close()
 
-	var pack, hashstr string
 	for rows.Next() {
-		var id, packName, levels, packStars, packCoins, packDiff, packColor string
-		rows.Scan(&id, &packName, &levels, &packStars, &packCoins, &packDiff, &packColor)
+		var pack LevelPack
+		rows.Scan(&pack.Id, &pack.PackName, &pack.Levels, &pack.PackStars, &pack.PackCoins, &pack.PackDifficulty, &pack.PackColor)
+		packs = append(packs, pack)
+	}
+	if len(packs) > 0 {
+		count = filter.CountMapPacks()
+	}
+	return
+}
 
-		pack += "1:" + id + ":2:" + packName + ":3:" + levels + ":4:" + packStars + ":5:" + packCoins + ":6:" + packDiff + ":7:" + packColor + ":8:" + packColor + "|"
-		hashstr += string(id[0]) + string(id[len(id)-1]) + packStars + packCoins
-	}
-	if len(pack) == 0 {
-		return "-2"
-	}
-	return pack[:len(pack)-1] + "#" + strconv.Itoa(filter.CountMapPacks()) + ":" + strconv.Itoa(page) + ":10#" + HashSolo2(hashstr)
+type LevelPack struct {
+	Id             int    `json:"id"`
+	PackName       string `json:"pack_name"`
+	Levels         string `json:"levels"`
+	PackStars      int    `json:"pack_stars"`
+	PackCoins      int    `json:"pack_coins"`
+	PackDifficulty int    `json:"pack_difficulty"`
+	PackColor      string `json:"pack_color"`
 }

@@ -13,73 +13,65 @@ import (
 )
 
 func GetCreators(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	//Post:=ReadPost(req)
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
+		serverError(connector)
 		return
 	}
 	acc := core.CAccount{DB: db}
 	users := acc.GetLeaderboard(core.CLEADERBOARD_BY_CPOINTS, []string{}, 0, config.ServerConfig.TopSize)
 	if len(users) == 0 {
-		io.WriteString(resp, "-2")
+		connector.Error("-2", "No users found")
 	} else {
-		var lk int
-		out := ""
-		for _, user := range users {
-			xacc := core.CAccount{DB: db, Uid: user}
-			lk++
-			out += connectors.GetAccLeaderboardItem(xacc, lk)
-		}
-		io.WriteString(resp, out[:len(out)-1])
+		xacc := core.CAccount{DB: db}
+		connector.Score_GetLeaderboard(users, xacc)
 	}
 }
 
 func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid credentials")
 			return
 		}
 
@@ -119,47 +111,42 @@ func GetLevelScores(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 		//Retrieve all scores
 		scores := cs.GetScoresForLevelId(lvlId, mode%4+400, xacc)
 		if len(scores) == 0 {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "No scores found")
 			return
 		}
-		out := ""
-		for _, score := range scores {
-			out += connectors.GetLeaderboardScore(score)
-		}
-		io.WriteString(resp, out[:len(out)-1])
+		connector.Score_GetScores(scores, "default")
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func GetLevelPlatScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) && Post.Get("levelID") != "" {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid credentials")
 			return
 		}
 
@@ -206,50 +193,44 @@ func GetLevelPlatScores(resp http.ResponseWriter, req *http.Request, conf *core.
 		//Retrieve all scores
 		scores := cs.GetScoresForPlatformerLevelId(lvlId, xtype%4+500, mode == 1, xacc)
 		if len(scores) == 0 {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "No scores found")
 			return
 		}
-		out := ""
-		for _, score := range scores {
-			if mode == 1 {
-				score.Percent = score.Coins
-			} else {
-				score.Percent = score.Attempts
-			}
-			out += connectors.GetLeaderboardScore(score)
+		modes := "attempts"
+		if mode == 1 {
+			modes = "coins"
 		}
-		io.WriteString(resp, out[:len(out)-1])
+		connector.Score_GetScores(scores, modes)
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad Request")
 	}
 }
 
 func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	xType := Post.Get("type")
 	if xType == "" {
 		xType = "top"
 	}
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
+		serverError(connector)
 		return
 	}
 	acc := core.CAccount{DB: db}
@@ -257,14 +238,14 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 	switch xType {
 	case "relative":
 		if !acc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid credentials")
 			return
 		}
 		acc.LoadStats()
 		users = acc.GetLeaderboard(core.CLEADERBOARD_GLOBAL, []string{}, acc.Stars, config.ServerConfig.TopSize)
 	case "friends":
 		if !acc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid credentials")
 			return
 		}
 		acc.LoadSocial()
@@ -298,31 +279,21 @@ func GetScores(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCon
 		users = acc.GetLeaderboard(core.CLEADERBOARD_BY_STARS, []string{}, 0, config.ServerConfig.TopSize)
 	}
 	if len(users) == 0 {
-		io.WriteString(resp, "-1")
+		connector.Error("-2", "No users found")
 	} else {
-		var lk int
-		out := ""
-		for _, user := range users {
-			xacc := core.CAccount{DB: db, Uid: user}
-			lk++
-			out += connectors.GetAccLeaderboardItem(xacc, lk)
-		}
-		io.WriteString(resp, out[:len(out)-1])
+		connector.Score_GetLeaderboard(users, acc)
 	}
 }
 
 func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 
@@ -331,19 +302,21 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 	}
 
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if core.CheckGDAuth(Post) {
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		xacc := core.CAccount{DB: db}
 		if !xacc.PerformGJPAuth(Post, IPAddr) {
-			io.WriteString(resp, "1") //! Weird thing
+			connector.Success("Invalid Credentials, but as per Geometry Dash API we should return 1 no matter what")
 			return
 		}
 		xacc.LoadStats()
@@ -373,13 +346,13 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		protect := core.CProtect{DB: db, Savepath: conf.SavePath + "/" + vars["gdps"], DisableProtection: config.SecurityConfig.DisableProtection}
 		protect.LoadModel(conf, config)
 		if !protect.DetectStats(xacc.Uid, xacc.Stars, xacc.Diamonds, xacc.Demons, xacc.Coins, xacc.UCoins) {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Invalid stats breh") // Le trolling
 			return
 		}
 		xacc.PushVessels()
 		xacc.PushStats()
-		io.WriteString(resp, strconv.Itoa(xacc.Uid))
+		connector.NumberedSuccess(xacc.Uid)
 	} else {
-		io.WriteString(resp, "1") //! Temporary
+		connector.Success("Bad Request, but as per Geometry Dash API we should return 1 no matter what")
 	}
 }

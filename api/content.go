@@ -52,7 +52,7 @@ func GetMusicLibrary(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 		return
 	}
 	db := &core.MySQLConn{}
-	defer db.CloseDB()
+
 	if logger.Should(db.ConnectBlob(config)) != nil {
 		return
 	}

@@ -12,58 +12,58 @@ const (
 
 type CLevel struct {
 	//Main
-	Id              int
-	Name            string
-	Description     string
-	Uid             int
-	Password        string
-	Version         int
-	Length          int
-	Difficulty      int
-	DemonDifficulty int
+	Id              int    `json:"id"`
+	Name            string `json:"name"`
+	Description     string `json:"description"`
+	Uid             int    `json:"uid"`
+	Password        string `json:"password"`
+	Version         int    `json:"version"`
+	Length          int    `json:"length"`
+	Difficulty      int    `json:"difficulty"`
+	DemonDifficulty int    `json:"demon_difficulty"`
 
-	SuggestDifficulty    float64
-	SuggestDifficultyCnt int
+	SuggestDifficulty    float64 `json:"-"`
+	SuggestDifficultyCnt int     `json:"-"`
 
 	//Level
-	TrackId         int
-	SongId          int
-	VersionGame     int
-	VersionBinary   int
-	StringExtra     string
-	StringSettings  string // FUCKING SONG IDS ; SFX IDS (song;sfx)
-	StringLevel     string
-	StringLevelInfo string
-	OrigId          int
+	TrackId         int    `json:"track_id"`
+	SongId          int    `json:"song_id"`
+	VersionGame     int    `json:"version_game"`
+	VersionBinary   int    `json:"version_binary"`
+	StringExtra     string `json:"string_extra"`
+	StringSettings  string `json:"string_settings"` // FUCKING SONG IDS ; SFX IDS (song;sfx)
+	StringLevel     string `json:"string_level"`
+	StringLevelInfo string `json:"string_level_info"`
+	OrigId          int    `json:"original_id"`
 
 	//Stats
-	Objects        int
-	StarsRequested int
-	StarsGot       int
-	Ucoins         int
-	Coins          int
-	Downloads      int
-	Likes          int
-	Reports        int
+	Objects        int `json:"objects"`
+	StarsRequested int `json:"stars_requested"`
+	StarsGot       int `json:"stars_got"`
+	Ucoins         int `json:"ucoins"`
+	Coins          int `json:"coins"`
+	Downloads      int `json:"downloads"`
+	Likes          int `json:"likes"`
+	Reports        int `json:"reports"`
 
 	//Params
-	Is2p       bool
-	IsVerified bool
-	IsFeatured int
-	ISHall     bool
-	IsEpic     int
-	IsUnlisted int
-	IsLDM      bool
+	Is2p       bool `json:"is_2p"`
+	IsVerified bool `json:"is_verified"`
+	IsFeatured int  `json:"is_featured"`
+	ISHall     bool `json:"is_hall"`
+	IsEpic     int  `json:"is_epic"`
+	IsUnlisted int  `json:"is_unlisted"`
+	IsLDM      bool `json:"is_ldm"`
 
 	//Dates
-	UploadDate string
-	UpdateDate string
+	UploadDate string `json:"upload_date"`
+	UpdateDate string `json:"update_date"`
 
-	UnlockLevelObject bool
-	SideloadUname     *string
+	UnlockLevelObject bool    `json:"-"`
+	SideloadUname     *string `json:"username,omitempty"`
 
-	DB     *MySQLConn
-	Logger Logger
+	DB     *MySQLConn `json:"-"`
+	Logger Logger     `json:"-"`
 }
 
 func (lvl *CLevel) Exists(lvlid int) bool {

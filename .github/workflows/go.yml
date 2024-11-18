@@ -7,7 +7,6 @@ on:
     branches: [ "master" ]
 
 jobs:
-
   build:
     runs-on: ubuntu-latest
     steps:
@@ -22,7 +21,10 @@ jobs:
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }} cr.yandex
 
     - name: Build
-      run: bash ./build.sh
+      run: docker build -t cr.yandex/crpr24jcqm2dno6qlm3b/ghostcore
+
+    - name: Push
+      run: docker push cr.yandex/crpr24jcqm2dno6qlm3b/ghostcore
 
   notify:
     name: Discord Notification
@@ -36,6 +38,6 @@ jobs:
         uses: nobrayner/discord-webhook@v1
         with:
            github-token: ${{ secrets.GITHUB_TOKEN }}
-           discord-webhook: https://discord.com/api/webhooks/1036916324875653180/0OUAkSz-BTm61CfHKFJMntD5NmRWIR-Ao8YUOOF-jhi8M3kDlQMOjy53R5Vb6oIUhigE
+           discord-webhook: https://discord.com/api/webhooks/1270366524128886815/2m_aquhXryYhMkw37KRLs6TqBh3D6gDI7Gs-Gio12ba3bLxvJ92Oej9qJnlyomvVH7_g
            username: 'Github Pipelines'
            avatar-url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'

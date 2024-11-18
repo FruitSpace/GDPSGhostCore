@@ -49,25 +49,26 @@ import "github.com/jmoiron/sqlx"
 //44 	Temple
 
 type CLevelList struct {
-	ID            int
-	Name          string
-	Description   string
-	Version       int
-	Difficulty    int
-	Downloads     int
-	Likes         int
-	IsFeatured    bool
-	UID           int
-	Levels        string
-	Diamonds      int
-	LevelDiamonds int
-	UploadDate    string
-	UpdateDate    string
-	Unlisted      int
+	ID            int    `json:"id"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	Version       int    `json:"version"`
+	Difficulty    int    `json:"difficulty"`
+	Downloads     int    `json:"downloads"`
+	Likes         int    `json:"likes"`
+	IsFeatured    bool   `json:"is_featured"`
+	UID           int    `json:"uid"`
+	Levels        string `json:"-"`
+	Diamonds      int    `json:"diamonds"`
+	LevelDiamonds int    `json:"level_diamonds"`
+	UploadDate    string `json:"upload_date"`
+	UpdateDate    string `json:"update_date"`
+	Unlisted      int    `json:"unlisted"`
 
-	SideloadUname *string
+	SideloadUname   *string  `json:"sideload_uname,omitempty"`
+	DecoupledLevels []string `json:"levels"`
 
-	DB *MySQLConn
+	DB *MySQLConn `json:"-"`
 }
 
 func (cll *CLevelList) Load(id int) {

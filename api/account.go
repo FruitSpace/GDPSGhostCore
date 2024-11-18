@@ -2,6 +2,7 @@ package api
 
 import (
 	"HalogenGhostCore/core"
+	"HalogenGhostCore/core/connectors"
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
@@ -15,31 +16,30 @@ import (
 )
 
 func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("saveData") != "" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		saveData := core.ClearGDRequest(Post.Get("saveData"))
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
@@ -53,32 +53,39 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			savepath := "/gdps_savedata/" + vars["gdps"] + "/"
 			taes := core.ThunderAES{}
 			if logger.Should(taes.GenKey(config.ServerConfig.SrvKey)) != nil {
+				serverError(connector)
 				return
 			}
 			if logger.Should(taes.Init()) != nil {
+				serverError(connector)
 				return
 			}
 			datax, err := taes.EncryptRaw(saveData)
 			if logger.Should(err) != nil {
+				serverError(connector)
 				return
 			}
 
 			s3 := core.NewS3FS()
 			if logger.Should(s3.PutFile(savepath+strconv.Itoa(acc.Uid)+".hsv", datax)) != nil {
+				serverError(connector)
 				return
 			}
 
 			saveData = strings.ReplaceAll(strings.ReplaceAll(strings.Split(saveData, ";")[0], "_", "/"), "-", "+")
 			b, err := base64.StdEncoding.DecodeString(saveData)
 			if logger.Should(err) != nil {
+				serverError(connector)
 				return
 			}
 			r, err := gzip.NewReader(bytes.NewBuffer(b))
 			if logger.Should(err) != nil {
+				serverError(connector)
 				return
 			}
 			d, err := io.ReadAll(r)
 			if logger.Should(err) != nil {
+				serverError(connector)
 				return
 			}
 			saveData = string(d)
@@ -88,39 +95,36 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			acc.PushStats()
 			//! Temp
 			s3.DeleteFile("/savedata_old/" + vars["gdps"] + "/files/savedata/" + strconv.Itoa(acc.Uid) + ".hal")
-			io.WriteString(resp, "1")
+			connector.Success("Backup successful")
 		} else {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "Invalid credentials")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad request")
 	}
 }
 
 func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		serverError(connector)
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	if (Post.Get("userName") != "" && Post.Get("password") != "") || Post.Get("gjp2") != "" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
 			return
 		}
@@ -137,40 +141,46 @@ func AccountSync(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 			if d, err := s3.GetFile(savepath); err == nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(config.ServerConfig.SrvKey)) != nil {
+					serverError(connector)
 					return
 				}
 				if logger.Should(taes.Init()) != nil {
+					serverError(connector)
 					return
 				}
 				data, err := taes.DecryptRaw(d)
 				if err != nil {
+					serverError(connector)
 					core.ReportFail(fmt.Sprintf("[%s] NG savedata decrypt error for `%s`", vars["gdps"], uname))
 					return
 				}
-				io.WriteString(resp, data+";21;30;a;a")
+				connector.Account_Sync(data)
 				//! Temp transitional
 			} else if d, err := s3.GetFile("/savedata_old/" + vars["gdps"] + "/files/savedata/" + strconv.Itoa(acc.Uid) + ".hal"); err == nil {
 				taes := core.ThunderAES{}
 				if logger.Should(taes.GenKey(pass)) != nil {
+					serverError(connector)
 					return
 				}
 				if logger.Should(taes.Init()) != nil {
+					serverError(connector)
 					return
 				}
 				data, err := taes.DecryptLegacy(string(d))
 				if err != nil {
+					serverError(connector)
 					core.ReportFail(fmt.Sprintf("[%s] HAL savedata decrypt error for `%s`", vars["gdps"], uname))
 					return
 				}
-				io.WriteString(resp, data+";21;30;a;a")
+				connector.Account_Sync(data)
 			} else {
-				io.WriteString(resp, "-1")
+				connector.Error("-1", "No savedata found")
 			}
 		} else {
-			io.WriteString(resp, "-2")
+			connector.Error("-2", "Invalid credentials")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad request")
 	}
 }
 
@@ -180,31 +190,29 @@ func AccountManagement(resp http.ResponseWriter, req *http.Request, conf *core.G
 }
 
 func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
 	Post := ReadPost(req)
 	if Post.Get("userName") != "" && Post.Get("password")+Post.Get("gjp2") != "" {
 		gjp2 := core.ClearGDRequest(Post.Get("gjp2"))
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
@@ -216,24 +224,18 @@ func AccountLogin(resp http.ResponseWriter, req *http.Request, conf *core.Global
 		}
 
 		if uid < 0 {
-			io.WriteString(resp, strconv.Itoa(uid))
+			connector.Error("-1", "Invalid credentials")
 		} else {
-			io.WriteString(resp, strconv.Itoa(uid)+","+strconv.Itoa(uid))
+			connector.Account_Login(uid)
 			core.RegisterAction(core.ACTION_USER_LOGIN, 0, uid, map[string]string{"uname": uname}, db)
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad request")
 	}
 }
 
 func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
-	IPAddr := req.Header.Get("CF-Connecting-IP")
-	if IPAddr == "" {
-		IPAddr = req.Header.Get("X-Real-IP")
-	}
-	if IPAddr == "" {
-		IPAddr = strings.Split(req.RemoteAddr, ":")[0]
-	}
+	IPAddr := ipOf(req)
 	vars := gorilla.Vars(req)
 	if conf.MaintenanceMode {
 		resp.WriteHeader(403)
@@ -243,40 +245,46 @@ func AccountRegister(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 
 	//Ballistics
 	if PrepareBallistics(req) {
-		io.WriteString(resp, "Ballistics")
 		return
 	}
 
 	logger := core.Logger{Output: os.Stderr}
+	connector := connectors.NewConnector(req.URL.Query().Has("json"))
+	defer func() { _, _ = io.WriteString(resp, connector.Output()) }()
 	config, err := conf.LoadById(vars["gdps"])
 	if logger.Should(err) != nil {
+		connector.Error("-1", "Not Found")
 		return
 	}
 	if core.CheckIPBan(IPAddr, config) {
+		connector.Error("-1", "Banned")
 		return
 	}
-	//Get:=req.URL.Query()
+
 	Post := ReadPost(req)
 	if Post.Get("userName") != "" && Post.Get("password") != "" && Post.Get("email") != "" {
 		uname := core.ClearGDRequest(Post.Get("userName"))
 		pass := core.ClearGDRequest(Post.Get("password"))
 		email := core.ClearGDRequest(Post.Get("email"))
 		db := &core.MySQLConn{}
-		defer db.CloseDB()
+
 		if logger.Should(db.ConnectBlob(config)) != nil {
+			serverError(connector)
 			return
 		}
 		acc := core.CAccount{DB: db}
 		if core.OnRegister(db, conf, config) {
 			uid := acc.Register(uname, pass, email, IPAddr, config.SecurityConfig.AutoActivate)
-			io.WriteString(resp, strconv.Itoa(uid))
 			if uid > 0 {
 				core.RegisterAction(core.ACTION_USER_REGISTER, 0, uid, map[string]string{"uname": uname, "email": email}, db)
+				connector.Success("Registered")
+			} else {
+				connector.Error(strconv.Itoa(uid), "Refer to https://github.com/gd-programming/gd.docs/blob/main/docs/topics/status_codes.md#registergjaccount")
 			}
 		} else {
-			io.WriteString(resp, "-1")
+			connector.Error("-1", "Player limits exceeded")
 		}
 	} else {
-		io.WriteString(resp, "-1")
+		connector.Error("-1", "Bad request")
 	}
 }

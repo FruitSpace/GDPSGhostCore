@@ -1,7 +1,7 @@
 package core
 
 import (
-	"golang.org/x/exp/slices"
+	"slices"
 	"strconv"
 	"strings"
 	"time"

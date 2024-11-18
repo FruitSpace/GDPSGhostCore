@@ -1,10 +1,12 @@
-FROM golang:1.22 as builder
+FROM golang:1.23 AS builder
 RUN mkdir /app
 WORKDIR /app
-COPY . .
-RUN go mod tidy && \
+COPY go.* .
+RUN go mod download && \
     go install github.com/gordonklaus/ineffassign@latest && \
     go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
+COPY . .
+RUN ineffassign ./...
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o HalogenGhostCore .
 
 FROM alpine
