@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"github.com/jmoiron/sqlx"
 	"time"
 )
@@ -30,11 +31,16 @@ type CLevel struct {
 	SongId          int    `json:"song_id"`
 	VersionGame     int    `json:"version_game"`
 	VersionBinary   int    `json:"version_binary"`
-	StringExtra     string `json:"string_extra"`
 	StringSettings  string `json:"string_settings"` // FUCKING SONG IDS ; SFX IDS (song;sfx)
 	StringLevel     string `json:"string_level"`
 	StringLevelInfo string `json:"string_level_info"`
 	OrigId          int    `json:"original_id"`
+
+	StringExtra     string `json:"-"`
+	ExpandableStore struct {
+		ExtraString string `json:"extra_string"`
+		TS          int    `json:"ts"`
+	} `json:"expandable_store"`
 
 	//Stats
 	Objects        int `json:"objects"`
@@ -95,6 +101,7 @@ func (lvl *CLevel) LoadDates() {
 func (lvl *CLevel) LoadLevel() {
 	lvl.DB.MustQueryRow("SELECT track_id, song_id,versionGame,versionBinary,stringExtra,stringSettings,stringLevel,stringLevelInfo,original_id FROM #DB#.levels WHERE id=?", lvl.Id).Scan(
 		&lvl.TrackId, &lvl.SongId, &lvl.VersionGame, &lvl.VersionBinary, &lvl.StringExtra, &lvl.StringSettings, &lvl.StringLevel, &lvl.StringLevelInfo, &lvl.OrigId)
+	json.Unmarshal([]byte(lvl.StringExtra), &lvl.ExpandableStore)
 }
 
 func (lvl *CLevel) LoadStats() {
@@ -126,6 +133,7 @@ func (lvl *CLevel) LoadAll() {
 	//lvl.LoadStats()
 	//lvl.LoadParams()
 	//lvl.LoadDates()
+	json.Unmarshal([]byte(lvl.StringExtra), &lvl.ExpandableStore)
 }
 
 func (lvl *CLevel) LoadBase() {
@@ -160,6 +168,8 @@ func (lvl *CLevel) UploadLevel() int {
 		return -1
 	}
 	date := time.Now().Format("2006-01-02 15:04:05")
+	sex, _ := json.Marshal(lvl.ExpandableStore)
+	lvl.StringExtra = string(sex)
 	q := "INSERT INTO #DB#.levels (name, description, uid, password, version, length, track_id, song_id, versionGame, versionBinary, stringExtra, stringSettings, stringLevel, stringLevelInfo, original_id, objects, starsRequested, ucoins, is2p, isVerified, isUnlisted, isLDM, uploadDate, updateDate) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
 	r := lvl.DB.ShouldPrepareExec(q, lvl.Name, lvl.Description, lvl.Uid, lvl.Password, lvl.Version, lvl.Length, lvl.TrackId, lvl.SongId, lvl.VersionGame, lvl.VersionBinary, lvl.StringExtra, lvl.StringSettings, lvl.StringLevel, lvl.StringLevelInfo, lvl.OrigId, lvl.Objects, lvl.StarsRequested, lvl.Ucoins, lvl.Is2p, lvl.IsVerified, lvl.IsUnlisted, lvl.IsLDM, date, date)
 	id, _ := r.LastInsertId()
@@ -171,6 +181,8 @@ func (lvl *CLevel) UpdateLevel() int {
 		return -1
 	}
 	date := time.Now().Format("2006-01-02 15:04:05")
+	sex, _ := json.Marshal(lvl.ExpandableStore)
+	lvl.StringExtra = string(sex)
 	q := "UPDATE #DB#.levels SET name=?, description=?, password=?, version=?, length=?, track_id=?, song_id=?, versionGame=?, versionBinary=?, stringExtra=?, stringSettings=?, stringLevel=?, stringLevelInfo=?, original_id=?, objects=?, starsRequested=?, ucoins=?, is2p=?, isVerified=?, isUnlisted=?, isLDM=?, updateDate=? WHERE id=?"
 	lvl.DB.ShouldExec(q, lvl.Name, lvl.Description, lvl.Password, lvl.Version, lvl.Length, lvl.TrackId, lvl.SongId, lvl.VersionGame, lvl.VersionBinary, lvl.StringExtra, lvl.StringSettings, lvl.StringLevel, lvl.StringLevelInfo, lvl.OrigId, lvl.Objects, lvl.StarsRequested, lvl.Ucoins, lvl.Is2p, lvl.IsVerified, lvl.IsUnlisted, lvl.IsLDM, date, lvl.Id)
 	return lvl.Id
@@ -368,6 +380,7 @@ func (lvl *CLevel) LoadBulkSearch(ids []int) []CLevel {
 			s := "[DELETED]"
 			levl.SideloadUname = &s
 		}
+		json.Unmarshal([]byte(levl.StringExtra), &levl.ExpandableStore)
 		if e != nil {
 			SendMessageDiscord(e.Error())
 		}

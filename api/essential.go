@@ -211,7 +211,7 @@ func RequestMod(resp http.ResponseWriter, req *http.Request, conf *core.GlobalCo
 		}
 		role := xacc.GetRoleObj(true)
 		if len(role.Privs) > 0 && role.Privs["aReqMod"] > 0 {
-			connector.Success("Request approved")
+			connector.NumberedSuccess(role.ModLevel)
 		} else {
 			connector.Error("-1", "Insufficient Privileges")
 		}

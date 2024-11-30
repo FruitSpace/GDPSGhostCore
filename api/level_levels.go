@@ -656,10 +656,11 @@ func LevelUpload(resp http.ResponseWriter, req *http.Request, conf *core.GlobalC
 		cl.IsUnlisted = isUnlisted%2 + isFUnlisted%2
 		core.TryInt(&isLDM, Post.Get("ldm"))
 		cl.IsLDM = isLDM != 0
-		cl.StringExtra = core.ClearGDRequest(Post.Get("extraString"))
-		if cl.StringExtra == "" {
-			cl.StringExtra = "29_29_29_40_29_29_29_29_29_29_29_29_29_29_29_29"
+		cl.ExpandableStore.ExtraString = core.ClearGDRequest(Post.Get("extraString"))
+		if cl.ExpandableStore.ExtraString == "" {
+			cl.ExpandableStore.ExtraString = "29_29_29_40_29_29_29_29_29_29_29_29_29_29_29_29"
 		}
+		core.TryInt(&cl.ExpandableStore.TS, Post.Get("ts"))
 		cl.StringLevelInfo = core.ClearGDRequest(Post.Get("levelInfo"))
 		core.TryInt(&cl.VersionBinary, Post.Get("binaryVersion"))
 		core.TryInt(&cl.Id, Post.Get("levelID"))
