@@ -3,6 +3,7 @@ package core
 import (
 	"math"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -87,12 +88,27 @@ func (filter *CLevelFilter) GenerateQueryString(params map[string]string) string
 	if _, ok := params["isOrig"]; ok {
 		whereq += " AND original_id=0"
 	}
-	if _, ok := params["isFeatured"]; ok {
-		whereq += " AND isFeatured=1"
+	// rateconfig
+	{
+		var ratestring []string
+		if _, ok := params["isFeatured"]; ok {
+			ratestring = append(ratestring, "isFeatured=1")
+		}
+		if _, ok := params["isEpic"]; ok {
+			ratestring = append(ratestring, "isEpic=1")
+		}
+		if _, ok := params["isMythic"]; ok {
+			ratestring = append(ratestring, "isEpic=2")
+		}
+		if _, ok := params["isLegendary"]; ok {
+			ratestring = append(ratestring, "isEpic=3")
+		}
+
+		if len(ratestring) > 0 {
+			whereq += " AND (" + strings.Join(ratestring, " OR ") + ")"
+		}
 	}
-	if _, ok := params["isEpic"]; ok {
-		whereq += " AND isEpic=1"
-	}
+
 	if _, ok := params["coins"]; ok {
 		whereq += " AND coins>0"
 	}

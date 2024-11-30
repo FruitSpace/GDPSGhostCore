@@ -348,6 +348,14 @@ func LevelGetLevels(resp http.ResponseWriter, req *http.Request, conf *core.Glob
 	if epic != 0 {
 		Params["isEpic"] = "1"
 	}
+	core.TryInt(&epic, Post.Get("mythic"))
+	if epic != 0 {
+		Params["isMythic"] = "1"
+	}
+	core.TryInt(&epic, Post.Get("legendary"))
+	if epic != 0 {
+		Params["isLegendary"] = "1"
+	}
 	core.TryInt(&original, Post.Get("original"))
 	if original != 0 {
 		Params["isOrig"] = "1"
