@@ -88,6 +88,10 @@ func (protect *CProtect) ResetUserLimits() {
 }
 
 func (protect *CProtect) DetectLevelModel(uid int) bool {
+	//FIXME
+	if 1 == 1 {
+		return true
+	}
 	if protect.DisableProtection {
 		return true
 	}
@@ -114,6 +118,10 @@ func (protect *CProtect) DetectStats(uid int, stars int, diamonds int, demons in
 		RegisterAction(ACTION_BAN_BAN, 0, uid, map[string]string{"type": "Ban:StatsNegative"}, protect.DB)
 		SendMessageDiscord("User " + strconv.Itoa(uid) + " has been banned for having negative stats.")
 		return false
+	}
+	//FIXME
+	if 1 == 1 {
+		return true
 	}
 	if protect.LevelModel.MaxStars == 0 {
 		protect.LevelModel.MaxStars = 200
@@ -143,7 +151,7 @@ func (protect *CProtect) DetectMessages(uid int) bool {
 	}
 	meta := protect.GetMeta(uid)
 	t := int(time.Now().Unix())
-	if t-meta["msg_time"] < 120 {
+	if t-meta["msg_time"] < 60 {
 		return false
 	}
 	meta["msg_time"] = t
@@ -158,7 +166,7 @@ func (protect *CProtect) DetectPosts(uid int) bool {
 	}
 	meta := protect.GetMeta(uid)
 	t := int(time.Now().Unix())
-	if t-meta["post_time"] < 120 {
+	if t-meta["post_time"] < 60 {
 		return false
 	}
 	meta["post_time"] = t
@@ -173,7 +181,7 @@ func (protect *CProtect) DetectComments(uid int) bool {
 	}
 	meta := protect.GetMeta(uid)
 	t := int(time.Now().Unix())
-	if t-meta["comm_time"] < 120 {
+	if t-meta["comm_time"] < 30 {
 		return false
 	}
 	meta["comm_time"] = t

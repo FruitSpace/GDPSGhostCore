@@ -322,7 +322,7 @@ func (lvl *CLevel) RecalculateCPoints(uid int) {
 			cpoints++
 		}
 		if isEpic > 0 {
-			cpoints++
+			cpoints += Clamp(isEpic, 1, 3)
 		}
 		//! COLLABS DISABLED
 		//collablist := strings.Split(collab, ",")
