@@ -20,7 +20,6 @@ type GDConnector struct {
 }
 
 func (c *GDConnector) Output() string {
-	log.Println("Output: " + c.output)
 	return c.output
 }
 
@@ -584,13 +583,52 @@ func (c *GDConnector) getUserProfile(acc core.CAccount, isFriend bool) string {
 	// 51=13 - color3, 53=34 -> swingcopter, 54=5 -> jetpack?,
 	role := acc.GetRoleObj(false)
 	rank := acc.GetLeaderboardRank()
+
+	demonStat := fmt.Sprintf(
+		"%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d",
+		acc.ExtraData.DemonStats.Standard.Easy,
+		acc.ExtraData.DemonStats.Standard.Medium,
+		acc.ExtraData.DemonStats.Standard.Hard,
+		acc.ExtraData.DemonStats.Standard.Insane,
+		acc.ExtraData.DemonStats.Standard.Extreme,
+		acc.ExtraData.DemonStats.Platformer.Easy,
+		acc.ExtraData.DemonStats.Platformer.Medium,
+		acc.ExtraData.DemonStats.Platformer.Hard,
+		acc.ExtraData.DemonStats.Platformer.Insane,
+		acc.ExtraData.DemonStats.Platformer.Extreme,
+		acc.ExtraData.DemonStats.Weeklies,
+		acc.ExtraData.DemonStats.Gauntlets,
+	)
+
+	classicStat := fmt.Sprintf(
+		"%d,%d,%d,%d,%d,%d,%d,%d",
+		acc.ExtraData.StandardStats.Auto,
+		acc.ExtraData.StandardStats.Easy,
+		acc.ExtraData.StandardStats.Normal,
+		acc.ExtraData.StandardStats.Hard,
+		acc.ExtraData.StandardStats.Harder,
+		acc.ExtraData.StandardStats.Insane,
+		acc.ExtraData.StandardStats.Daily,
+		acc.ExtraData.StandardStats.Gauntlet,
+	)
+
+	platformerStat := fmt.Sprintf(
+		"%d,%d,%d,%d,%d,%d",
+		acc.ExtraData.PlatformerStats.Auto,
+		acc.ExtraData.PlatformerStats.Easy,
+		acc.ExtraData.PlatformerStats.Normal,
+		acc.ExtraData.PlatformerStats.Hard,
+		acc.ExtraData.PlatformerStats.Harder,
+		acc.ExtraData.PlatformerStats.Insane,
+	)
+
 	return "1:" + acc.Uname + ":2:" + s(acc.Uid) + ":3:" + s(acc.Stars) + ":4:" + s(acc.Demons) + ":6:" + s(rank) + ":7:" + s(acc.Uid) +
 		":8:" + s(acc.CPoints) + ":9:" + s(acc.GetShownIcon()) + ":10:" + s(acc.ColorPrimary) + ":11:" + s(acc.ColorSecondary) + ":13:" + s(acc.Coins) +
 		":14:" + s(acc.IconType) + ":15:" + s(acc.Special) + ":16:" + s(acc.Uid) + ":17:" + s(acc.UCoins) + ":18:" + s(acc.MS) + ":19:" + s(acc.FrS) +
 		":20:" + acc.Youtube + ":21:" + s(acc.Cube) + ":22:" + s(acc.Ship) + ":23:" + s(acc.Ball) + ":24:" + s(acc.Ufo) + ":25:" + s(acc.Wave) + ":26:" + s(acc.Robot) +
 		":28:" + s(acc.Trace) + ":29:1:30:" + s(rank) + ":31:" + s(core.ToInt(isFriend)) + ":43:" + s(acc.Spider) + ":44:" + acc.Twitter +
 		":45:" + acc.Twitch + ":46:" + s(acc.Diamonds) + ":48:" + s(acc.Death) + ":49:" + s(role.ModLevel) + ":50:" + s(acc.CS) + ":51:" + s(acc.ColorGlow) +
-		":52:" + s(acc.Moons) + ":53:" + s(acc.Swing) + ":54:" + s(acc.Jetpack)
+		":52:" + s(acc.Moons) + ":53:" + s(acc.Swing) + ":54:" + s(acc.Jetpack) + ":55:" + demonStat + ":56:" + classicStat + ":57:" + platformerStat
 }
 
 // userProfilePersonal used at getUserInfo to append some data if user is requesting themselves (w/o trailing hash)

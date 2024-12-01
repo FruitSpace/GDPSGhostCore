@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -366,6 +367,64 @@ func (filter *CLevelFilter) GetMapPacks(page int) (packs []LevelPack, count int)
 		count = filter.CountMapPacks()
 	}
 	return
+}
+
+func (filter *CLevelFilter) CountDemonTypes(ids []int) DemonEncapsulated {
+	data := DemonEncapsulated{}
+	idsString := strings.Join(ArrTranslate(ids), ",")
+
+	rows := filter.DB.ShouldQuery(fmt.Sprintf(`SELECT demonDifficulty, length FROM #DB#.levels WHERE id IN (%s) AND demonDifficulty>=0`, idsString))
+	defer rows.Close()
+
+	for rows.Next() {
+		var diff, length int
+		rows.Scan(&diff, &length)
+		if length < 5 {
+			switch diff {
+			case 3:
+				data.Standard.Easy++
+			case 4:
+				data.Standard.Medium++
+			case 5:
+				data.Standard.Insane++
+			case 6:
+				data.Standard.Extreme++
+			default:
+				data.Standard.Hard++
+			}
+		} else {
+			switch diff {
+			case 3:
+				data.Platformer.Easy++
+			case 4:
+				data.Platformer.Medium++
+			case 5:
+				data.Platformer.Insane++
+			case 6:
+				data.Platformer.Extreme++
+			default:
+				data.Platformer.Hard++
+			}
+		}
+	}
+	return data
+}
+
+type DemonEncapsulated = struct {
+	Standard struct {
+		Easy    int
+		Medium  int
+		Hard    int
+		Insane  int
+		Extreme int
+	}
+	Platformer struct {
+		Easy    int
+		Medium  int
+		Hard    int
+		Insane  int
+		Extreme int
+	}
 }
 
 type LevelPack struct {

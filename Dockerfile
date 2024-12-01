@@ -7,7 +7,7 @@ RUN go mod download && \
     go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
 COPY . .
 RUN ineffassign ./...
-RUN CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o HalogenGhostCore .
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o HalogenGhostCore .
 
 FROM alpine
 EXPOSE 1997

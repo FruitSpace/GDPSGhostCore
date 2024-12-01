@@ -92,7 +92,7 @@ func AccountBackup(resp http.ResponseWriter, req *http.Request, conf *core.Globa
 			acc.LoadStats()
 			acc.Orbs, _ = strconv.Atoi(strings.Split(strings.Split(saveData, "</s><k>14</k><s>")[1], "</s>")[0])
 			acc.LvlsCompleted, _ = strconv.Atoi(strings.Split(strings.Split(strings.Split(saveData, "<k>GS_value</k>")[1], "</s><k>4</k><s>")[1], "</s>")[0])
-			acc.PushStats()
+			acc.PushStatsAndExtra()
 			//! Temp
 			s3.DeleteFile("/savedata_old/" + vars["gdps"] + "/files/savedata/" + strconv.Itoa(acc.Uid) + ".hal")
 			connector.Success("Backup successful")

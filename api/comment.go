@@ -4,7 +4,6 @@ import (
 	"HalogenGhostCore/core"
 	"HalogenGhostCore/core/connectors"
 	"encoding/base64"
-	"fmt"
 	gorilla "github.com/gorilla/mux"
 	"io"
 	"net/http"
@@ -77,7 +76,6 @@ func AccountCommentGet(resp http.ResponseWriter, req *http.Request, conf *core.G
 		}
 		var uid int
 		xuid := Post.Get("accountID")
-		fmt.Println(Post["accountID"])
 		if len(Post["accountID"]) > 1 {
 			xuid = Post["accountID"][1]
 		}

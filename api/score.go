@@ -349,8 +349,60 @@ func UpdateUserScore(resp http.ResponseWriter, req *http.Request, conf *core.Glo
 			connector.Error("-1", "Invalid stats breh") // Le trolling
 			return
 		}
+
+		// 2.2 demon stats
+		{
+			core.TryInt(&xacc.ExtraData.DemonStats.Weeklies, Post.Get("dinfow"))
+			core.TryInt(&xacc.ExtraData.DemonStats.Gauntlets, Post.Get("dinfog"))
+			cf := &core.CLevelFilter{DB: db}
+			data := cf.CountDemonTypes(core.Decompose(
+				core.CleanDoubles(core.ClearGDRequest(Post.Get("dinfo")), ","),
+				","))
+
+			xacc.ExtraData.DemonStats.Standard.Easy = data.Standard.Easy
+			xacc.ExtraData.DemonStats.Standard.Medium = data.Standard.Medium
+			xacc.ExtraData.DemonStats.Standard.Hard = data.Standard.Hard
+			xacc.ExtraData.DemonStats.Standard.Insane = data.Standard.Insane
+			xacc.ExtraData.DemonStats.Standard.Extreme = data.Standard.Extreme
+
+			xacc.ExtraData.DemonStats.Platformer.Easy = data.Platformer.Easy
+			xacc.ExtraData.DemonStats.Platformer.Medium = data.Platformer.Medium
+			xacc.ExtraData.DemonStats.Platformer.Hard = data.Platformer.Hard
+			xacc.ExtraData.DemonStats.Platformer.Insane = data.Platformer.Insane
+			xacc.ExtraData.DemonStats.Platformer.Extreme = data.Platformer.Extreme
+		}
+
+		// 2.2 standard stats
+		{
+			core.TryInt(&xacc.ExtraData.StandardStats.Daily, Post.Get("sinfod"))
+			core.TryInt(&xacc.ExtraData.StandardStats.Gauntlet, Post.Get("sinfog"))
+			sinfo := core.Decompose(core.CleanDoubles(core.ClearGDRequest(Post.Get("sinfo")), ","), ",")
+			if len(sinfo) == 12 {
+				xacc.ExtraData.StandardStats.Auto = sinfo[0]
+				xacc.ExtraData.StandardStats.Easy = sinfo[1]
+				xacc.ExtraData.StandardStats.Normal = sinfo[2]
+				xacc.ExtraData.StandardStats.Hard = sinfo[3]
+				xacc.ExtraData.StandardStats.Harder = sinfo[4]
+				xacc.ExtraData.StandardStats.Insane = sinfo[5]
+				xacc.ExtraData.PlatformerStats.Auto = sinfo[6]
+				xacc.ExtraData.PlatformerStats.Easy = sinfo[7]
+				xacc.ExtraData.PlatformerStats.Normal = sinfo[8]
+				xacc.ExtraData.PlatformerStats.Hard = sinfo[9]
+				xacc.ExtraData.PlatformerStats.Harder = sinfo[10]
+				xacc.ExtraData.PlatformerStats.Insane = sinfo[11]
+				d := 0
+				for _, v := range sinfo {
+					d += v
+				}
+				if xacc.Demons > d {
+					// Still have no idea why
+					xacc.ExtraData.StandardStats.Hard += min(xacc.Demons-d, 5)
+				}
+			}
+		}
+
 		xacc.PushVessels()
-		xacc.PushStats()
+		xacc.PushStatsAndExtra()
 		connector.NumberedSuccess(xacc.Uid)
 	} else {
 		connector.Success("Bad Request, but as per Geometry Dash API we should return 1 no matter what")
