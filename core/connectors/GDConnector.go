@@ -120,6 +120,9 @@ func (c *GDConnector) Level_GetGauntlets(gaus []map[string]string, hash string) 
 	for _, gau := range gaus {
 		c.output += "1:" + gau["pack_name"] + ":3:" + gau["levels"] + "|"
 	}
+	if len(c.output) == 0 {
+		c.output = "x"
+	}
 	c.output = c.output[:len(c.output)-1] + "#" + hash
 }
 

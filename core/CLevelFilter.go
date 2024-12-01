@@ -372,7 +372,10 @@ func (filter *CLevelFilter) GetMapPacks(page int) (packs []LevelPack, count int)
 func (filter *CLevelFilter) CountDemonTypes(ids []int) DemonEncapsulated {
 	data := DemonEncapsulated{}
 	idsString := strings.Join(ArrTranslate(ids), ",")
-
+	if idsString == "" {
+		return data
+	}
+	fmt.Println("idsString", idsString)
 	rows := filter.DB.ShouldQuery(fmt.Sprintf(`SELECT demonDifficulty, length FROM #DB#.levels WHERE id IN (%s) AND demonDifficulty>=0`, idsString))
 	defer rows.Close()
 
