@@ -125,6 +125,7 @@ var RouteMap = map[string]func(http.ResponseWriter, *http.Request, *core.GlobalC
 	//"/db/content/sfx/s{sfxid}.ogg":           GetSFXTrack,
 
 	"/db/content/music/musiclibrary.dat":         GetMusicLibrary,
+	"/db/content/music/musiclibrary_02.dat":      GetMusicLibrary,
 	"/db/content/music/musiclibrary_version.txt": GetMusicLibraryVersion,
 	"/db/mp3": GetSongInfo,
 }
