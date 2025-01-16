@@ -47,7 +47,7 @@ func TriggerMaintenance(resp http.ResponseWriter, req *http.Request, conf *core.
 		return
 	}
 	io.WriteString(resp, "OK")
-	go core.MaintainTasks()
+	//go core.MaintainTasks()
 }
 
 func EventAction(resp http.ResponseWriter, req *http.Request, conf *core.GlobalConfig) {
