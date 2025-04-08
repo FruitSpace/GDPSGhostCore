@@ -1,5 +1,7 @@
 .idea/
-_*/
+/_minio/
+/_mysql/
+/_redis/
 .DS_Store
 
 HalogenGhostCore
