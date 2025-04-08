@@ -1,31 +1,41 @@
-version: "3.4"
 services:
   # unified database for host + gdps
   mariadb:
     image: mariadb:latest
     restart: always
+    healthcheck:
+      test: ["CMD", "bash", "-c", "mariadb -h 127.0.0.1 -u $${MARIADB_USER} -p$${MARIADB_PASSWORD} -e 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
-      - 3306:3306
+      - "3306:3306"
     volumes:
       - ./_mysql:/var/lib/mysql
     environment:
       MARIADB_ROOT_PASSWORD: "GlooseDumbass"
       MARIADB_USER: "gen_user"
       MARIADB_PASSWORD: "pineappol"
-  # keydb for gdps config storage (db 7)
-  keydb:
-    image: eqalpha/keydb:latest
+      MARIADB_DATABASE: "gdps_000S"
+  # redis for gdps config storage (db 7)
+  redis:
+    image: redis:latest
     restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 3
     ports:
-      - 6379:6379
+      - "6379:6379"
     volumes:
-      - ./_keydb:/data
+      - ./_redis:/data
   minio:
     image: quay.io/minio/minio:latest
     restart: always
     ports:
-      - 9000:9000
-      - 9001:9001
+      - "9000:9000"
+      - "9001:9001"
     volumes:
       - ./_minio:/data
     command: server /data --console-address ":9001"
@@ -36,29 +46,56 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - "8080:8080"
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
+
+  # used for importing backups
+  recovery:
+    build: _recover
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    volumes:
+      - ./_recover:/recovery
+    environment:
+      NEED_RECOVERY: "true"
+      ID: "000S" # GDPS ID
+      MINIO_USER: "apache"
+      MINIO_PASSWORD: "apache2077"
+      DB_USER: "gen_user"
+      DB_PASS: "pineappol"
+      REDIS_PASSWORD: ""
   # ghostcore itself
   ghostcore:
     build:
-      context: .
+      context: src
       dockerfile: Dockerfile
     depends_on:
-      - mariadb
-      - keydb
-      - minio
+      mariadb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      recovery:
+        condition: service_completed_successfully
     ports:
-      - 80:1997
+      - "80:1997"
     environment:
-      MASTER_KEY: "3XTR4OrD1nArY_K3Y_1907"
-      DB_USER: "gen_user"
-      DB_PASS: "pineappol"
-      DB_HOST: "mariadb"
-      REDIS_PORT: "6379"
-      REDIS_HOST: "keydb"
-      REDIS_PASSWORD: ""
-      SAVE_PATH: "/core"
-      S3_CONFIG: "access_key=apache,secret=apache2077,region=us-east-1,bucket=default,endpoint=minio,cdn=minio"
-      CONSUL_ADDR: "consul:8500"
-      CONSUL_DC: "dc1"
+      MASTER_KEY: "WhateverKey" # Used for authenticating service endpoints
+      DB_USER: "gen_user" # database user for everything
+      DB_PASS: "pineappol" # database password
+      DB_HOST: "mariadb" # Don't change
+      REDIS_PORT: "6379" # Don't change
+      REDIS_HOST: "redis" # Don't change
+      REDIS_PASSWORD: "" # Don't change unless you've set Redis password
+      SAVE_PATH: "/core" # Used for security model
+      S3_CONFIG: "access_key=apache,secret=apache2077,region=us-east-1,bucket=default,endpoint=minio,cdn=minio" # S3 creds for minio
+      CONSUL_ADDR: "consul:8500" # Ignore this, when core can't connect to consul it will assume self-leadership
+      CONSUL_DC: "dc1" # Ignore this
